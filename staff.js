@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 1. SEGURIDAD Y DATOS DE USUARIO
     if (localStorage.getItem('staffLogueado') !== 'true') {
-        window.location.href = "login.html";
+        window.location.href = "login";
         return;
     }
 
@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
+    // CONFIGURACIÓN DE CLOUDINARY
+    // =========================================================
+    const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
+    const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
+
+    // =========================================================
     // SISTEMA DE TAREAS
     // =========================================================
     const listaTareas = document.getElementById('listaTareas');
@@ -31,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip de 0:15 a 0:45 y agregar música.", proyecto: "General", archivos: [] }
     ];
     
-    let tareaActivaIndex = -1; // Para saber en qué tarea estamos subiendo archivos
+    let tareaActivaIndex = -1;
 
     function renderTareas() {
         listaTareas.innerHTML = '';
@@ -133,23 +139,73 @@ document.addEventListener('DOMContentLoaded', function() {
             lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>';
         } else {
             archivos.forEach(a => {
-                lista.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-file"></i> ${a}</li>`;
+                const url = typeof a === 'object' ? a.url : '#';
+                const nombre = typeof a === 'object' ? a.nombre : a;
+
+                // TRUCO DE CLOUDINARY para forzar descarga
+                const urlDescarga = url.includes('/upload/') 
+                    ? url.replace('/upload/', '/upload/fl_attachment/') 
+                    : url;
+
+                lista.innerHTML += `
+                    <li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-file" style="color: #f7c948;"></i> ${nombre}
+                        </a>
+                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" target="_blank">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
+                    </li>
+                `;
             });
         }
     }
 
-    window.subirArchivosTarea = function() {
+    window.subirArchivosTarea = async function(event) {
+        if (event && event.preventDefault) { event.preventDefault(); }
+        
         const input = document.getElementById('inputArchivoTarea');
-        if(input.files.length > 0) {
-            for(let i=0; i<input.files.length; i++) {
-                // Solo guardamos el nombre para simularlo
-                tareas[tareaActivaIndex].archivos.push(input.files[i].name);
+        if(input.files.length === 0) return;
+
+        const boton = document.querySelector('.upload-area button');
+        const textoOriginal = boton.innerHTML;
+        boton.innerHTML = "Subiendo...";
+        boton.disabled = true;
+
+        for(let i=0; i<input.files.length; i++) {
+            const file = input.files[i];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.secure_url) {
+                    tareas[tareaActivaIndex].archivos.push({
+                        nombre: file.name,
+                        url: data.secure_url
+                    });
+                } else {
+                    alert(`Error al subir ${file.name}`);
+                }
+            } catch (error) {
+                console.error("Error de subida:", error);
+                alert(`Error de conexión al subir ${file.name}`);
             }
-            localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-            renderArchivosModal();
-            input.value = ''; // limpiar
-            alert("¡Archivos adjuntados a la tarea!");
         }
+
+        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
+        boton.innerHTML = textoOriginal;
+        boton.disabled = false;
+        input.value = ''; 
+        renderArchivosModal();
+        alert("¡Archivos subidos a la nube con éxito!");
     }
 
     // =========================================================
@@ -162,8 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderProyectos() {
         listaProyectos.innerHTML = '';
-        
-        // Actualizar el select de tareas
         const selectProyecto = document.getElementById('inputProyecto');
         selectProyecto.innerHTML = '<option value="General">Proyecto General</option>';
         
@@ -211,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // LÓGICA DEL MODAL DE PROYECTO
     const modalProyecto = document.getElementById('modalProyecto');
 
     window.abrirModalProyecto = function(nombreProyecto) {
@@ -219,20 +272,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const lista = document.getElementById('mProyectoTareas');
         lista.innerHTML = '';
 
-        // Buscar tareas que pertenezcan a este proyecto
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
 
         if(tareasDelProyecto.length === 0) {
             lista.innerHTML = '<p style="color:#666;">No hay tareas asignadas a este proyecto.</p>';
         } else {
             tareasDelProyecto.forEach(t => {
+                // Buscamos el índice original de esta tarea para abrirla
+                const tareaIndexOriginal = tareas.findIndex(original => original.id === t.id);
+                
                 lista.innerHTML += `
-                    <li class="archivo-item" style="justify-content: space-between;">
+                    <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
                         <div>
-                            <i class="fa-solid fa-check-square" style="color:${t.estado === 'completed' ? '#4CAF50' : '#f7c948'};"></i>
-                            <span style="margin-left:10px;">${t.titulo}</span>
+                            <i class="fa-solid fa-folder-open" style="color:${t.estado === 'completed' ? '#4CAF50' : '#f7c948'};"></i>
+                            <span style="margin-left:10px; color:white;">${t.titulo}</span>
                         </div>
-                        <span style="font-size:0.8rem; color:#a0a0b8;">Para: ${t.asignado}</span>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <span style="font-size:0.8rem; color:#a0a0b8;">Para: ${t.asignado}</span>
+                            <i class="fa-solid fa-chevron-right" style="color:#a0a0b8;"></i>
+                        </div>
                     </li>
                 `;
             });
@@ -240,14 +298,13 @@ document.addEventListener('DOMContentLoaded', function() {
         modalProyecto.style.display = 'flex';
     }
 
-    // CERRAR MODALES
     window.cerrarModal = function() {
         modalTarea.style.display = 'none';
         modalProyecto.style.display = 'none';
     }
 
     // =========================================================
-    // SISTEMA DE CLIENTES
+    // SISTEMA DE CLIENTES Y CALENDARIO
     // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
@@ -298,9 +355,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // =========================================================
-    // SISTEMA DE CALENDARIO (Igual que antes)
-    // =========================================================
     const listaEventos = document.getElementById('listaEventos');
     let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
 
@@ -328,7 +382,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // =========================================================
     // NAVEGACIÓN Y CERRAR SESIÓN
+    // =========================================================
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('.view-section');
 
@@ -346,6 +402,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnLogout').addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.removeItem('staffLogueado');
-        window.location.href = "login.html";
+        window.location.href = "login";
     });
 });

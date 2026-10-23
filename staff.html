@@ -53,7 +53,6 @@
                 </button>
             </div>
 
-            <!-- Formulario de Tareas con Descripción y Proyecto -->
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
@@ -63,7 +62,6 @@
                     <input type="date" id="inputFecha" style="flex: 1;">
                     <select id="inputProyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                         <option value="General">Proyecto General</option>
-                        <!-- Los proyectos se cargarán aquí con JS -->
                     </select>
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
@@ -143,7 +141,7 @@
             
             <div class="upload-area">
                 <input type="file" id="inputArchivoTarea" multiple>
-                <button onclick="subirArchivosTarea()" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
+                <button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
             </div>
         </div>
     </div>
@@ -153,29 +151,11 @@
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
-            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas asignadas a este proyecto:</p>
+            <p style="color:#a0a0b8; margin-bottom: 20px;">Haz clic en una tarea para abrir su carpeta de archivos:</p>
             <ul id="mProyectoTareas" class="archivos-lista"></ul>
         </div>
     </div>
 
     <script src="staff.js"></script>
-</body>
-</html>
-    <!-- Tu script normal -->
-    <script src="script.js"></script> 
-
-    <!-- OneSignal SDK -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "6d8c12f8-ae11-467a-9af2-e2b5138f1650",
-          notifyButton: {
-            enable: true,
-          },
-        });
-      });
-    </script>
 </body>
 </html>

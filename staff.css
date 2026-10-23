@@ -188,11 +188,16 @@ body {
     display: flex;
     align-items: center;
     gap: 20px;
+    cursor: pointer;
+    transition: 0.3s;
 }
+
+.task-item:hover { border-color: rgba(247, 201, 72, 0.4); background: rgba(247, 201, 72, 0.05); }
 
 .task-status { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .task-status.pending { background: #ff5e5e; box-shadow: 0 0 10px #ff5e5e; }
 .task-status.progress { background: #f7c948; box-shadow: 0 0 10px #f7c948; }
+.task-status.completed { background: #4CAF50; box-shadow: 0 0 10px #4CAF50; }
 
 .task-details { flex-grow: 1; }
 .task-details h4 { font-size: 1rem; margin-bottom: 4px; }
@@ -230,43 +235,31 @@ body {
 }
 
 .btn-eliminar:hover { background: #ff5e5e; color: white; }
+.btn-completar { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.3); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+.btn-completar:hover { background: #4CAF50; color: white; transform: scale(1.1); }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 900px) {
-    body { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: relative; padding: 20px; }
-    .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
-    .main-content { margin-left: 0; width: 100%; padding: 20px; }
-}
-/* Ajuste para que el bote de basura quede a la derecha */
-.task-item {
-    justify-content: space-between;
-}
-/* Botón de Completar (Palomita verde) */
-.btn-completar {
-    background: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
+/* Botón de descarga */
+.btn-descargar {
+    background: rgba(247, 201, 72, 0.1);
+    color: #f7c948;
+    border: 1px solid rgba(247, 201, 72, 0.3);
+    padding: 6px 10px;
+    border-radius: 6px;
     transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
 }
+.btn-descargar:hover { background: #f7c948; color: #0b0b1a; transform: scale(1.1); }
 
-.btn-completar:hover {
-    background: #4CAF50;
-    color: white;
-    transform: scale(1.1);
-}
 /* ===== MODALES ===== */
 .modal {
     display: none;
     position: fixed;
     z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
     background-color: rgba(5, 5, 15, 0.8);
     backdrop-filter: blur(5px);
     align-items: center;
@@ -286,18 +279,11 @@ body {
 
 .close {
     position: absolute;
-    top: 15px;
-    right: 20px;
-    color: #a0a0b8;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
+    top: 15px; right: 20px;
+    color: #a0a0b8; font-size: 28px; font-weight: bold;
+    cursor: pointer; transition: 0.3s;
 }
-
-.close:hover {
-    color: #ff5e5e;
-}
+.close:hover { color: #ff5e5e; }
 
 .instrucciones-box {
     background: rgba(255,255,255,0.03);
@@ -318,7 +304,13 @@ body {
 }
 
 .upload-area input[type="file"] {
-    color: #a0a0b8;
-    font-size: 0.85rem;
-    width: 100%;
+    color: #a0a0b8; font-size: 0.85rem; width: 100%;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: relative; padding: 20px; }
+    .sidebar-nav { flex-direction: row; flex-wrap: wrap; }
+    .main-content { margin-left: 0; width: 100%; padding: 20px; }
 }
