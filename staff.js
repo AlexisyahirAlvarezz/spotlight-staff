@@ -23,82 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
     // =========================================================
-    // PROYECTOS (Se declaran primero para llenar el menú)
-    // =========================================================
-    let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
-        { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
-    ];
-
-    function renderProyectosSelect() {
-        const select = document.getElementById('inputProyecto');
-        // Limpiamos el select dejando solo la opción General
-        select.innerHTML = '<option value="General">Proyecto General</option>';
-        
-        proyectosDB.forEach(p => {
-            select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
-        });
-    }
-    renderProyectosSelect(); // Llenamos el menú al cargar la página
-
-    const listaProyectos = document.getElementById('listaProyectos');
-
-    function renderProyectosLista() {
-        listaProyectos.innerHTML = '';
-        proyectosDB.forEach(p => {
-            const botonEliminar = esGerente 
-                ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` 
-                : '';
-
-            listaProyectos.innerHTML += `
-                <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')">
-                    <div>
-                        <i class="fa-solid fa-folder" style="color:#f7c948;"></i> 
-                        <strong style="color:white; margin-left:10px;">${p.nombre}</strong>
-                    </div>
-                    ${botonEliminar}
-                </li>
-            `;
-        });
-    }
-    renderProyectosLista();
-
-    // Crear Proyecto (desde la pestaña Proyectos)
-    document.getElementById('btnMostrarFormProyecto').addEventListener('click', () => {
-        document.getElementById('formNuevoProyecto').style.display = document.getElementById('formNuevoProyecto').style.display === 'none' ? 'flex' : 'none';
-    });
-
-    document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
-        const nombre = document.getElementById('inputProyectoNom').value;
-        const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
-        
-        if (nombre) {
-            // Verificamos que no exista uno con el mismo nombre
-            if (proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-                alert("Ya existe un proyecto con ese nombre.");
-                return;
-            }
-            proyectosDB.push({ id: Date.now(), nombre, cliente });
-            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-            renderProyectosLista();
-            renderProyectosSelect(); // ¡MAGIA! Actualiza el menú desplegable de las tareas
-            document.getElementById('formNuevoProyecto').style.display = 'none';
-            document.getElementById('inputProyectoNom').value = '';
-            document.getElementById('inputClienteProyecto').value = '';
-        } else {
-            alert("Escribe un nombre para el proyecto.");
-        }
-    });
-
-    window.eliminarProyecto = function(id) {
-        if (confirm("¿Eliminar este proyecto? (Las tareas no se borrarán)")) {
-            proyectosDB = proyectosDB.filter(p => p.id !== id);
-            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-            renderProyectosLista();
-            renderProyectosSelect(); // Actualizamos el menú
-        }
-    };
-
-    // =========================================================
     // SISTEMA DE TAREAS
     // =========================================================
     const listaTareas = document.getElementById('listaTareas');
@@ -120,7 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
             
-            const botonCompletar = t.estado !== 'completed'
+            // LÓGICA DE LA PALOMITA: SOLO la persona asignada puede completar la tarea
+            const esAsignado = (nombreStaff.toLowerCase() === t.asignado.toLowerCase());
+            const puedeCompletar = esAsignado;
+
+            const botonCompletar = (t.estado !== 'completed' && puedeCompletar)
                 ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})" title="Completar"><i class="fa-solid fa-check"></i></button>` 
                 : '';
 
@@ -158,16 +86,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const titulo = document.getElementById('inputTarea').value;
         const asignado = document.getElementById('inputAsignado').value;
         const fecha = document.getElementById('inputFecha').value;
-        const proyecto = document.getElementById('inputProyecto').value; // Toma el valor del select
+        // Escribimos el proyecto a mano
+        const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
 
         if (titulo && asignado) {
+            // CREAR CARPETA DEL PROYECTO AUTOMÁTICAMENTE SI NO EXISTE
+            if (proyecto !== "General") {
+                let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [];
+                if (!proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
+                    proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
+                    localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+                    if (typeof renderProyectosLista === 'function') renderProyectosLista();
+                }
+            }
+
             tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
             localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
             renderTareas();
             formNuevaTarea.style.display = 'none';
             document.getElementById('inputTarea').value = '';
             document.getElementById('inputAsignado').value = '';
+            document.getElementById('inputProyecto').value = '';
             document.getElementById('inputDescripcionTarea').value = '';
         } else {
             alert("Por favor, escribe la tarea y a quién se la asignas.");
@@ -213,18 +153,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const url = typeof a === 'object' ? a.url : '#';
                 const nombre = typeof a === 'object' ? a.nombre : a;
 
-                // TRUCO DE CLOUDINARY MEJORADO PARA FORZAR DESCARGA
-                const urlDescarga = url.includes('/upload/') 
-                    ? url.replace('/upload/', '/upload/fl_attachment/') 
-                    : url;
+                // TRUCO DE CLOUDINARY CORREGIDO PARA FORZAR DESCARGA DIRECTA
+                let urlDescarga = url;
+                if (url.includes('/upload/')) {
+                    urlDescarga = url.replace('/upload/', '/upload/fl_attachment/');
+                }
 
                 lista.innerHTML += `
                     <li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                        <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <i class="fa-solid fa-file" style="color: #f7c948;"></i> ${nombre}
                         </a>
-                        <!-- FORZAMOS LA DESCARGA CON EL ATRIBUTO download -->
-                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" download="${nombre}">
+                        <!-- Botón de descarga directa sin target="_blank" -->
+                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" style="cursor: pointer;">
                             <i class="fa-solid fa-download"></i>
                         </a>
                     </li>
@@ -274,6 +215,66 @@ document.addEventListener('DOMContentLoaded', function() {
         alert("¡Archivos subidos a la nube con éxito!");
     }
 
+    // =========================================================
+    // SISTEMA DE PROYECTOS
+    // =========================================================
+    const listaProyectos = document.getElementById('listaProyectos');
+    let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
+        { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
+    ];
+
+    window.renderProyectosLista = function() {
+        listaProyectos.innerHTML = '';
+        proyectosDB.forEach(p => {
+            const botonEliminar = esGerente 
+                ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` 
+                : '';
+
+            listaProyectos.innerHTML += `
+                <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')">
+                    <div>
+                        <i class="fa-solid fa-folder" style="color:#f7c948;"></i> 
+                        <strong style="color:white; margin-left:10px;">${p.nombre}</strong>
+                    </div>
+                    ${botonEliminar}
+                </li>
+            `;
+        });
+    }
+    renderProyectosLista();
+
+    document.getElementById('btnMostrarFormProyecto').addEventListener('click', () => {
+        document.getElementById('formNuevoProyecto').style.display = document.getElementById('formNuevoProyecto').style.display === 'none' ? 'flex' : 'none';
+    });
+
+    document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
+        const nombre = document.getElementById('inputProyectoNom').value;
+        const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
+        
+        if (nombre) {
+            if (proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
+                alert("Ya existe un proyecto con ese nombre.");
+                return;
+            }
+            proyectosDB.push({ id: Date.now(), nombre, cliente });
+            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+            renderProyectosLista();
+            document.getElementById('formNuevoProyecto').style.display = 'none';
+            document.getElementById('inputProyectoNom').value = '';
+            document.getElementById('inputClienteProyecto').value = '';
+        } else {
+            alert("Escribe un nombre para el proyecto.");
+        }
+    });
+
+    window.eliminarProyecto = function(id) {
+        if (confirm("¿Eliminar este proyecto? (Las tareas no se borrarán)")) {
+            proyectosDB = proyectosDB.filter(p => p.id !== id);
+            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+            renderProyectosLista();
+        }
+    };
+
     const modalProyecto = document.getElementById('modalProyecto');
 
     window.abrirModalProyecto = function(nombreProyecto) {
@@ -310,9 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         modalProyecto.style.display = 'none';
     }
 
-    // =========================================================
     // CLIENTES Y CALENDARIO
-    // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
         { id: 1, nombre: "Panasonic México" },

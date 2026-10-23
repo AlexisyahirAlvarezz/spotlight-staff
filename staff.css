@@ -235,10 +235,19 @@ body {
 }
 
 .btn-eliminar:hover { background: #ff5e5e; color: white; }
-.btn-completar { background: rgba(76, 175, 80, 0.1); color: #4CAF50; border: 1px solid rgba(76, 175, 80, 0.3); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+
+.btn-completar {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
 .btn-completar:hover { background: #4CAF50; color: white; transform: scale(1.1); }
 
-/* Botón de descarga */
+/* Botón de descarga en los archivos */
 .btn-descargar {
     background: rgba(247, 201, 72, 0.1);
     color: #f7c948;

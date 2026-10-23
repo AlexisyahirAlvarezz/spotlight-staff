@@ -55,10 +55,8 @@
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
-                    <!-- AQUÍ ESTÁ EL CAMBIO: Ahora es un menú desplegable -->
-                    <select id="inputProyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="General">Proyecto General</option>
-                    </select>
+                    <!-- Campo de texto para escribir el proyecto a mano -->
+                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto (Ej. Búho de Oro)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
