@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 1. SEGURIDAD Y DATOS DE USUARIO
     if (localStorage.getItem('staffLogueado') !== 'true') {
-        window.location.href = "login";
+        window.location.href = "login.html";
         return;
     }
 
@@ -21,12 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // CONFIGURACIÓN DE CLOUDINARY (TU NUBE DE ARCHIVOS)
-    // =========================================================
-    const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
-    const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
-
-    // =========================================================
     // SISTEMA DE TAREAS
     // =========================================================
     const listaTareas = document.getElementById('listaTareas');
@@ -37,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip de 0:15 a 0:45 y agregar música.", proyecto: "General", archivos: [] }
     ];
     
-    let tareaActivaIndex = -1;
+    let tareaActivaIndex = -1; // Para saber en qué tarea estamos subiendo archivos
 
     function renderTareas() {
         listaTareas.innerHTML = '';
@@ -139,68 +133,27 @@ document.addEventListener('DOMContentLoaded', function() {
             lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>';
         } else {
             archivos.forEach(a => {
-                const url = typeof a === 'object' ? a.url : '#';
-                const nombre = typeof a === 'object' ? a.nombre : a;
-
-                lista.innerHTML += `
-                    <li class="archivo-item">
-                        <i class="fa-solid fa-file" style="color: #f7c948;"></i> 
-                        <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; margin-left: 10px;">
-                            ${nombre} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.7rem; margin-left:5px; color:#a0a0b8;"></i>
-                        </a>
-                    </li>
-                `;
+                lista.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-file"></i> ${a}</li>`;
             });
         }
     }
 
-    window.subirArchivosTarea = async function() {
+    window.subirArchivosTarea = function() {
         const input = document.getElementById('inputArchivoTarea');
-        if(input.files.length === 0) return;
-
-        const boton = document.querySelector('.upload-area button');
-        const textoOriginal = boton.innerHTML;
-        boton.innerHTML = "Subiendo...";
-        boton.disabled = true;
-
-        for(let i=0; i<input.files.length; i++) {
-            const file = input.files[i];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-            try {
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (data.secure_url) {
-                    tareas[tareaActivaIndex].archivos.push({
-                        nombre: file.name,
-                        url: data.secure_url
-                    });
-                } else {
-                    alert(`Error al subir ${file.name}`);
-                }
-            } catch (error) {
-                console.error("Error de subida:", error);
-                alert(`Error de conexión al subir ${file.name}`);
+        if(input.files.length > 0) {
+            for(let i=0; i<input.files.length; i++) {
+                // Solo guardamos el nombre para simularlo
+                tareas[tareaActivaIndex].archivos.push(input.files[i].name);
             }
+            localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
+            renderArchivosModal();
+            input.value = ''; // limpiar
+            alert("¡Archivos adjuntados a la tarea!");
         }
-
-        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-        boton.innerHTML = textoOriginal;
-        boton.disabled = false;
-        input.value = ''; 
-        renderArchivosModal();
-        alert("¡Archivos subidos a la nube con éxito!");
     }
 
     // =========================================================
-    // SISTEMA DE PROYECTOS Y CLIENTES (Se mantienen igual)
+    // SISTEMA DE PROYECTOS
     // =========================================================
     const listaProyectos = document.getElementById('listaProyectos');
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
@@ -209,6 +162,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderProyectos() {
         listaProyectos.innerHTML = '';
+        
+        // Actualizar el select de tareas
         const selectProyecto = document.getElementById('inputProyecto');
         selectProyecto.innerHTML = '<option value="General">Proyecto General</option>';
         
@@ -256,6 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // LÓGICA DEL MODAL DE PROYECTO
     const modalProyecto = document.getElementById('modalProyecto');
 
     window.abrirModalProyecto = function(nombreProyecto) {
@@ -263,6 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const lista = document.getElementById('mProyectoTareas');
         lista.innerHTML = '';
 
+        // Buscar tareas que pertenezcan a este proyecto
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
 
         if(tareasDelProyecto.length === 0) {
@@ -283,12 +240,15 @@ document.addEventListener('DOMContentLoaded', function() {
         modalProyecto.style.display = 'flex';
     }
 
+    // CERRAR MODALES
     window.cerrarModal = function() {
         modalTarea.style.display = 'none';
         modalProyecto.style.display = 'none';
     }
 
-    // Clientes
+    // =========================================================
+    // SISTEMA DE CLIENTES
+    // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
         { id: 1, nombre: "Panasonic México" },
@@ -338,7 +298,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Calendario
+    // =========================================================
+    // SISTEMA DE CALENDARIO (Igual que antes)
+    // =========================================================
     const listaEventos = document.getElementById('listaEventos');
     let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
 
@@ -366,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Navegación
+    // NAVEGACIÓN Y CERRAR SESIÓN
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('.view-section');
 
@@ -375,6 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             navLinks.forEach(l => l.classList.remove('active'));
             sections.forEach(s => s.style.display = 'none');
+            
             this.classList.add('active');
             document.getElementById('view-' + this.getAttribute('data-target')).style.display = 'block';
         });
@@ -383,6 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnLogout').addEventListener('click', function(e) {
         e.preventDefault();
         localStorage.removeItem('staffLogueado');
-        window.location.href = "login";
+        window.location.href = "login.html";
     });
 });

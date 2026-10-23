@@ -6,6 +6,7 @@
     <title>Panel de Control | SPOTLIGHT Staff</title>
     <link rel="stylesheet" href="staff.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -17,11 +18,10 @@
         </div>
         
         <nav class="sidebar-nav">
-            <a href="#" class="active"><i class="fa-solid fa-house"></i> Inicio</a>
-            <a href="#"><i class="fa-solid fa-video"></i> Proyectos</a>
-            <a href="#"><i class="fa-solid fa-calendar"></i> Calendario</a>
-            <a href="#"><i class="fa-solid fa-users"></i> Clientes</a>
-            <a href="#"><i class="fa-solid fa-gear"></i> Configuración</a>
+            <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
+            <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
+            <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
+            <a href="#" class="nav-link" data-target="clientes"><i class="fa-solid fa-users"></i> Clientes</a>
         </nav>
 
         <div class="sidebar-footer">
@@ -31,66 +31,151 @@
 
     <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content">
+        
         <header class="top-header">
             <div class="welcome-text">
-                <h1>¡Hola, <span id="nombreStaff">Admin</span>! 👋</h1>
-                <p>Bienvenido al panel de control de SPOTLIGHT.</p>
+                <h1>¡Hola, <span id="nombreStaff">Staff</span>! 👋</h1>
+                <p>Panel de control. <br>
+                   <span id="rolStaff" style="color: #f7c948; font-weight: bold; font-size: 0.9rem;"></span>
+                </p>
             </div>
             <div class="user-profile">
-                <div class="avatar">A</div>
+                <div class="avatar" id="avatarLetra">S</div>
             </div>
         </header>
 
-        <section class="dashboard-grid">
-            <div class="dash-card">
-                <div class="card-icon gold"><i class="fa-solid fa-film"></i></div>
-                <div class="card-info">
-                    <h3>3</h3>
-                    <p>Proyectos Activos</p>
-                </div>
+        <!-- ===== VISTA: INICIO (TAREAS) ===== -->
+        <section id="view-inicio" class="view-section active">
+            <div class="recent-tasks-header">
+                <h2>Tareas del Equipo</h2>
+                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;">
+                    <i class="fa-solid fa-plus"></i> Asignar Tarea
+                </button>
             </div>
+
+            <!-- Formulario de Tareas con Descripción y Proyecto -->
+            <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
+                    <input type="text" id="inputAsignado" placeholder="Asignar a (Nombre)" style="flex: 1;">
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="date" id="inputFecha" style="flex: 1;">
+                    <select id="inputProyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                        <option value="General">Proyecto General</option>
+                        <!-- Los proyectos se cargarán aquí con JS -->
+                    </select>
+                </div>
+                <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
+                <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
+            </div>
+
+            <div class="task-list" id="listaTareas"></div>
+
+            <h2 style="margin-top: 40px; color: #4CAF50;"><i class="fa-solid fa-check-circle"></i> Tareas Completadas</h2>
+            <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
+        </section>
+
+        <!-- ===== VISTA: PROYECTOS ===== -->
+        <section id="view-proyectos" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Gestión de Proyectos</h2>
+                <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;">
+                    <i class="fa-solid fa-plus"></i> Nuevo Proyecto
+                </button>
+            </div>
+
+            <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
+                <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
+                <input type="text" id="inputClienteProyecto" placeholder="Cliente">
+                <button id="btnGuardarProyecto" class="btn-primary">Guardar</button>
+            </div>
+
+            <ul id="listaProyectos" class="archivos-lista"></ul>
+        </section>
+
+        <!-- ===== VISTA: CALENDARIO ===== -->
+        <section id="view-calendario" class="view-section" style="display: none;">
+            <h2>Calendario de Rodajes y Eventos</h2>
             
-            <div class="dash-card">
-                <div class="card-icon blue"><i class="fa-solid fa-clock"></i></div>
-                <div class="card-info">
-                    <h3>2</h3>
-                    <p>Rodajes esta semana</p>
-                </div>
+            <div class="form-tarea" style="margin-top: 20px;">
+                <input type="text" id="inputEvento" placeholder="Nombre del evento">
+                <input type="date" id="inputFechaEvento">
+                <button id="btnAgendarEvento" class="btn-primary">Agendar</button>
             </div>
 
-            <div class="dash-card">
-                <div class="card-icon green"><i class="fa-solid fa-check"></i></div>
-                <div class="card-info">
-                    <h3>12</h3>
-                    <p>Tareas Completadas</p>
-                </div>
-            </div>
+            <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
-        <section class="recent-tasks">
-            <h2>Tareas Recientes</h2>
-            <div class="task-list">
-                <div class="task-item">
-                    <div class="task-status pending"></div>
-                    <div class="task-details">
-                        <h4>Edición de video - Cliente Panasonic</h4>
-                        <p>Vence hoy a las 18:00 hrs</p>
-                    </div>
-                    <span class="task-tag">Edición</span>
-                </div>
-
-                <div class="task-item">
-                    <div class="task-status progress"></div>
-                    <div class="task-details">
-                        <h4>Preparar equipo para rodaje - Búho de Oro</h4>
-                        <p>Mañana a las 08:00 hrs</p>
-                    </div>
-                    <span class="task-tag">Producción</span>
-                </div>
+        <!-- ===== VISTA: CLIENTES ===== -->
+        <section id="view-clientes" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Directorio de Clientes</h2>
+                <button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;">
+                    <i class="fa-solid fa-plus"></i> Nuevo Cliente
+                </button>
             </div>
+
+            <div id="formNuevoCliente" class="form-tarea" style="display: none;">
+                <input type="text" id="inputCliente" placeholder="Nombre de la Empresa">
+                <button id="btnGuardarCliente" class="btn-primary">Guardar</button>
+            </div>
+
+            <ul id="listaClientes" class="archivos-lista"></ul>
         </section>
+
     </main>
 
+    <!-- ===== MODAL DE DETALLES DE TAREA ===== -->
+    <div id="modalTarea" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2>
+            <p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p>
+            
+            <div class="instrucciones-box">
+                <h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4>
+                <p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p>
+            </div>
+
+            <h4 style="color:white; margin-top: 20px;">Archivos Adjuntos:</h4>
+            <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px;"></ul>
+            
+            <div class="upload-area">
+                <input type="file" id="inputArchivoTarea" multiple>
+                <button onclick="subirArchivosTarea()" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL DE DETALLES DE PROYECTO ===== -->
+    <div id="modalProyecto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
+            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas asignadas a este proyecto:</p>
+            <ul id="mProyectoTareas" class="archivos-lista"></ul>
+        </div>
+    </div>
+
     <script src="staff.js"></script>
+</body>
+</html>
+    <!-- Tu script normal -->
+    <script src="script.js"></script> 
+
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "6d8c12f8-ae11-467a-9af2-e2b5138f1650",
+          notifyButton: {
+            enable: true,
+          },
+        });
+      });
+    </script>
 </body>
 </html>

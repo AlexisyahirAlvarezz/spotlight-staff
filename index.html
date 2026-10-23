@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirigiendo... | SPOTLIGHT</title>
+    <!-- ESTA LÍNEA HACE LA MAGIA: Redirige al login en 0 segundos -->
+    <meta http-equiv="refresh" content="0; url=login.html">
+    
+    <style>
+        body {
+            background-color: #05050f;
+            color: #f7c948;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <h2>Cargando portal del staff...</h2>
+</body>
+</html>
+    <!-- Tu script normal -->
+    <script src="script.js"></script> 
+
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "6d8c12f8-ae11-467a-9af2-e2b5138f1650",
+          notifyButton: {
+            enable: true,
+          },
+        });
+      });
+    </script>
+</body>
+</html>

@@ -14,10 +14,10 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-    <img src="logo-blanco.jpg" alt="SPOTLIGHT" class="login-logo">
-    <h2>Portal del Staff</h2>
-    <p>Ingresa tus credenciales para acceder</p>
-</div>
+                <img src="logo-blanco.jpg" alt="SPOTLIGHT" class="login-logo">
+                <h2>Portal del Staff</h2>
+                <p>Ingresa tus credenciales para acceder</p>
+            </div>
 
             <!-- FORMULARIO DE LOGIN -->
             <form id="loginForm">
@@ -42,6 +42,23 @@
         </div>
     </div>
 
+    <!-- Tu script normal -->
     <script src="login.js"></script>
+
+    <!-- ============================================================ -->
+    <!-- ONESIGNAL SDK (AQUÍ ESTÁ BIEN UBICADO) -->
+    <!-- ============================================================ -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "6d8c12f8-ae11-467a-9af2-e2b5138f1650",
+          notifyButton: {
+            enable: true, // Esto hace que aparezca la campanita
+          },
+        });
+      });
+    </script>
 </body>
 </html>
