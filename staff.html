@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control | SPOTLIGHT Staff</title>
+    <link rel="stylesheet" href="staff.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- BARRA LATERAL -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <img src="logo-blanco.jpg" alt="SPOTLIGHT">
+            <span>SPOTLIGHT</span>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="active"><i class="fa-solid fa-house"></i> Inicio</a>
+            <a href="#"><i class="fa-solid fa-video"></i> Proyectos</a>
+            <a href="#"><i class="fa-solid fa-calendar"></i> Calendario</a>
+            <a href="#"><i class="fa-solid fa-users"></i> Clientes</a>
+            <a href="#"><i class="fa-solid fa-gear"></i> Configuración</a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+        <header class="top-header">
+            <div class="welcome-text">
+                <h1>¡Hola, <span id="nombreStaff">Admin</span>! 👋</h1>
+                <p>Bienvenido al panel de control de SPOTLIGHT.</p>
+            </div>
+            <div class="user-profile">
+                <div class="avatar">A</div>
+            </div>
+        </header>
+
+        <section class="dashboard-grid">
+            <div class="dash-card">
+                <div class="card-icon gold"><i class="fa-solid fa-film"></i></div>
+                <div class="card-info">
+                    <h3>3</h3>
+                    <p>Proyectos Activos</p>
+                </div>
+            </div>
+            
+            <div class="dash-card">
+                <div class="card-icon blue"><i class="fa-solid fa-clock"></i></div>
+                <div class="card-info">
+                    <h3>2</h3>
+                    <p>Rodajes esta semana</p>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="card-icon green"><i class="fa-solid fa-check"></i></div>
+                <div class="card-info">
+                    <h3>12</h3>
+                    <p>Tareas Completadas</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="recent-tasks">
+            <h2>Tareas Recientes</h2>
+            <div class="task-list">
+                <div class="task-item">
+                    <div class="task-status pending"></div>
+                    <div class="task-details">
+                        <h4>Edición de video - Cliente Panasonic</h4>
+                        <p>Vence hoy a las 18:00 hrs</p>
+                    </div>
+                    <span class="task-tag">Edición</span>
+                </div>
+
+                <div class="task-item">
+                    <div class="task-status progress"></div>
+                    <div class="task-details">
+                        <h4>Preparar equipo para rodaje - Búho de Oro</h4>
+                        <p>Mañana a las 08:00 hrs</p>
+                    </div>
+                    <span class="task-tag">Producción</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="staff.js"></script>
+</body>
+</html>
