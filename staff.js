@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. SEGURIDAD Y DATOS DE USUARIO
     if (localStorage.getItem('staffLogueado') !== 'true') {
         window.location.href = "login";
         return;
@@ -20,11 +19,84 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('btnMostrarFormCliente').style.display = 'flex';
     }
 
-    // =========================================================
-    // CONFIGURACIÓN DE CLOUDINARY
-    // =========================================================
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
+
+    // =========================================================
+    // PROYECTOS (Se declaran primero para llenar el menú)
+    // =========================================================
+    let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
+        { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
+    ];
+
+    function renderProyectosSelect() {
+        const select = document.getElementById('inputProyecto');
+        // Limpiamos el select dejando solo la opción General
+        select.innerHTML = '<option value="General">Proyecto General</option>';
+        
+        proyectosDB.forEach(p => {
+            select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+        });
+    }
+    renderProyectosSelect(); // Llenamos el menú al cargar la página
+
+    const listaProyectos = document.getElementById('listaProyectos');
+
+    function renderProyectosLista() {
+        listaProyectos.innerHTML = '';
+        proyectosDB.forEach(p => {
+            const botonEliminar = esGerente 
+                ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` 
+                : '';
+
+            listaProyectos.innerHTML += `
+                <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')">
+                    <div>
+                        <i class="fa-solid fa-folder" style="color:#f7c948;"></i> 
+                        <strong style="color:white; margin-left:10px;">${p.nombre}</strong>
+                    </div>
+                    ${botonEliminar}
+                </li>
+            `;
+        });
+    }
+    renderProyectosLista();
+
+    // Crear Proyecto (desde la pestaña Proyectos)
+    document.getElementById('btnMostrarFormProyecto').addEventListener('click', () => {
+        document.getElementById('formNuevoProyecto').style.display = document.getElementById('formNuevoProyecto').style.display === 'none' ? 'flex' : 'none';
+    });
+
+    document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
+        const nombre = document.getElementById('inputProyectoNom').value;
+        const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
+        
+        if (nombre) {
+            // Verificamos que no exista uno con el mismo nombre
+            if (proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
+                alert("Ya existe un proyecto con ese nombre.");
+                return;
+            }
+            proyectosDB.push({ id: Date.now(), nombre, cliente });
+            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+            renderProyectosLista();
+            renderProyectosSelect(); // ¡MAGIA! Actualiza el menú desplegable de las tareas
+            document.getElementById('formNuevoProyecto').style.display = 'none';
+            document.getElementById('inputProyectoNom').value = '';
+            document.getElementById('inputClienteProyecto').value = '';
+        } else {
+            alert("Escribe un nombre para el proyecto.");
+        }
+    });
+
+    window.eliminarProyecto = function(id) {
+        if (confirm("¿Eliminar este proyecto? (Las tareas no se borrarán)")) {
+            proyectosDB = proyectosDB.filter(p => p.id !== id);
+            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+            renderProyectosLista();
+            renderProyectosSelect(); // Actualizamos el menú
+        }
+    };
 
     // =========================================================
     // SISTEMA DE TAREAS
@@ -86,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const titulo = document.getElementById('inputTarea').value;
         const asignado = document.getElementById('inputAsignado').value;
         const fecha = document.getElementById('inputFecha').value;
-        const proyecto = document.getElementById('inputProyecto').value;
+        const proyecto = document.getElementById('inputProyecto').value; // Toma el valor del select
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
 
         if (titulo && asignado) {
@@ -97,6 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('inputTarea').value = '';
             document.getElementById('inputAsignado').value = '';
             document.getElementById('inputDescripcionTarea').value = '';
+        } else {
+            alert("Por favor, escribe la tarea y a quién se la asignas.");
         }
     });
 
@@ -115,17 +189,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // LÓGICA DEL MODAL DE TAREAS
     const modalTarea = document.getElementById('modalTarea');
 
     window.abrirModalTarea = function(index) {
         tareaActivaIndex = index;
         const t = tareas[index];
-        
         document.getElementById('mTareaTitulo').textContent = t.titulo;
         document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`;
         document.getElementById('mTareaDesc').textContent = t.desc || "Sin instrucciones.";
-        
         renderArchivosModal();
         modalTarea.style.display = 'flex';
     }
@@ -142,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const url = typeof a === 'object' ? a.url : '#';
                 const nombre = typeof a === 'object' ? a.nombre : a;
 
-                // TRUCO DE CLOUDINARY para forzar descarga
+                // TRUCO DE CLOUDINARY MEJORADO PARA FORZAR DESCARGA
                 const urlDescarga = url.includes('/upload/') 
                     ? url.replace('/upload/', '/upload/fl_attachment/') 
                     : url;
@@ -152,7 +223,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-file" style="color: #f7c948;"></i> ${nombre}
                         </a>
-                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" target="_blank">
+                        <!-- FORZAMOS LA DESCARGA CON EL ATRIBUTO download -->
+                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" download="${nombre}">
                             <i class="fa-solid fa-download"></i>
                         </a>
                     </li>
@@ -183,14 +255,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     method: 'POST',
                     body: formData
                 });
-
                 const data = await response.json();
-
                 if (data.secure_url) {
-                    tareas[tareaActivaIndex].archivos.push({
-                        nombre: file.name,
-                        url: data.secure_url
-                    });
+                    tareas[tareaActivaIndex].archivos.push({ nombre: file.name, url: data.secure_url });
                 } else {
                     alert(`Error al subir ${file.name}`);
                 }
@@ -199,7 +266,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert(`Error de conexión al subir ${file.name}`);
             }
         }
-
         localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
         boton.innerHTML = textoOriginal;
         boton.disabled = false;
@@ -207,63 +273,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderArchivosModal();
         alert("¡Archivos subidos a la nube con éxito!");
     }
-
-    // =========================================================
-    // SISTEMA DE PROYECTOS
-    // =========================================================
-    const listaProyectos = document.getElementById('listaProyectos');
-    let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
-        { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
-    ];
-
-    function renderProyectos() {
-        listaProyectos.innerHTML = '';
-        const selectProyecto = document.getElementById('inputProyecto');
-        selectProyecto.innerHTML = '<option value="General">Proyecto General</option>';
-        
-        proyectosDB.forEach(p => {
-            selectProyecto.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
-
-            const botonEliminar = esGerente 
-                ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` 
-                : '';
-
-            listaProyectos.innerHTML += `
-                <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')">
-                    <div>
-                        <i class="fa-solid fa-folder" style="color:#f7c948;"></i> 
-                        <strong style="color:white; margin-left:10px;">${p.nombre}</strong>
-                    </div>
-                    ${botonEliminar}
-                </li>
-            `;
-        });
-    }
-    renderProyectos();
-
-    document.getElementById('btnMostrarFormProyecto').addEventListener('click', () => {
-        document.getElementById('formNuevoProyecto').style.display = document.getElementById('formNuevoProyecto').style.display === 'none' ? 'flex' : 'none';
-    });
-
-    document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
-        const nombre = document.getElementById('inputProyectoNom').value;
-        const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
-        if (nombre) {
-            proyectosDB.push({ id: Date.now(), nombre, cliente });
-            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-            renderProyectos();
-            document.getElementById('formNuevoProyecto').style.display = 'none';
-            document.getElementById('inputProyectoNom').value = '';
-        }
-    });
-
-    window.eliminarProyecto = function(id) {
-        if (confirm("¿Eliminar este proyecto? (Las tareas no se borrarán)")) {
-            proyectosDB = proyectosDB.filter(p => p.id !== id);
-            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-            renderProyectos();
-        }
-    };
 
     const modalProyecto = document.getElementById('modalProyecto');
 
@@ -278,9 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             lista.innerHTML = '<p style="color:#666;">No hay tareas asignadas a este proyecto.</p>';
         } else {
             tareasDelProyecto.forEach(t => {
-                // Buscamos el índice original de esta tarea para abrirla
                 const tareaIndexOriginal = tareas.findIndex(original => original.id === t.id);
-                
                 lista.innerHTML += `
                     <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
                         <div>
@@ -304,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // SISTEMA DE CLIENTES Y CALENDARIO
+    // CLIENTES Y CALENDARIO
     // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
@@ -318,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const botonEliminar = esGerente 
                 ? `<button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
-
             listaClientes.innerHTML += `
                 <li class="archivo-item" style="justify-content: space-between;">
                     <div>
@@ -382,9 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // =========================================================
-    // NAVEGACIÓN Y CERRAR SESIÓN
-    // =========================================================
+    // NAVEGACIÓN Y LOGOUT
     const navLinks = document.querySelectorAll('.nav-link');
     const sections = document.querySelectorAll('.view-section');
 
@@ -393,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             navLinks.forEach(l => l.classList.remove('active'));
             sections.forEach(s => s.style.display = 'none');
-            
             this.classList.add('active');
             document.getElementById('view-' + this.getAttribute('data-target')).style.display = 'block';
         });

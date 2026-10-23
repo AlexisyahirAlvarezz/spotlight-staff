@@ -10,28 +10,23 @@
 </head>
 <body>
 
-    <!-- BARRA LATERAL -->
     <aside class="sidebar">
         <div class="sidebar-logo">
             <img src="logo-blanco.jpg" alt="SPOTLIGHT">
             <span>SPOTLIGHT</span>
         </div>
-        
         <nav class="sidebar-nav">
             <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="clientes"><i class="fa-solid fa-users"></i> Clientes</a>
         </nav>
-
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
         </div>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content">
-        
         <header class="top-header">
             <div class="welcome-text">
                 <h1>¡Hola, <span id="nombreStaff">Staff</span>! 👋</h1>
@@ -44,7 +39,7 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: INICIO (TAREAS) ===== -->
+        <!-- ===== VISTA: INICIO ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -60,6 +55,7 @@
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
+                    <!-- AQUÍ ESTÁ EL CAMBIO: Ahora es un menú desplegable -->
                     <select id="inputProyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                         <option value="General">Proyecto General</option>
                     </select>
@@ -82,26 +78,22 @@
                     <i class="fa-solid fa-plus"></i> Nuevo Proyecto
                 </button>
             </div>
-
             <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
                 <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
-                <input type="text" id="inputClienteProyecto" placeholder="Cliente">
+                <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
                 <button id="btnGuardarProyecto" class="btn-primary">Guardar</button>
             </div>
-
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
         <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Calendario de Rodajes y Eventos</h2>
-            
             <div class="form-tarea" style="margin-top: 20px;">
                 <input type="text" id="inputEvento" placeholder="Nombre del evento">
                 <input type="date" id="inputFechaEvento">
                 <button id="btnAgendarEvento" class="btn-primary">Agendar</button>
             </div>
-
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
@@ -113,32 +105,26 @@
                     <i class="fa-solid fa-plus"></i> Nuevo Cliente
                 </button>
             </div>
-
             <div id="formNuevoCliente" class="form-tarea" style="display: none;">
                 <input type="text" id="inputCliente" placeholder="Nombre de la Empresa">
                 <button id="btnGuardarCliente" class="btn-primary">Guardar</button>
             </div>
-
             <ul id="listaClientes" class="archivos-lista"></ul>
         </section>
-
     </main>
 
-    <!-- ===== MODAL DE DETALLES DE TAREA ===== -->
+    <!-- MODAL DE TAREA -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2>
             <p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p>
-            
             <div class="instrucciones-box">
                 <h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4>
                 <p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p>
             </div>
-
             <h4 style="color:white; margin-top: 20px;">Archivos Adjuntos:</h4>
             <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px;"></ul>
-            
             <div class="upload-area">
                 <input type="file" id="inputArchivoTarea" multiple>
                 <button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
@@ -146,7 +132,7 @@
         </div>
     </div>
 
-    <!-- ===== MODAL DE DETALLES DE PROYECTO ===== -->
+    <!-- MODAL DE PROYECTO -->
     <div id="modalProyecto" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
