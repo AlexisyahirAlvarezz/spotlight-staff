@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
     // =========================================================
-    // SISTEMA DE PROYECTOS (Declarado primero)
+    // PROYECTOS
     // =========================================================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
         { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // =========================================================
-    // SISTEMA DE TAREAS
+    // TAREAS
     // =========================================================
     const listaTareas = document.getElementById('listaTareas');
     const listaTareasCompletadas = document.getElementById('listaTareasCompletadas');
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
             
-            // SOLO LA PERSONA ASIGNADA PUEDE COMPLETAR
+            // SOLO EL ASIGNADO VE LA PALOMITA
             const usuarioLimpio = nombreStaff.trim().toLowerCase();
             const asignadoLimpio = t.asignado.trim().toLowerCase();
             const esAsignado = (usuarioLimpio === asignadoLimpio);
@@ -142,18 +142,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('btnGuardarTarea').addEventListener('click', () => {
         const titulo = document.getElementById('inputTarea').value;
-        const asignado = document.getElementById('inputAsignado').value; // Toma el nombre del select
+        const asignado = document.getElementById('inputAsignado').value; // Toma el select
         const fecha = document.getElementById('inputFecha').value;
         const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
 
         if (titulo) {
-            // CREAR CARPETA AUTOMÁTICAMENTE SI NO EXISTE
+            // CREAR CARPETA AUTOMÁTICAMENTE
             if (proyecto !== "General") {
                 if (!proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                     proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
                     localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-                    renderProyectosLista(); // Refresca la lista visual de carpetas
+                    renderProyectosLista();
                 }
             }
 
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const url = typeof a === 'object' ? a.url : '#';
                 const nombre = typeof a === 'object' ? a.nombre : a;
 
-                // URL FORZADA PARA DESCARGA (TRUCO DE CLOUDINARY)
+                // FORZAR DESCARGA
                 let urlDescarga = url;
                 if (url.includes('/upload/')) {
                     urlDescarga = url.replace('/upload/', '/upload/fl_attachment/');
@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const modalProyecto = document.getElementById('modalProyecto');
 
+    // MOSTRAR TAREAS Y ARCHIVOS EN LA CARPETA
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas');
@@ -284,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tareasDelProyecto.forEach(t => {
                 const tareaIndexOriginal = tareas.findIndex(original => original.id === t.id);
                 
-                // MOSTRAR LA TAREA EN LA CARPETA
+                // MOSTRAR TAREA
                 lista.innerHTML += `
                     <li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
                         <div>
@@ -298,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </li>
                 `;
 
-                // MOSTRAR LOS ARCHIVOS SUBIDOS EN LA CARPETA
+                // MOSTRAR ARCHIVOS DE ESA TAREA EN LA CARPETA
                 if (t.archivos && t.archivos.length > 0) {
                     t.archivos.forEach(a => {
                         const url = typeof a === 'object' ? a.url : '#';
@@ -328,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // SISTEMA DE CALENDARIO VISUAL
+    // CALENDARIO
     // =========================================================
     let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
     let fechaCalendario = new Date();
@@ -336,6 +337,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderCalendario = function() {
         const grid = document.getElementById('calendarDays');
         const display = document.getElementById('monthYearDisplay');
+        if(!grid || !display) return; // Seguridad
+        
         grid.innerHTML = '';
 
         const year = fechaCalendario.getFullYear();
@@ -414,9 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // =========================================================
     // CLIENTES
-    // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
         { id: 1, nombre: "Panasonic México" },
