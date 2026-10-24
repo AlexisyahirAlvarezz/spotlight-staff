@@ -54,7 +54,7 @@
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
-                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
+                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaTarea')"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
             </div>
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -65,7 +65,7 @@
                         <option value="Beatriz">Beatriz (Jefa de Producción)</option>
                         <option value="Jair">Jair (Jefe de Finanzas)</option>
                         <option value="Ximena">Ximena (Jefa de RRHH)</option>
-                        <option value="Maria Fernanda">Maria Fernanda (Rol de Fernanda)</option>
+                        <option value="Maria Fernanda">Maria Fernanda (Diseñadora Gráfica)</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -82,7 +82,10 @@
 
         <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Gestión de Proyectos</h2><button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button></div>
+            <div class="recent-tasks-header">
+                <h2>Gestión de Proyectos</h2>
+                <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
+            </div>
             <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
                 <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
                 <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
@@ -116,7 +119,10 @@
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Exámenes de Capacitación</h2>
-                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Crear Nuevo Examen</button>
+                <!-- BOTÓN CON ONCLICK DIRECTO PARA EVITAR ERRORES -->
+                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoExamen')">
+                    <i class="fa-solid fa-plus"></i> Crear Nuevo Examen
+                </button>
             </div>
 
             <!-- FORMULARIO PARA CREAR EXAMEN -->
@@ -157,7 +163,10 @@
 
         <!-- ===== VISTA: CLIENTES ===== -->
         <section id="view-clientes" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Directorio de Clientes</h2><button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Nuevo Cliente</button></div>
+            <div class="recent-tasks-header">
+                <h2>Directorio de Clientes</h2>
+                <button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoCliente')"><i class="fa-solid fa-plus"></i> Nuevo Cliente</button>
+            </div>
             <div id="formNuevoCliente" class="form-tarea" style="display: none;">
                 <input type="text" id="inputCliente" placeholder="Nombre de la Empresa">
                 <button id="btnGuardarCliente" class="btn-primary">Guardar</button>
