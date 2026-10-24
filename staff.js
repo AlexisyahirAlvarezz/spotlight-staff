@@ -1,10 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     // 1. SEGURIDAD
-    if (localStorage.getItem('staffLogueado') !== 'true') { 
-        window.location.href = "login"; 
-        return; 
-    }
+    if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
     // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
@@ -18,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('btnMostrarFormTarea').style.display = 'flex';
         document.getElementById('btnMostrarFormProyecto').style.display = 'flex';
         document.getElementById('btnMostrarFormCliente').style.display = 'flex';
+        document.getElementById('btnMostrarFormExamen').style.display = 'flex';
     }
 
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
@@ -49,12 +47,99 @@ document.addEventListener('DOMContentLoaded', function() {
         renderNotificaciones();
     });
 
+    // ================= SISTEMA DE EXÁMENES =================
+    let examenesDB = JSON.parse(localStorage.getItem('examenesSpotlight')) || [];
+    const listaExamenes = document.getElementById('listaExamenes');
+
+    window.renderExamenes = function() {
+        listaExamenes.innerHTML = '';
+        if(examenesDB.length === 0) {
+            listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>';
+            return;
+        }
+
+        examenesDB.forEach((ex, index) => {
+            // El botón de eliminar solo se le muestra a los gerentes
+            const botonEliminar = esGerente 
+                ? `<button class="btn-eliminar" onclick="eliminarExamen(${index})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` 
+                : '';
+
+            // TANTO GERENTES COMO STAFF VEN EL EXAMEN Y PUEDEN RESPONDERLO
+            listaExamenes.innerHTML += `
+                <div class="examen-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">${ex.titulo}</h3>
+                        ${botonEliminar}
+                    </div>
+                    <p style="margin-bottom: 15px;">${ex.pregunta}</p>
+                    <label class="opcion-examen">
+                        <input type="radio" name="examen_${index}" value="A"> ${ex.opcionA}
+                    </label>
+                    <label class="opcion-examen">
+                        <input type="radio" name="examen_${index}" value="B"> ${ex.opcionB}
+                    </label>
+                    <button class="btn-primary" onclick="calificarExamen(${index})" style="margin-top: 15px;">Enviar Respuesta</button>
+                </div>
+            `;
+        });
+    }
+    renderExamenes();
+
+    if(document.getElementById('btnMostrarFormExamen')) {
+        document.getElementById('btnMostrarFormExamen').addEventListener('click', () => {
+            document.getElementById('formNuevoExamen').style.display = document.getElementById('formNuevoExamen').style.display === 'none' ? 'flex' : 'none';
+        });
+
+        document.getElementById('btnGuardarExamen').addEventListener('click', () => {
+            const titulo = document.getElementById('examenTitulo').value;
+            const pregunta = document.getElementById('examenPregunta').value;
+            const opcionA = document.getElementById('examenOpcionA').value;
+            const opcionB = document.getElementById('examenOpcionB').value;
+            const correcta = document.getElementById('examenCorrecta').value;
+
+            if (titulo && pregunta && opcionA && opcionB) {
+                examenesDB.push({ titulo, pregunta, opcionA, opcionB, correcta });
+                localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
+                renderExamenes();
+                document.getElementById('formNuevoExamen').style.display = 'none';
+                // Limpiar formulario
+                document.getElementById('examenTitulo').value = '';
+                document.getElementById('examenPregunta').value = '';
+                document.getElementById('examenOpcionA').value = '';
+                document.getElementById('examenOpcionB').value = '';
+            } else {
+                alert("Llena todos los campos del examen.");
+            }
+        });
+    }
+
+    window.eliminarExamen = function(index) {
+        if (confirm("¿Eliminar este examen?")) {
+            examenesDB.splice(index, 1);
+            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
+            renderExamenes();
+        }
+    };
+
+    window.calificarExamen = function(index) {
+        const seleccion = document.querySelector(`input[name="examen_${index}"]:checked`);
+        if (!seleccion) { alert("Por favor selecciona una opción."); return; }
+        
+        const respuestaUsuario = seleccion.value;
+        const respuestaCorrecta = examenesDB[index].correcta;
+
+        if (respuestaUsuario === respuestaCorrecta) {
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+            alert("¡Felicidades! Has aprobado el examen. 🎉");
+        } else {
+            alert("Respuesta incorrecta. Repasa el material e inténtalo de nuevo. 😢");
+        }
+    };
+
     // ================= PROYECTOS =================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [{ id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }];
-    
     window.renderProyectosLista = function() {
-        const listaProyectos = document.getElementById('listaProyectos'); 
-        listaProyectos.innerHTML = '';
+        const listaProyectos = document.getElementById('listaProyectos'); listaProyectos.innerHTML = '';
         proyectosDB.forEach(p => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` : '';
             listaProyectos.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')"><div><i class="fa-solid fa-folder" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${p.nombre}</strong></div>${botonEliminar}</li>`;
@@ -94,11 +179,8 @@ document.addEventListener('DOMContentLoaded', function() {
         listaTareas.innerHTML = ''; listaTareasCompletadas.innerHTML = '';
         tareas.forEach((t, index) => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` : '';
-            
-            // LÓGICA DE LA PALOMITA ESTRICTA: SOLO EL ASIGNADO
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})"><i class="fa-solid fa-check"></i></button>` : '';
-
             const html = `<div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})"><div style="display: flex; align-items: center; gap: 20px;"><div class="task-status ${t.estado}"></div><div class="task-details"><h4>${t.titulo}</h4><p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p></div></div><div style="display: flex; align-items: center; gap: 10px;"><span class="task-tag">${t.estado}</span>${botonCompletar}${botonEliminar}</div></div>`;
             if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } else { listaTareas.innerHTML += html; }
         });
@@ -106,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTareas();
 
     document.getElementById('btnMostrarFormTarea').addEventListener('click', () => { document.getElementById('formNuevaTarea').style.display = document.getElementById('formNuevaTarea').style.display === 'none' ? 'flex' : 'none'; });
-    
     document.getElementById('btnGuardarTarea').addEventListener('click', () => {
         const titulo = document.getElementById('inputTarea').value;
         const asignado = document.getElementById('inputAsignado').value;
@@ -115,25 +196,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
         
         if (titulo) {
-            // CREAR CARPETA AUTOMÁTICA SI NO EXISTE
             if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                 proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
                 localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
                 renderProyectosLista();
             }
-            
             tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
             localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-            
-            // CREAR NOTIFICACIÓN
             notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
             localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
             renderNotificaciones();
-
-            renderTareas(); 
-            document.getElementById('formNuevaTarea').style.display = 'none';
-            document.getElementById('inputTarea').value = ''; 
-            document.getElementById('inputProyecto').value = '';
+            renderTareas(); document.getElementById('formNuevaTarea').style.display = 'none';
+            document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
         } else { alert("Escribe qué hay que hacer."); }
     });
 
@@ -143,10 +217,9 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTareas();
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     };
-    
     window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
 
-    // MODAL DE TAREA
+    // MODAL TAREA
     window.abrirModalTarea = function(index) {
         tareaActivaIndex = index; const t = tareas[index];
         document.getElementById('mTareaTitulo').textContent = t.titulo;
@@ -161,7 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
         else {
             archivos.forEach(a => {
-                // FORZAR DESCARGA CON CLOUDINARY
                 const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
                 lista.innerHTML += `<li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
             });
@@ -173,7 +245,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('inputArchivoTarea'); if(input.files.length === 0) return;
         const boton = document.querySelector('.upload-area button'); const textOrig = boton.innerHTML;
         boton.innerHTML = "Subiendo..."; boton.disabled = true;
-        
         for(let i=0; i<input.files.length; i++) {
             const file = input.files[i]; const formData = new FormData();
             formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
@@ -188,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boton.innerHTML = textOrig; boton.disabled = false; input.value = ''; renderArchivosModal();
     }
 
-    // MODAL DE PROYECTO
+    // MODAL PROYECTO
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
@@ -278,8 +349,9 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
             const target = this.getAttribute('data-target');
             document.getElementById('view-' + target).style.display = 'block';
-            // SE DIBUJA EL CALENDARIO AL ENTRAR A SU SECCIÓN
+            
             if (target === 'calendario') renderCalendario();
+            if (target === 'examenes') renderExamenes(); // Recarga exámenes al entrar
         });
     });
 

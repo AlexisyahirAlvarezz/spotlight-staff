@@ -613,3 +613,20 @@ body {
         padding: 20px; 
     } 
 }
+/* (Pega aquí todo el CSS que ya tenías, y solo agrega estas líneas al final) */
+
+/* ESTILOS PARA EXÁMENES */
+.examen-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 15px;
+}
+.examen-card h3 { color: #f7c948; margin-bottom: 15px; }
+.opcion-examen {
+    display: block; background: rgba(0,0,0,0.3); padding: 12px 20px; border-radius: 8px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s;
+}
+.opcion-examen:hover { border-color: #f7c948; background: rgba(247, 201, 72, 0.1); }
+.opcion-examen input { margin-right: 10px; accent-color: #f7c948; }

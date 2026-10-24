@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // =========================================================
     // BASE DE DATOS DEL STAFF DE SPOTLIGHT
     // =========================================================
-    const usuariosDB = {
+        const usuariosDB = {
         "SP-001": { pass: "J0h4n#Kp7z", nombre: "Johan Sebastián", rol: "Gerente General" },
         "SP-002": { pass: "Br4y@Nq2x", nombre: "Brayan Alexander", rol: "Gerente de Marketing" },
         "SP-003": { pass: "Be4tr1z$Wm", nombre: "Beatriz", rol: "Jefa de Producción" },
         "SP-004": { pass: "J41r%Lc9v", nombre: "Jair", rol: "Jefe de Finanzas" },
-        "SP-005": { pass: "X1m3n@Rt5", nombre: "Ximena", rol: "Jefa de Recursos Humanos" }
+        "SP-005": { pass: "X1m3n@Rt5", nombre: "Ximena", rol: "Jefa de Recursos Humanos" },
+        // NUEVA INTEGRANTE
+        "SP-006": { pass: "M4r14@F3rn", nombre: "Maria Fernanda", rol: "Rol De Fernanda" }
     };
 
     loginForm.addEventListener('submit', function(e) {
