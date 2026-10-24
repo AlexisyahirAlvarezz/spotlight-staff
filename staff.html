@@ -52,7 +52,7 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
                     
-                    <!-- MENÚ DESPLEGABLE DE NOMBRES -->
+                    <!-- AQUÍ ESTÁ EL MENÚ DE NOMBRES -->
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                         <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
                         <option value="Brayan Alexander">Brayan Alexander (Gerente Marketing)</option>
@@ -91,7 +91,7 @@
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
-        <!-- ===== VISTA: CALENDARIO ===== -->
+        <!-- ===== VISTA: CALENDARIO VISUAL ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda de Rodajes y Eventos</h2>
             
@@ -107,19 +107,16 @@
                 <button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button>
             </div>
 
-            <!-- CALENDARIO VISUAL -->
             <div class="calendar-container">
                 <div class="calendar-header">
                     <button id="prevMonth" class="btn-icon"><i class="fa-solid fa-chevron-left"></i></button>
-                    <h3 id="monthYearDisplay">Octubre 2026</h3>
+                    <h3 id="monthYearDisplay">Mes Año</h3>
                     <button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
                 <div class="calendar-grid-header">
                     <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
                 </div>
-                <div class="calendar-grid" id="calendarDays">
-                    <!-- Los días se generan con JS -->
-                </div>
+                <div class="calendar-grid" id="calendarDays"></div>
             </div>
 
             <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>

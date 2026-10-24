@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
     // =========================================================
-    // SISTEMA DE PROYECTOS (Declarado primero para las carpetas)
+    // SISTEMA DE PROYECTOS (Declarado primero)
     // =========================================================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
         { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
             
-            // LÓGICA DE LA PALOMITA ESTRICTA: Solo el asignado
+            // SOLO LA PERSONA ASIGNADA PUEDE COMPLETAR
             const usuarioLimpio = nombreStaff.trim().toLowerCase();
             const asignadoLimpio = t.asignado.trim().toLowerCase();
             const esAsignado = (usuarioLimpio === asignadoLimpio);
@@ -142,18 +142,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('btnGuardarTarea').addEventListener('click', () => {
         const titulo = document.getElementById('inputTarea').value;
-        const asignado = document.getElementById('inputAsignado').value;
+        const asignado = document.getElementById('inputAsignado').value; // Toma el nombre del select
         const fecha = document.getElementById('inputFecha').value;
         const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
 
         if (titulo) {
-            // CREAR CARPETA DE PROYECTO AUTOMÁTICAMENTE SI NO EXISTE
+            // CREAR CARPETA AUTOMÁTICAMENTE SI NO EXISTE
             if (proyecto !== "General") {
                 if (!proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                     proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
                     localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-                    renderProyectosLista(); // Actualizamos la lista visualmente
+                    renderProyectosLista(); // Refresca la lista visual de carpetas
                 }
             }
 
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const url = typeof a === 'object' ? a.url : '#';
                 const nombre = typeof a === 'object' ? a.nombre : a;
 
-                // TRUCO DEFINITIVO DE CLOUDINARY PARA FORZAR DESCARGA
+                // URL FORZADA PARA DESCARGA (TRUCO DE CLOUDINARY)
                 let urlDescarga = url;
                 if (url.includes('/upload/')) {
                     urlDescarga = url.replace('/upload/', '/upload/fl_attachment/');
@@ -271,7 +271,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const modalProyecto = document.getElementById('modalProyecto');
 
-    // MODAL DE PROYECTO (Muestra tareas Y sus archivos)
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas');
@@ -285,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
             tareasDelProyecto.forEach(t => {
                 const tareaIndexOriginal = tareas.findIndex(original => original.id === t.id);
                 
-                // Renderizamos la tarea
+                // MOSTRAR LA TAREA EN LA CARPETA
                 lista.innerHTML += `
                     <li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
                         <div>
@@ -299,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </li>
                 `;
 
-                // Renderizamos los archivos de esa tarea dentro de la carpeta
+                // MOSTRAR LOS ARCHIVOS SUBIDOS EN LA CARPETA
                 if (t.archivos && t.archivos.length > 0) {
                     t.archivos.forEach(a => {
                         const url = typeof a === 'object' ? a.url : '#';
@@ -307,8 +306,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         let urlDescarga = url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url;
 
                         lista.innerHTML += `
-                            <li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; border-radius: 0 8px 8px 0; background: transparent;">
-                                <a href="${url}" target="_blank" style="color: #a0a0b8; text-decoration: none; display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+                            <li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; border-radius: 0 8px 8px 0; background: transparent; display: flex; justify-content: space-between;">
+                                <a href="${url}" target="_blank" style="color: #a0a0b8; text-decoration: none; display: flex; align-items: center; gap: 10px;">
                                     <i class="fa-solid fa-file"></i> ${nombre}
                                 </a>
                                 <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" style="padding: 4px 8px; font-size: 0.8rem;">
@@ -348,12 +347,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const primerDia = new Date(year, month, 1).getDay();
         const diasEnMes = new Date(year, month + 1, 0).getDate();
 
-        // Espacios vacíos antes del primer día
         for (let i = 0; i < primerDia; i++) {
             grid.innerHTML += `<div class="calendar-day empty"></div>`;
         }
 
-        // Días del mes
         for (let dia = 1; dia <= diasEnMes; dia++) {
             const fechaStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             const tieneEvento = eventos.some(e => e.fecha === fechaStr);
@@ -386,11 +383,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const listaEventos = document.getElementById('listaEventos');
         listaEventos.innerHTML = '';
         
-        // Ordenar eventos por fecha
         eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
         eventos.forEach(ev => {
-            // Formatear fecha a algo más bonito
             const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             listaEventos.innerHTML += `
                 <li class="archivo-item">
