@@ -38,7 +38,6 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: INICIO ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -50,13 +49,14 @@
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
-                    <!-- MENÚ DESPLEGABLE DE NOMBRES -->
+                    
+                    <!-- AQUÍ ESTÁ EL MENÚ DE NOMBRES -->
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="Johan Sebastián">Johan Sebastián</option>
-                        <option value="Brayan Alexander">Brayan Alexander</option>
-                        <option value="Beatriz">Beatriz</option>
-                        <option value="Jair">Jair</option>
-                        <option value="Ximena">Ximena</option>
+                        <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
+                        <option value="Brayan Alexander">Brayan Alexander (Gerente Marketing)</option>
+                        <option value="Beatriz">Beatriz (Producción)</option>
+                        <option value="Jair">Jair (Finanzas)</option>
+                        <option value="Ximena">Ximena (RH)</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -73,7 +73,6 @@
             <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
         </section>
 
-        <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Gestión de Proyectos</h2>
@@ -89,7 +88,7 @@
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
-        <!-- ===== VISTA: CALENDARIO VISUAL ===== -->
+        <!-- VISTA CALENDARIO CON CUADRÍCULA -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda de Rodajes y Eventos</h2>
             
@@ -121,7 +120,6 @@
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
-        <!-- ===== VISTA: CLIENTES ===== -->
         <section id="view-clientes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Directorio de Clientes</h2>
@@ -137,7 +135,6 @@
         </section>
     </main>
 
-    <!-- MODAL DE TAREA -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
@@ -156,7 +153,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE PROYECTO -->
     <div id="modalProyecto" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="cerrarModal()">&times;</span>
