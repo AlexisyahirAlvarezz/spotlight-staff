@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
+
     <aside class="sidebar">
         <div class="sidebar-logo">
             <img src="logo-blanco.jpg" alt="SPOTLIGHT">
@@ -33,11 +34,28 @@
                    <span id="rolStaff" style="color: #f7c948; font-weight: bold; font-size: 0.9rem;"></span>
                 </p>
             </div>
-            <div class="user-profile">
-                <div class="avatar" id="avatarLetra">S</div>
+            
+            <div class="header-actions">
+                <!-- CAMPANITA DE NOTIFICACIONES -->
+                <div class="notification-container">
+                    <button id="btnNotificaciones" class="btn-icon">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="badgeNotificaciones" class="badge" style="display: none;">0</span>
+                    </button>
+                    <div id="panelNotificaciones" class="notification-dropdown">
+                        <h4>Notificaciones</h4>
+                        <ul id="listaNotificaciones">
+                            <!-- Se llenan con JS -->
+                        </ul>
+                    </div>
+                </div>
+                <div class="user-profile">
+                    <div class="avatar" id="avatarLetra">S</div>
+                </div>
             </div>
         </header>
 
+        <!-- ===== VISTA: INICIO ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -50,29 +68,28 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
                     
-                    <!-- AQUÍ ESTÁ EL MENÚ DE NOMBRES -->
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
-                        <option value="Brayan Alexander">Brayan Alexander (Gerente Marketing)</option>
-                        <option value="Beatriz">Beatriz (Producción)</option>
-                        <option value="Jair">Jair (Finanzas)</option>
-                        <option value="Ximena">Ximena (RH)</option>
+                        <option value="Johan Sebastián">Johan Sebastián</option>
+                        <option value="Brayan Alexander">Brayan Alexander</option>
+                        <option value="Beatriz">Beatriz</option>
+                        <option value="Jair">Jair</option>
+                        <option value="Ximena">Ximena</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
-                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto (Ej. Búho de Oro)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
             </div>
 
             <div class="task-list" id="listaTareas"></div>
-
             <h2 style="margin-top: 40px; color: #4CAF50;"><i class="fa-solid fa-check-circle"></i> Tareas Completadas</h2>
             <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
         </section>
 
+        <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Gestión de Proyectos</h2>
@@ -88,18 +105,16 @@
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
-        <!-- VISTA CALENDARIO CON CUADRÍCULA -->
+        <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda de Rodajes y Eventos</h2>
             
             <div class="form-tarea" style="margin-top: 20px; flex-direction: row; align-items: flex-end;">
                 <div style="flex: 2;">
-                    <label style="font-size:0.8rem; color:#a0a0b8; margin-bottom:5px; display:block;">Nombre del Evento</label>
-                    <input type="text" id="inputEvento" placeholder="Ej. Rodaje Búho de Oro">
+                    <input type="text" id="inputEvento" placeholder="Nombre del evento" style="width:100%;">
                 </div>
                 <div style="flex: 1;">
-                    <label style="font-size:0.8rem; color:#a0a0b8; margin-bottom:5px; display:block;">Fecha</label>
-                    <input type="date" id="inputFechaEvento">
+                    <input type="date" id="inputFechaEvento" style="width:100%;">
                 </div>
                 <button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button>
             </div>
@@ -115,11 +130,11 @@
                 </div>
                 <div class="calendar-grid" id="calendarDays"></div>
             </div>
-
             <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
+        <!-- ===== VISTA: CLIENTES ===== -->
         <section id="view-clientes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Directorio de Clientes</h2>
@@ -135,6 +150,7 @@
         </section>
     </main>
 
+    <!-- MODALES -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
