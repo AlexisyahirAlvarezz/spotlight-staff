@@ -10,6 +10,7 @@
 </head>
 <body>
 
+    <!-- BARRA LATERAL -->
     <aside class="sidebar">
         <div class="sidebar-logo">
             <img src="logo-blanco.jpg" alt="SPOTLIGHT">
@@ -26,6 +27,7 @@
         </div>
     </aside>
 
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content">
         <header class="top-header">
             <div class="welcome-text">
@@ -44,9 +46,7 @@
                     </button>
                     <div id="panelNotificaciones" class="notification-dropdown">
                         <h4>Notificaciones</h4>
-                        <ul id="listaNotificaciones">
-                            <!-- Se llenan con JS -->
-                        </ul>
+                        <ul id="listaNotificaciones"></ul>
                     </div>
                 </div>
                 <div class="user-profile">
@@ -55,7 +55,7 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: INICIO ===== -->
+        <!-- ===== VISTA: INICIO (TAREAS) ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -68,23 +68,25 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
                     
+                    <!-- MENÚ DESPLEGABLE DE NOMBRES Y PUESTOS -->
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="Johan Sebastián">Johan Sebastián</option>
-                        <option value="Brayan Alexander">Brayan Alexander</option>
-                        <option value="Beatriz">Beatriz</option>
-                        <option value="Jair">Jair</option>
-                        <option value="Ximena">Ximena</option>
+                        <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
+                        <option value="Brayan Alexander">Brayan Alexander (Gerente de Marketing)</option>
+                        <option value="Beatriz">Beatriz (Jefa de Producción)</option>
+                        <option value="Jair">Jair (Jefe de Finanzas)</option>
+                        <option value="Ximena">Ximena (Jefa de RRHH)</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
-                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto (Ej. Búho de Oro)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
             </div>
 
             <div class="task-list" id="listaTareas"></div>
+            
             <h2 style="margin-top: 40px; color: #4CAF50;"><i class="fa-solid fa-check-circle"></i> Tareas Completadas</h2>
             <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
         </section>
@@ -130,6 +132,7 @@
                 </div>
                 <div class="calendar-grid" id="calendarDays"></div>
             </div>
+            
             <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
@@ -150,7 +153,7 @@
         </section>
     </main>
 
-    <!-- MODALES -->
+    <!-- MODAL DE TAREA -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
@@ -169,6 +172,7 @@
         </div>
     </div>
 
+    <!-- MODAL DE PROYECTO -->
     <div id="modalProyecto" class="modal">
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="cerrarModal()">&times;</span>

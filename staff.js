@@ -1,6 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-    if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
+    // 1. SEGURIDAD
+    if (localStorage.getItem('staffLogueado') !== 'true') { 
+        window.location.href = "login"; 
+        return; 
+    }
+    
+    // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
     document.getElementById('nombreStaff').textContent = nombreStaff;
@@ -17,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= SISTEMA DE NOTIFICACIONES =================
+    // ================= NOTIFICACIONES =================
     let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -27,28 +33,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderNotificaciones() {
         const misNotificaciones = notificaciones.filter(n => n.para === nombreStaff);
         const noLeidas = misNotificaciones.filter(n => !n.leida).length;
-        
-        if (noLeidas > 0) {
-            badge.textContent = noLeidas;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
-        }
-
+        if (noLeidas > 0) { badge.textContent = noLeidas; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
         listaNotificaciones.innerHTML = '';
-        if (misNotificaciones.length === 0) {
-            listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>';
-        } else {
-            misNotificaciones.forEach(n => {
-                listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`;
-            });
+        if (misNotificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
+        else {
+            misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; });
         }
     }
     renderNotificaciones();
 
     btnNotificaciones.addEventListener('click', () => {
         panelNotificaciones.style.display = panelNotificaciones.style.display === 'block' ? 'none' : 'block';
-        // Marcar como leídas
         notificaciones.forEach(n => { if(n.para === nombreStaff) n.leida = true; });
         localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
         renderNotificaciones();
@@ -58,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [{ id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }];
     
     window.renderProyectosLista = function() {
-        const listaProyectos = document.getElementById('listaProyectos');
+        const listaProyectos = document.getElementById('listaProyectos'); 
         listaProyectos.innerHTML = '';
         proyectosDB.forEach(p => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` : '';
@@ -99,6 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
         listaTareas.innerHTML = ''; listaTareasCompletadas.innerHTML = '';
         tareas.forEach((t, index) => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` : '';
+            
+            // LÓGICA DE LA PALOMITA ESTRICTA: SOLO EL ASIGNADO
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})"><i class="fa-solid fa-check"></i></button>` : '';
 
@@ -109,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
     renderTareas();
 
     document.getElementById('btnMostrarFormTarea').addEventListener('click', () => { document.getElementById('formNuevaTarea').style.display = document.getElementById('formNuevaTarea').style.display === 'none' ? 'flex' : 'none'; });
+    
     document.getElementById('btnGuardarTarea').addEventListener('click', () => {
         const titulo = document.getElementById('inputTarea').value;
         const asignado = document.getElementById('inputAsignado').value;
@@ -117,18 +115,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
         
         if (titulo) {
-            // Crear carpeta si no existe
+            // CREAR CARPETA AUTOMÁTICA SI NO EXISTE
             if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                 proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
                 localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
                 renderProyectosLista();
             }
             
-            // Guardar tarea
             tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
             localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
             
-            // CREAR NOTIFICACIÓN PARA EL ASIGNADO
+            // CREAR NOTIFICACIÓN
             notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
             localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
             renderNotificaciones();
@@ -146,9 +143,10 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTareas();
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     };
+    
     window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
 
-    // MODAL TAREA
+    // MODAL DE TAREA
     window.abrirModalTarea = function(index) {
         tareaActivaIndex = index; const t = tareas[index];
         document.getElementById('mTareaTitulo').textContent = t.titulo;
@@ -163,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
         else {
             archivos.forEach(a => {
-                // TRUCO PARA FORZAR DESCARGA CON CLOUDINARY
+                // FORZAR DESCARGA CON CLOUDINARY
                 const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
                 lista.innerHTML += `<li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
             });
@@ -190,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boton.innerHTML = textOrig; boton.disabled = false; input.value = ''; renderArchivosModal();
     }
 
-    // MODAL PROYECTO
+    // MODAL DE PROYECTO
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
@@ -220,12 +218,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const grid = document.getElementById('calendarDays'); 
         const display = document.getElementById('monthYearDisplay');
         if(!grid) return;
-        
         grid.innerHTML = '';
         const year = fechaCalendario.getFullYear(); const month = fechaCalendario.getMonth();
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         display.textContent = `${meses[month]} ${year}`;
-        
         const primerDia = new Date(year, month, 1).getDay(); const diasEnMes = new Date(year, month + 1, 0).getDate();
         for (let i = 0; i < primerDia; i++) grid.innerHTML += `<div class="calendar-day empty"></div>`;
         for (let dia = 1; dia <= diasEnMes; dia++) {
@@ -237,7 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('prevMonth').addEventListener('click', () => { fechaCalendario.setMonth(fechaCalendario.getMonth() - 1); renderCalendario(); });
     document.getElementById('nextMonth').addEventListener('click', () => { fechaCalendario.setMonth(fechaCalendario.getMonth() + 1); renderCalendario(); });
-    // El calendario NO se renderiza al inicio, se renderiza cuando se da clic (abajo en el menú).
 
     function renderListaEventos() {
         const listaEventos = document.getElementById('listaEventos'); listaEventos.innerHTML = '';
@@ -257,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else { alert("Escribe el nombre y la fecha."); }
     });
 
-    // ================= CLIENTES Y NAVEGACIÓN =================
+    // ================= CLIENTES =================
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [{ id: 1, nombre: "Panasonic México" }];
     function renderClientes() {
         const listaClientes = document.getElementById('listaClientes'); listaClientes.innerHTML = '';
@@ -274,21 +269,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     window.eliminarCliente = function(id) { if (confirm("¿Eliminar cliente?")) { clientesDB = clientesDB.filter(c => c.id !== id); localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); renderClientes(); } };
 
-    // NAVEGACIÓN (AQUÍ SE ARREGLA EL CALENDARIO)
+    // ================= NAVEGACIÓN =================
     document.querySelectorAll('.nav-link').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active');
-            
             const target = this.getAttribute('data-target');
             document.getElementById('view-' + target).style.display = 'block';
-
-            // SI SE ABRE EL CALENDARIO, LO DIBUJAMOS AQUÍ MISMO
-            if (target === 'calendario') {
-                renderCalendario();
-            }
+            // SE DIBUJA EL CALENDARIO AL ENTRAR A SU SECCIÓN
+            if (target === 'calendario') renderCalendario();
         });
     });
 
