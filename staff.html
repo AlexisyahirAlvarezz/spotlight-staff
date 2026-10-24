@@ -51,14 +51,19 @@
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
-                    <input type="text" id="inputAsignado" placeholder="Asignar a (Nombre)" style="flex: 1;">
+                    
+                    <!-- MENÚ DESPLEGABLE DE NOMBRES -->
+                    <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                        <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
+                        <option value="Brayan Alexander">Brayan Alexander (Gerente Marketing)</option>
+                        <option value="Beatriz">Beatriz (Producción)</option>
+                        <option value="Jair">Jair (Finanzas)</option>
+                        <option value="Ximena">Ximena (RH)</option>
+                    </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
-                    <!-- AQUÍ ESTÁ EL CAMBIO: Ahora es un SELECT para elegir el proyecto -->
-                    <select id="inputProyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="General">Proyecto General</option>
-                    </select>
+                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto (Ej. Búho de Oro)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
@@ -88,14 +93,36 @@
 
         <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
-            <h2>Calendario de Rodajes y Eventos</h2>
-            <div class="form-tarea" style="margin-top: 20px; flex-direction: column;">
-                <input type="text" id="inputEvento" placeholder="Nombre del evento o rodaje" style="width: 100%;">
-                <div style="display: flex; gap: 15px; margin-top: 10px;">
-                    <input type="date" id="inputFechaEvento" style="flex: 1;">
-                    <button id="btnAgendarEvento" class="btn-primary" style="flex: 1;">Agendar Evento</button>
+            <h2>Agenda de Rodajes y Eventos</h2>
+            
+            <div class="form-tarea" style="margin-top: 20px; flex-direction: row; align-items: flex-end;">
+                <div style="flex: 2;">
+                    <label style="font-size:0.8rem; color:#a0a0b8; margin-bottom:5px; display:block;">Nombre del Evento</label>
+                    <input type="text" id="inputEvento" placeholder="Ej. Rodaje Búho de Oro">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size:0.8rem; color:#a0a0b8; margin-bottom:5px; display:block;">Fecha</label>
+                    <input type="date" id="inputFechaEvento">
+                </div>
+                <button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button>
+            </div>
+
+            <!-- CALENDARIO VISUAL -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <button id="prevMonth" class="btn-icon"><i class="fa-solid fa-chevron-left"></i></button>
+                    <h3 id="monthYearDisplay">Octubre 2026</h3>
+                    <button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <div class="calendar-grid-header">
+                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
+                </div>
+                <div class="calendar-grid" id="calendarDays">
+                    <!-- Los días se generan con JS -->
                 </div>
             </div>
+
+            <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
@@ -136,10 +163,10 @@
 
     <!-- MODAL DE PROYECTO -->
     <div id="modalProyecto" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
-            <p style="color:#a0a0b8; margin-bottom: 20px;">Haz clic en una tarea para abrir su carpeta de archivos:</p>
+            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas y archivos de este proyecto:</p>
             <ul id="mProyectoTareas" class="archivos-lista"></ul>
         </div>
     </div>

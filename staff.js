@@ -23,20 +23,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
     // =========================================================
-    // SISTEMA DE PROYECTOS (Se declaran primero para llenar el SELECT)
+    // SISTEMA DE PROYECTOS (Declarado primero para las carpetas)
     // =========================================================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [
         { id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }
     ];
-
-    function renderProyectosSelect() {
-        const select = document.getElementById('inputProyecto');
-        select.innerHTML = '<option value="General">Proyecto General</option>';
-        proyectosDB.forEach(p => {
-            select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
-        });
-    }
-    renderProyectosSelect();
 
     const listaProyectos = document.getElementById('listaProyectos');
 
@@ -67,21 +58,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
         const nombre = document.getElementById('inputProyectoNom').value;
         const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
-        
         if (nombre) {
             if (proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-                alert("Ya existe un proyecto con ese nombre.");
-                return;
+                alert("Ya existe un proyecto con ese nombre."); return;
             }
             proyectosDB.push({ id: Date.now(), nombre, cliente });
             localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
             renderProyectosLista();
-            renderProyectosSelect(); // ¡MAGIA! Actualiza el menú desplegable de tareas
             document.getElementById('formNuevoProyecto').style.display = 'none';
             document.getElementById('inputProyectoNom').value = '';
             document.getElementById('inputClienteProyecto').value = '';
-        } else {
-            alert("Escribe un nombre para el proyecto.");
         }
     });
 
@@ -90,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
             proyectosDB = proyectosDB.filter(p => p.id !== id);
             localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
             renderProyectosLista();
-            renderProyectosSelect(); // Actualizamos el menú
         }
     };
 
@@ -116,11 +101,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` 
                 : '';
             
-            // LÓGICA DE LA PALOMITA: SOLO la persona asignada
-            const esAsignado = (nombreStaff.toLowerCase() === t.asignado.toLowerCase());
-            const puedeCompletar = esAsignado;
+            // LÓGICA DE LA PALOMITA ESTRICTA: Solo el asignado
+            const usuarioLimpio = nombreStaff.trim().toLowerCase();
+            const asignadoLimpio = t.asignado.trim().toLowerCase();
+            const esAsignado = (usuarioLimpio === asignadoLimpio);
 
-            const botonCompletar = (t.estado !== 'completed' && puedeCompletar)
+            const botonCompletar = (t.estado !== 'completed' && esAsignado)
                 ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})" title="Completar"><i class="fa-solid fa-check"></i></button>` 
                 : '';
 
@@ -158,19 +144,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const titulo = document.getElementById('inputTarea').value;
         const asignado = document.getElementById('inputAsignado').value;
         const fecha = document.getElementById('inputFecha').value;
-        const proyecto = document.getElementById('inputProyecto').value; // Toma el valor del SELECT
+        const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
         const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
 
-        if (titulo && asignado) {
+        if (titulo) {
+            // CREAR CARPETA DE PROYECTO AUTOMÁTICAMENTE SI NO EXISTE
+            if (proyecto !== "General") {
+                if (!proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
+                    proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
+                    localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+                    renderProyectosLista(); // Actualizamos la lista visualmente
+                }
+            }
+
             tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
             localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
             renderTareas();
             formNuevaTarea.style.display = 'none';
             document.getElementById('inputTarea').value = '';
-            document.getElementById('inputAsignado').value = '';
             document.getElementById('inputDescripcionTarea').value = '';
+            document.getElementById('inputProyecto').value = '';
         } else {
-            alert("Por favor, escribe la tarea y a quién se la asignas.");
+            alert("Por favor, escribe qué hay que hacer.");
         }
     });
 
@@ -213,40 +208,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 const url = typeof a === 'object' ? a.url : '#';
                 const nombre = typeof a === 'object' ? a.nombre : a;
 
+                // TRUCO DEFINITIVO DE CLOUDINARY PARA FORZAR DESCARGA
+                let urlDescarga = url;
+                if (url.includes('/upload/')) {
+                    urlDescarga = url.replace('/upload/', '/upload/fl_attachment/');
+                }
+
                 lista.innerHTML += `
                     <li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <a href="${url}" target="_blank" style="color: #fff; text-decoration: none; display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <i class="fa-solid fa-file" style="color: #f7c948;"></i> ${nombre}
                         </a>
-                        <!-- Enviamos la URL y el nombre a la función de descarga JS -->
-                        <button class="btn-descargar" onclick="descargarArchivo('${url}', '${nombre}')" title="Descargar archivo">
+                        <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" style="cursor: pointer;">
                             <i class="fa-solid fa-download"></i>
-                        </button>
+                        </a>
                     </li>
                 `;
             });
-        }
-    }
-
-    // NUEVA FUNCIÓN PARA FORZAR LA DESCARGA
-    window.descargarArchivo = async function(url, nombre) {
-        try {
-            // Fetch descarga el archivo real, evitando que el navegador lo abra
-            const response = await fetch(url);
-            const blob = await response.blob();
-            const blobUrl = window.URL.createObjectURL(blob);
-            
-            // Creamos un enlace invisible para forzar la descarga
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = nombre; 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(blobUrl);
-        } catch (error) {
-            alert("Error de red al descargar. Abriendo en nueva pestaña.");
-            window.open(url, '_blank');
         }
     }
 
@@ -293,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const modalProyecto = document.getElementById('modalProyecto');
 
+    // MODAL DE PROYECTO (Muestra tareas Y sus archivos)
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas');
@@ -301,22 +280,44 @@ document.addEventListener('DOMContentLoaded', function() {
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
 
         if(tareasDelProyecto.length === 0) {
-            lista.innerHTML = '<p style="color:#666;">No hay tareas asignadas a este proyecto.</p>';
+            lista.innerHTML = '<p style="color:#666;">No hay tareas ni archivos en este proyecto.</p>';
         } else {
             tareasDelProyecto.forEach(t => {
                 const tareaIndexOriginal = tareas.findIndex(original => original.id === t.id);
+                
+                // Renderizamos la tarea
                 lista.innerHTML += `
-                    <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
+                    <li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${tareaIndexOriginal})">
                         <div>
-                            <i class="fa-solid fa-folder-open" style="color:${t.estado === 'completed' ? '#4CAF50' : '#f7c948'};"></i>
-                            <span style="margin-left:10px; color:white;">${t.titulo}</span>
+                            <i class="fa-solid fa-folder-open" style="color:#f7c948;"></i>
+                            <strong style="margin-left:10px; color:white;">${t.titulo}</strong>
                         </div>
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <span style="font-size:0.8rem; color:#a0a0b8;">Para: ${t.asignado}</span>
+                            <span style="font-size:0.8rem; color:#a0a0b8;">Asignada a: ${t.asignado}</span>
                             <i class="fa-solid fa-chevron-right" style="color:#a0a0b8;"></i>
                         </div>
                     </li>
                 `;
+
+                // Renderizamos los archivos de esa tarea dentro de la carpeta
+                if (t.archivos && t.archivos.length > 0) {
+                    t.archivos.forEach(a => {
+                        const url = typeof a === 'object' ? a.url : '#';
+                        const nombre = typeof a === 'object' ? a.nombre : a;
+                        let urlDescarga = url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url;
+
+                        lista.innerHTML += `
+                            <li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; border-radius: 0 8px 8px 0; background: transparent;">
+                                <a href="${url}" target="_blank" style="color: #a0a0b8; text-decoration: none; display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+                                    <i class="fa-solid fa-file"></i> ${nombre}
+                                </a>
+                                <a href="${urlDescarga}" class="btn-descargar" title="Descargar archivo" style="padding: 4px 8px; font-size: 0.8rem;">
+                                    <i class="fa-solid fa-download"></i>
+                                </a>
+                            </li>
+                        `;
+                    });
+                }
             });
         }
         modalProyecto.style.display = 'flex';
@@ -328,7 +329,98 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // =========================================================
-    // CLIENTES Y CALENDARIO
+    // SISTEMA DE CALENDARIO VISUAL
+    // =========================================================
+    let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
+    let fechaCalendario = new Date();
+
+    window.renderCalendario = function() {
+        const grid = document.getElementById('calendarDays');
+        const display = document.getElementById('monthYearDisplay');
+        grid.innerHTML = '';
+
+        const year = fechaCalendario.getFullYear();
+        const month = fechaCalendario.getMonth();
+
+        const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        display.textContent = `${meses[month]} ${year}`;
+
+        const primerDia = new Date(year, month, 1).getDay();
+        const diasEnMes = new Date(year, month + 1, 0).getDate();
+
+        // Espacios vacíos antes del primer día
+        for (let i = 0; i < primerDia; i++) {
+            grid.innerHTML += `<div class="calendar-day empty"></div>`;
+        }
+
+        // Días del mes
+        for (let dia = 1; dia <= diasEnMes; dia++) {
+            const fechaStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            const tieneEvento = eventos.some(e => e.fecha === fechaStr);
+            
+            const hoy = new Date();
+            const esHoy = (dia === hoy.getDate() && month === hoy.getMonth() && year === hoy.getFullYear());
+
+            grid.innerHTML += `
+                <div class="calendar-day ${esHoy ? 'today' : ''}">
+                    <span class="day-number">${dia}</span>
+                    ${tieneEvento ? '<div class="event-dot"></div>' : ''}
+                </div>
+            `;
+        }
+    }
+
+    document.getElementById('prevMonth').addEventListener('click', () => {
+        fechaCalendario.setMonth(fechaCalendario.getMonth() - 1);
+        renderCalendario();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', () => {
+        fechaCalendario.setMonth(fechaCalendario.getMonth() + 1);
+        renderCalendario();
+    });
+
+    renderCalendario();
+
+    function renderListaEventos() {
+        const listaEventos = document.getElementById('listaEventos');
+        listaEventos.innerHTML = '';
+        
+        // Ordenar eventos por fecha
+        eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        eventos.forEach(ev => {
+            // Formatear fecha a algo más bonito
+            const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            listaEventos.innerHTML += `
+                <li class="archivo-item">
+                    <i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i> 
+                    <div style="margin-left:10px;">
+                        <strong style="color:white; display:block;">${ev.nombre}</strong>
+                        <span style="font-size:0.85rem; color:#a0a0b8; text-transform: capitalize;">${fechaFormat}</span>
+                    </div>
+                </li>
+            `;
+        });
+    }
+    renderListaEventos();
+
+    document.getElementById('btnAgendarEvento').addEventListener('click', () => {
+        const nombre = document.getElementById('inputEvento').value;
+        const fecha = document.getElementById('inputFechaEvento').value;
+        if (nombre && fecha) {
+            eventos.push({ nombre, fecha });
+            localStorage.setItem('eventosSpotlight', JSON.stringify(eventos));
+            renderCalendario();
+            renderListaEventos();
+            document.getElementById('inputEvento').value = '';
+        } else {
+            alert("Escribe el nombre del evento y selecciona una fecha.");
+        }
+    });
+
+    // =========================================================
+    // CLIENTES
     // =========================================================
     const listaClientes = document.getElementById('listaClientes');
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [
@@ -377,35 +469,6 @@ document.addEventListener('DOMContentLoaded', function() {
             renderClientes();
         }
     };
-
-    const listaEventos = document.getElementById('listaEventos');
-    let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
-
-    function renderEventos() {
-        listaEventos.innerHTML = '';
-        eventos.forEach(ev => {
-            listaEventos.innerHTML += `
-                <li class="archivo-item">
-                    <i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i> 
-                    ${ev.nombre} - <strong>${ev.fecha}</strong>
-                </li>
-            `;
-        });
-    }
-    renderEventos();
-
-    document.getElementById('btnAgendarEvento').addEventListener('click', () => {
-        const nombre = document.getElementById('inputEvento').value;
-        const fecha = document.getElementById('inputFechaEvento').value;
-        if (nombre && fecha) {
-            eventos.push({ nombre, fecha });
-            localStorage.setItem('eventosSpotlight', JSON.stringify(eventos));
-            renderEventos();
-            document.getElementById('inputEvento').value = '';
-        } else {
-            alert("Escribe el nombre del evento y selecciona una fecha.");
-        }
-    });
 
     // NAVEGACIÓN Y LOGOUT
     const navLinks = document.querySelectorAll('.nav-link');
