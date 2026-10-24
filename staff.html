@@ -19,7 +19,6 @@
             <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
-            <!-- NUEVA SECCIÓN DE EXÁMENES EN EL MENÚ -->
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
             <a href="#" class="nav-link" data-target="clientes"><i class="fa-solid fa-users"></i> Clientes</a>
         </nav>
@@ -36,7 +35,6 @@
                    <span id="rolStaff" style="color: #f7c948; font-weight: bold; font-size: 0.9rem;"></span>
                 </p>
             </div>
-            
             <div class="header-actions">
                 <div class="notification-container">
                     <button id="btnNotificaciones" class="btn-icon">
@@ -48,9 +46,7 @@
                         <ul id="listaNotificaciones"></ul>
                     </div>
                 </div>
-                <div class="user-profile">
-                    <div class="avatar" id="avatarLetra">S</div>
-                </div>
+                <div class="user-profile"><div class="avatar" id="avatarLetra">S</div></div>
             </div>
         </header>
 
@@ -58,11 +54,8 @@
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
-                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;">
-                    <i class="fa-solid fa-plus"></i> Asignar Tarea
-                </button>
+                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
             </div>
-
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
@@ -77,12 +70,11 @@
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
-                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto (Ej. Búho de Oro)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
             </div>
-
             <div class="task-list" id="listaTareas"></div>
             <h2 style="margin-top: 40px; color: #4CAF50;"><i class="fa-solid fa-check-circle"></i> Tareas Completadas</h2>
             <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
@@ -90,12 +82,7 @@
 
         <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
-            <div class="recent-tasks-header">
-                <h2>Gestión de Proyectos</h2>
-                <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;">
-                    <i class="fa-solid fa-plus"></i> Nuevo Proyecto
-                </button>
-            </div>
+            <div class="recent-tasks-header"><h2>Gestión de Proyectos</h2><button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button></div>
             <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
                 <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
                 <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
@@ -118,9 +105,7 @@
                     <h3 id="monthYearDisplay">Mes Año</h3>
                     <button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
-                <div class="calendar-grid-header">
-                    <div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div>
-                </div>
+                <div class="calendar-grid-header"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div>
                 <div class="calendar-grid" id="calendarDays"></div>
             </div>
             <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>
@@ -131,39 +116,48 @@
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Exámenes de Capacitación</h2>
-                <!-- SOLO GERENTES VEN EL BOTÓN DE CREAR -->
-                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;">
-                    <i class="fa-solid fa-plus"></i> Crear Examen
-                </button>
+                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Crear Nuevo Examen</button>
             </div>
 
-            <!-- FORMULARIO PARA CREAR EXAMEN (Oculto por defecto) -->
+            <!-- FORMULARIO PARA CREAR EXAMEN -->
             <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="examenTitulo" placeholder="Título del Examen (Ej. Protocolo de Rodaje)">
-                <input type="text" id="examenPregunta" placeholder="Escribe la pregunta aquí...">
-                <div style="display: flex; gap: 15px;">
-                    <input type="text" id="examenOpcionA" placeholder="Opción A" style="flex:1;">
-                    <input type="text" id="examenOpcionB" placeholder="Opción B" style="flex:1;">
+                <input type="text" id="examenTitulo" placeholder="Título del Examen (Ej. Protocolo de Rodaje)" style="font-weight: bold; font-size: 1.1rem;">
+                
+                <div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <!-- Las preguntas se agregan dinámicamente aquí -->
                 </div>
-                <select id="examenCorrecta" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                    <option value="A">La respuesta correcta es la Opción A</option>
-                    <option value="B">La respuesta correcta es la Opción B</option>
-                </select>
-                <button id="btnGuardarExamen" class="btn-primary" style="align-self: flex-end;">Publicar Examen</button>
+
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;"><i class="fa-solid fa-plus"></i> Añadir otra pregunta</button>
+                    <button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar Examen Completo</button>
+                </div>
             </div>
 
-            <!-- AQUÍ SE MOSTRARÁN LOS EXÁMENES PARA RESPONDER -->
+            <!-- LISTA DE EXÁMENES DISPONIBLES -->
+            <h3 style="margin-top: 20px; color: white; margin-bottom: 15px;">Exámenes Disponibles</h3>
             <ul id="listaExamenes" class="archivos-lista"></ul>
+
+            <!-- TABLA DE RESULTADOS -->
+            <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-chart-simple"></i> Resultados de los Exámenes</h3>
+            <div style="background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
+                        <tr>
+                            <th style="padding: 15px;">Nombre</th>
+                            <th style="padding: 15px;">Examen</th>
+                            <th style="padding: 15px;">Calificación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResultados">
+                        <!-- Los resultados se cargan con JS -->
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- ===== VISTA: CLIENTES ===== -->
         <section id="view-clientes" class="view-section" style="display: none;">
-            <div class="recent-tasks-header">
-                <h2>Directorio de Clientes</h2>
-                <button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;">
-                    <i class="fa-solid fa-plus"></i> Nuevo Cliente
-                </button>
-            </div>
+            <div class="recent-tasks-header"><h2>Directorio de Clientes</h2><button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;"><i class="fa-solid fa-plus"></i> Nuevo Cliente</button></div>
             <div id="formNuevoCliente" class="form-tarea" style="display: none;">
                 <input type="text" id="inputCliente" placeholder="Nombre de la Empresa">
                 <button id="btnGuardarCliente" class="btn-primary">Guardar</button>
@@ -172,15 +166,25 @@
         </section>
     </main>
 
+    <!-- MODAL PARA RESPONDER EXAMEN -->
+    <div id="modalExamen" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="close" onclick="cerrarModalExamen()">&times;</span>
+            <h2 id="mExamenTitulo" style="color:#f7c948; margin-bottom: 20px;">Título del Examen</h2>
+            <div id="mExamenPreguntas" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Preguntas para responder -->
+            </div>
+            <button id="btnCalificarExamen" class="btn-primary" style="margin-top: 25px; width: 100%;">Enviar Respuestas</button>
+        </div>
+    </div>
+
+    <!-- MODALES DE TAREA Y PROYECTO -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2>
             <p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p>
-            <div class="instrucciones-box">
-                <h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4>
-                <p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p>
-            </div>
+            <div class="instrucciones-box"><h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4><p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p></div>
             <h4 style="color:white; margin-top: 20px;">Archivos Adjuntos:</h4>
             <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px;"></ul>
             <div class="upload-area">

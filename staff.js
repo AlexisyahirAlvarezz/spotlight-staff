@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // 1. SEGURIDAD
     if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
-    // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
     document.getElementById('nombreStaff').textContent = nombreStaff;
@@ -21,6 +18,201 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
+    // ================= SISTEMA DE EXÁMENES =================
+    let examenesDB = JSON.parse(localStorage.getItem('examenesSpotlight')) || [];
+    let resultadosDB = JSON.parse(localStorage.getItem('resultadosSpotlight')) || [];
+    let preguntasTemporales = []; // Para crear un examen
+    let examenActivoId = null;
+
+    const listaExamenes = document.getElementById('listaExamenes');
+    const tablaResultados = document.getElementById('tablaResultados');
+
+    // 1. Lógica para AÑADIR PREGUNTAS al crear
+    function crearBloquePregunta() {
+        const contenedor = document.getElementById('contenedorPreguntas');
+        const bloque = document.createElement('div');
+        bloque.className = 'pregunta-bloque';
+        bloque.innerHTML = `
+            <input type="text" class="p-pregunta" placeholder="Escribe la pregunta..." style="width: 100%; margin-bottom: 10px;">
+            <div style="display: flex; gap: 10px;">
+                <input type="text" class="p-opA" placeholder="Opción A" style="flex:1;">
+                <input type="text" class="p-opB" placeholder="Opción B" style="flex:1;">
+            </div>
+            <select class="p-correcta" style="width: 100%; margin-top: 10px; padding: 10px; background: #05050f; color: white; border-radius: 8px; border: 1px solid #333;">
+                <option value="A">Correcta: Opción A</option>
+                <option value="B">Correcta: Opción B</option>
+            </select>
+        `;
+        contenedor.appendChild(bloque);
+    }
+    
+    // Iniciar con un bloque
+    if (document.getElementById('contenedorPreguntas')) {
+        crearBloquePregunta();
+        document.getElementById('btnAgregarPregunta').addEventListener('click', crearBloquePregunta);
+
+        // Guardar el examen completo
+        document.getElementById('btnGuardarExamen').addEventListener('click', () => {
+            const titulo = document.getElementById('examenTitulo').value;
+            const bloques = document.querySelectorAll('.pregunta-bloque');
+            const preguntas = [];
+
+            if (!titulo) { alert("El examen necesita un título."); return; }
+
+            bloques.forEach(b => {
+                const preg = b.querySelector('.p-pregunta').value;
+                const opA = b.querySelector('.p-opA').value;
+                const opB = b.querySelector('.p-opB').value;
+                const corr = b.querySelector('.p-correcta').value;
+                if (preg && opA && opB) {
+                    preguntas.push({ pregunta: preg, opcionA: opA, opcionB: opB, correcta: corr });
+                }
+            });
+
+            if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta completa."); return; }
+
+            examenesDB.push({ id: Date.now(), titulo, preguntas });
+            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
+            
+            // Limpiar formulario
+            document.getElementById('examenTitulo').value = '';
+            document.getElementById('contenedorPreguntas').innerHTML = '';
+            crearBloquePregunta(); // Dejar uno listo
+            document.getElementById('formNuevoExamen').style.display = 'none';
+            
+            renderExamenes();
+        });
+    }
+
+    // 2. Renderizar Exámenes Disponibles y Tabla
+    window.renderExamenes = function() {
+        // Lista de exámenes
+        listaExamenes.innerHTML = '';
+        if(examenesDB.length === 0) {
+            listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>';
+        } else {
+            examenesDB.forEach((ex) => {
+                const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarExamen(${ex.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+                listaExamenes.innerHTML += `
+                    <li class="examen-card">
+                        <div>
+                            <h3>${ex.titulo}</h3>
+                            <p style="color:#a0a0b8; font-size: 0.9rem; margin-top: 5px;">${ex.preguntas.length} preguntas</p>
+                        </div>
+                        <div>
+                            ${botonEliminar}
+                            <button class="btn-primary" onclick="abrirExamenParaResponder(${ex.id})" style="margin-left: 10px;">Responder</button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
+
+        // Tabla de resultados
+        tablaResultados.innerHTML = '';
+        if(resultadosDB.length === 0) {
+            tablaResultados.innerHTML = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #666;">Aún no hay resultados registrados.</td></tr>';
+        } else {
+            // Ordenar de más reciente a más antiguo
+            [...resultadosDB].reverse().forEach(res => {
+                const color = res.porcentaje >= 70 ? '#4CAF50' : '#ff5e5e';
+                tablaResultados.innerHTML += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 15px; color: white;">${res.alumno}</td>
+                        <td style="padding: 15px; color: #a0a0b8;">${res.tituloExamen}</td>
+                        <td style="padding: 15px; font-weight: bold; color: ${color};">${res.porcentaje}% (${res.aciertos}/${res.total})</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+    renderExamenes();
+
+    window.eliminarExamen = function(id) {
+        if (confirm("¿Eliminar este examen? (Los resultados se mantendrán)")) {
+            examenesDB = examenesDB.filter(ex => ex.id !== id);
+            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
+            renderExamenes();
+        }
+    };
+
+    // 3. Abrir Modal para Responder
+    window.abrirExamenParaResponder = function(id) {
+        const examen = examenesDB.find(ex => ex.id === id);
+        if(!examen) return;
+
+        examenActivoId = id;
+        document.getElementById('mExamenTitulo').textContent = examen.titulo;
+        const contenedor = document.getElementById('mExamenPreguntas');
+        contenedor.innerHTML = '';
+
+        examen.preguntas.forEach((p, index) => {
+            contenedor.innerHTML += `
+                <div class="pregunta-bloque">
+                    <p style="margin-bottom: 10px; font-weight: bold;">${index + 1}. ${p.pregunta}</p>
+                    <label class="opcion-examen"><input type="radio" name="resp_${index}" value="A"> ${p.opcionA}</label>
+                    <label class="opcion-examen"><input type="radio" name="resp_${index}" value="B"> ${p.opcionB}</label>
+                </div>
+            `;
+        });
+
+        document.getElementById('modalExamen').style.display = 'flex';
+    }
+
+    window.cerrarModalExamen = function() {
+        document.getElementById('modalExamen').style.display = 'none';
+    }
+
+    // 4. Calificar Examen
+    document.getElementById('btnCalificarExamen').addEventListener('click', () => {
+        const examen = examenesDB.find(ex => ex.id === examenActivoId);
+        if(!examen) return;
+
+        let aciertos = 0;
+        let todasRespondidas = true;
+
+        examen.preguntas.forEach((p, index) => {
+            const seleccion = document.querySelector(`input[name="resp_${index}"]:checked`);
+            if (!seleccion) {
+                todasRespondidas = false;
+            } else if (seleccion.value === p.correcta) {
+                aciertos++;
+            }
+        });
+
+        if (!todasRespondidas) {
+            alert("Por favor, responde todas las preguntas antes de enviar.");
+            return;
+        }
+
+        const total = examen.preguntas.length;
+        const porcentaje = Math.round((aciertos / total) * 100);
+
+        // Guardar en la base de datos
+        resultadosDB.push({
+            id: Date.now(),
+            examenId: examen.id,
+            tituloExamen: examen.titulo,
+            alumno: nombreStaff,
+            porcentaje: porcentaje,
+            aciertos: aciertos,
+            total: total
+        });
+        localStorage.setItem('resultadosSpotlight', JSON.stringify(resultadosDB));
+
+        // Mostrar resultado y cerrar
+        cerrarModalExamen();
+        renderExamenes(); // Actualiza la tabla
+
+        if (porcentaje >= 70) {
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}% (${aciertos}/${total} aciertos). 🎉`);
+        } else {
+            alert(`Obtuviste un ${porcentaje}% (${aciertos}/${total} aciertos). Necesitas al menos 70% para aprobar. ¡Sigue practicando! 😢`);
+        }
+    });
+
+
     // ================= NOTIFICACIONES =================
     let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
@@ -34,12 +226,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (noLeidas > 0) { badge.textContent = noLeidas; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
         listaNotificaciones.innerHTML = '';
         if (misNotificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
-        else {
-            misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; });
-        }
+        else { misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; }); }
     }
     renderNotificaciones();
-
     btnNotificaciones.addEventListener('click', () => {
         panelNotificaciones.style.display = panelNotificaciones.style.display === 'block' ? 'none' : 'block';
         notificaciones.forEach(n => { if(n.para === nombreStaff) n.leida = true; });
@@ -47,96 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
         renderNotificaciones();
     });
 
-    // ================= SISTEMA DE EXÁMENES =================
-    let examenesDB = JSON.parse(localStorage.getItem('examenesSpotlight')) || [];
-    const listaExamenes = document.getElementById('listaExamenes');
-
-    window.renderExamenes = function() {
-        listaExamenes.innerHTML = '';
-        if(examenesDB.length === 0) {
-            listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>';
-            return;
-        }
-
-        examenesDB.forEach((ex, index) => {
-            // El botón de eliminar solo se le muestra a los gerentes
-            const botonEliminar = esGerente 
-                ? `<button class="btn-eliminar" onclick="eliminarExamen(${index})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` 
-                : '';
-
-            // TANTO GERENTES COMO STAFF VEN EL EXAMEN Y PUEDEN RESPONDERLO
-            listaExamenes.innerHTML += `
-                <div class="examen-card">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                        <h3 style="margin: 0;">${ex.titulo}</h3>
-                        ${botonEliminar}
-                    </div>
-                    <p style="margin-bottom: 15px;">${ex.pregunta}</p>
-                    <label class="opcion-examen">
-                        <input type="radio" name="examen_${index}" value="A"> ${ex.opcionA}
-                    </label>
-                    <label class="opcion-examen">
-                        <input type="radio" name="examen_${index}" value="B"> ${ex.opcionB}
-                    </label>
-                    <button class="btn-primary" onclick="calificarExamen(${index})" style="margin-top: 15px;">Enviar Respuesta</button>
-                </div>
-            `;
-        });
-    }
-    renderExamenes();
-
-    if(document.getElementById('btnMostrarFormExamen')) {
-        document.getElementById('btnMostrarFormExamen').addEventListener('click', () => {
-            document.getElementById('formNuevoExamen').style.display = document.getElementById('formNuevoExamen').style.display === 'none' ? 'flex' : 'none';
-        });
-
-        document.getElementById('btnGuardarExamen').addEventListener('click', () => {
-            const titulo = document.getElementById('examenTitulo').value;
-            const pregunta = document.getElementById('examenPregunta').value;
-            const opcionA = document.getElementById('examenOpcionA').value;
-            const opcionB = document.getElementById('examenOpcionB').value;
-            const correcta = document.getElementById('examenCorrecta').value;
-
-            if (titulo && pregunta && opcionA && opcionB) {
-                examenesDB.push({ titulo, pregunta, opcionA, opcionB, correcta });
-                localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-                renderExamenes();
-                document.getElementById('formNuevoExamen').style.display = 'none';
-                // Limpiar formulario
-                document.getElementById('examenTitulo').value = '';
-                document.getElementById('examenPregunta').value = '';
-                document.getElementById('examenOpcionA').value = '';
-                document.getElementById('examenOpcionB').value = '';
-            } else {
-                alert("Llena todos los campos del examen.");
-            }
-        });
-    }
-
-    window.eliminarExamen = function(index) {
-        if (confirm("¿Eliminar este examen?")) {
-            examenesDB.splice(index, 1);
-            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-            renderExamenes();
-        }
-    };
-
-    window.calificarExamen = function(index) {
-        const seleccion = document.querySelector(`input[name="examen_${index}"]:checked`);
-        if (!seleccion) { alert("Por favor selecciona una opción."); return; }
-        
-        const respuestaUsuario = seleccion.value;
-        const respuestaCorrecta = examenesDB[index].correcta;
-
-        if (respuestaUsuario === respuestaCorrecta) {
-            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            alert("¡Felicidades! Has aprobado el examen. 🎉");
-        } else {
-            alert("Respuesta incorrecta. Repasa el material e inténtalo de nuevo. 😢");
-        }
-    };
-
-    // ================= PROYECTOS =================
+    // ================= PROYECTOS Y TAREAS (Igual que antes) =================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [{ id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }];
     window.renderProyectosLista = function() {
         const listaProyectos = document.getElementById('listaProyectos'); listaProyectos.innerHTML = '';
@@ -169,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // ================= TAREAS =================
     let tareas = JSON.parse(localStorage.getItem('tareasSpotlight')) || [{ id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip de 0:15 a 0:45", proyecto: "General", archivos: [] }];
     let tareaActivaIndex = -1;
 
@@ -219,7 +318,6 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
 
-    // MODAL TAREA
     window.abrirModalTarea = function(index) {
         tareaActivaIndex = index; const t = tareas[index];
         document.getElementById('mTareaTitulo').textContent = t.titulo;
@@ -259,7 +357,6 @@ document.addEventListener('DOMContentLoaded', function() {
         boton.innerHTML = textOrig; boton.disabled = false; input.value = ''; renderArchivosModal();
     }
 
-    // MODAL PROYECTO
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
@@ -351,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('view-' + target).style.display = 'block';
             
             if (target === 'calendario') renderCalendario();
-            if (target === 'examenes') renderExamenes(); // Recarga exámenes al entrar
+            if (target === 'examenes') renderExamenes();
         });
     });
 
