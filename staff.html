@@ -123,23 +123,25 @@
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
             </div>
-            <div class="task-list" id="listaTareas"></div>
-            <h2 style="margin-top: 40px; color: #4CAF50;"><i class="fa-solid fa-check-circle"></i> Tareas Completadas</h2>
-            <div class="task-list" id="listaTareasCompletadas" style="margin-top: 15px;"></div>
-        </section>
 
-        <!-- ===== VISTA: PROYECTOS ===== -->
-        <section id="view-proyectos" class="view-section" style="display: none;">
-            <div class="recent-tasks-header">
-                <h2>Gestión de Proyectos</h2>
-                <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
+            <!-- TABLERO KANBAN -->
+            <div class="kanban-board">
+                <!-- Columna Pendientes -->
+                <div class="kanban-column">
+                    <h3><i class="fa-solid fa-list-check"></i> Por Hacer</h3>
+                    <div class="kanban-items" id="kanban-pending"></div>
+                </div>
+                <!-- Columna En Proceso -->
+                <div class="kanban-column">
+                    <h3><i class="fa-solid fa-spinner"></i> En Proceso</h3>
+                    <div class="kanban-items" id="kanban-progress"></div>
+                </div>
+                <!-- Columna Completadas -->
+                <div class="kanban-column">
+                    <h3><i class="fa-solid fa-check-circle"></i> Completadas</h3>
+                    <div class="kanban-items" id="kanban-completed"></div>
+                </div>
             </div>
-            <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
-                <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
-                <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
-                <button id="btnGuardarProyecto" class="btn-primary">Guardar</button>
-            </div>
-            <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
         <!-- ===== VISTA: CALENDARIO ===== -->

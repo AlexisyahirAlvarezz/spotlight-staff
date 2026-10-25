@@ -369,9 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); }
     };
 
-    // ================= TAREAS =================
-    const listaTareas = document.getElementById('listaTareas');
-    const listaTareasCompletadas = document.getElementById('listaTareasCompletadas');
+    // ================= TAREAS (TABLERO KANBAN) =================
     let tareas = [];
     let tareaActivaId = null;
 
@@ -381,34 +379,59 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.renderTareas = function() {
-        if(!listaTareas) return;
-        listaTareas.innerHTML = ''; listaTareasCompletadas.innerHTML = '';
-        tareas.forEach((t) => {
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea('${t.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
-            const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
-            const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea('${t.id}')"><i class="fa-solid fa-check"></i></button>` : '';
-            const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
+        const colPending = document.getElementById('kanban-pending');
+        const colProgress = document.getElementById('kanban-progress');
+        const colCompleted = document.getElementById('kanban-completed');
+        
+        if(!colPending) return;
 
-            const html = `
-                <div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea('${t.id}')">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <div class="task-status ${t.estado}"></div>
-                        <div class="task-details">
-                            <h4>${t.titulo}</h4>
-                            <p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        ${etiquetaNota}
-                        <span class="task-tag">${t.estado}</span>
-                        ${botonCompletar}
-                        ${botonEliminar}
+        colPending.innerHTML = '';
+        colProgress.innerHTML = '';
+        colCompleted.innerHTML = '';
+
+        tareas.forEach((t) => {
+            const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
+            const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
+            
+            let botonesAccion = '';
+
+            if (t.estado === 'pending') {
+                botonesAccion = `<button class="btn-start" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-play"></i> Empezar</button>`;
+            } else if (t.estado === 'progress') {
+                const btnReabrir = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> Pausar</button>`;
+                const btnTerminar = (esAsignado || esGerente) ? `<button class="btn-finish" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'completed')"><i class="fa-solid fa-check"></i> Terminar</button>` : '';
+                botonesAccion = btnReabrir + btnTerminar;
+            } else if (t.estado === 'completed') {
+                botonesAccion = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-rotate-left"></i> Reabrir</button>`;
+                if (esGerente) {
+                    botonesAccion += `<button class="btn-back" onclick="event.stopPropagation(); eliminarTarea('${t.id}')" style="flex: 0.5;"><i class="fa-solid fa-trash"></i></button>`;
+                }
+            }
+
+            const cardHTML = `
+                <div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')">
+                    <h4>${t.titulo}</h4>
+                    <p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p>
+                    ${etiquetaNota}
+                    <div class="kanban-actions">
+                        ${botonesAccion}
                     </div>
                 </div>
             `;
-            if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } else { listaTareas.innerHTML += html; }
+
+            if (t.estado === 'pending') colPending.innerHTML += cardHTML;
+            else if (t.estado === 'progress') colProgress.innerHTML += cardHTML;
+            else if (t.estado === 'completed') colCompleted.innerHTML += cardHTML;
         });
     }
+
+    window.cambiarEstadoTarea = function(id, nuevoEstado) {
+        db.collection("tareas").doc(id).update({ estado: nuevoEstado }).then(() => {
+            if (nuevoEstado === 'completed') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            }
+        });
+    };
 
     if(document.getElementById('btnGuardarTarea')) {
         document.getElementById('btnGuardarTarea').addEventListener('click', async () => {
@@ -431,12 +454,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.completarTarea = function(id) {
-        db.collection("tareas").doc(id).update({ estado: 'completed' }).then(() => {
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        });
-    };
-    
     window.eliminarTarea = function(id) { 
         if (confirm("¿Eliminar tarea?")) { db.collection("tareas").doc(id).delete(); } 
     };
