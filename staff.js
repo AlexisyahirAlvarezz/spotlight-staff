@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     
+    // 1. SEGURIDAD
     if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
+    // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
     document.getElementById('nombreStaff').textContent = nombreStaff;
@@ -26,156 +28,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // ==========================================
+    // CONFIGURACIÓN DE FIREBASE
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyD0b-S3Qo28sJzuJr-Sb-90_OqDzeJ0o1Q",
+        authDomain: "spotlight-produccion.firebaseapp.com",
+        projectId: "spotlight-produccion",
+        storageBucket: "spotlight-produccion.firebasestorage.app",
+        messagingSenderId: "354006255162",
+        appId: "1:354006255162:web:4241b9eca93f953c0e1703",
+        measurementId: "G-7F8T5TSHHZ"
+    };
+
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const db = firebase.firestore();
+
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= DIRECTORIO =================
-    let directorioDB = JSON.parse(localStorage.getItem('directorioSpotlight')) || [
-        { id: 1, nombre: "Johan Sebastián", rol: "Gerente General", correo: "johan@spotlight.com", telefono: "555-100-2001", foto: "" },
-        { id: 2, nombre: "Brayan Alexander", rol: "Gerente de Marketing", correo: "brayan@spotlight.com", telefono: "555-100-2002", foto: "" },
-        { id: 3, nombre: "Beatriz", rol: "Jefa de Producción", correo: "beatriz@spotlight.com", telefono: "555-100-2003", foto: "" },
-        { id: 4, nombre: "Jair", rol: "Jefe de Finanzas", correo: "jair@spotlight.com", telefono: "555-100-2004", foto: "" },
-        { id: 5, nombre: "Ximena", rol: "Jefa de RRHH", correo: "ximena@spotlight.com", telefono: "555-100-2005", foto: "" },
-        { id: 6, nombre: "Maria Fernanda", rol: "Diseñadora Gráfica", correo: "maria@spotlight.com", telefono: "555-100-2006", foto: "" }
-    ];
-    
-    const gridDirectorio = document.getElementById('gridDirectorio');
-
-    window.renderDirectorio = function() {
-        if(!gridDirectorio) return;
-        gridDirectorio.innerHTML = '';
-        
-        directorioDB.forEach(persona => {
-            const inicial = persona.nombre.charAt(0).toUpperCase();
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro(${persona.id})" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
-
-            let avatarHTML = '';
-            if (persona.foto && persona.foto !== "") {
-                avatarHTML = `<img src="${persona.foto}" alt="${persona.nombre}" class="miembro-avatar-img">`;
-            } else {
-                avatarHTML = `<div class="miembro-avatar">${inicial}</div>`;
-            }
-
-            gridDirectorio.innerHTML += `
-                <div class="miembro-card">
-                    ${botonEliminar}
-                    ${avatarHTML}
-                    <h3 class="miembro-nombre">${persona.nombre}</h3>
-                    <span class="miembro-rol">${persona.rol}</span>
-                    <div class="miembro-contacto">
-                        <span><i class="fa-solid fa-envelope"></i> ${persona.correo}</span>
-                        <span><i class="fa-solid fa-phone"></i> ${persona.telefono}</span>
-                    </div>
-                </div>
-            `;
-        });
-    }
-    renderDirectorio();
-
-    if(document.getElementById('btnGuardarDirectorio')) {
-        document.getElementById('btnGuardarDirectorio').addEventListener('click', async () => {
-            const nombre = document.getElementById('dirNombre').value;
-            const rol = document.getElementById('dirRol').value;
-            const correo = document.getElementById('dirCorreo').value;
-            const telefono = document.getElementById('dirTelefono').value;
-            const fileInput = document.getElementById('dirFoto');
-            const boton = document.getElementById('btnGuardarDirectorio');
-
-            if (nombre && rol) {
-                let fotoUrl = "";
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-                    boton.innerHTML = "Subiendo foto...";
-                    boton.disabled = true;
-
-                    try {
-                        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
-                        const data = await response.json();
-                        if (data.secure_url) { fotoUrl = data.secure_url; }
-                    } catch (error) { alert("Error al subir la foto."); }
-                    
-                    boton.innerHTML = "Guardar Integrante";
-                    boton.disabled = false;
-                }
-
-                directorioDB.push({ id: Date.now(), nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl });
-                localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
-                renderDirectorio();
-                
-                document.getElementById('formNuevoDirectorio').style.display = 'none';
-                document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
-            } else { alert("El nombre y el puesto son obligatorios."); }
-        });
-    }
-
-    window.eliminarMiembro = function(id) {
-        if (confirm("¿Eliminar a este integrante?")) {
-            directorioDB = directorioDB.filter(p => p.id !== id);
-            localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
-            renderDirectorio();
-        }
-    };
-
-    // ================= TABLÓN DE ANUNCIOS =================
-    let anunciosDB = JSON.parse(localStorage.getItem('anunciosSpotlight')) || [];
-    const listaAnuncios = document.getElementById('listaAnuncios');
-
-    window.renderAnuncios = function() {
-        if(!listaAnuncios) return;
-        listaAnuncios.innerHTML = '';
-        if (anunciosDB.length === 0) { listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>'; return; }
-        const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
-            if (a.prioridad === 'Urgente' && b.prioridad !== 'Urgente') return -1;
-            if (a.prioridad !== 'Urgente' && b.prioridad === 'Urgente') return 1;
-            return b.id - a.id;
-        });
-        anunciosOrdenados.forEach(a => {
-            const esUrgente = a.prioridad === 'Urgente';
-            const claseCard = esUrgente ? 'anuncio-urgente' : 'anuncio-normal';
-            const badge = esUrgente ? '<span class="badge-urgente">URGENTE 🚨</span>' : '';
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarAnuncio(${a.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
-            listaAnuncios.innerHTML += `
-                <div class="anuncio-card ${claseCard}">
-                    <div class="anuncio-header">
-                        <div>${badge}<h3 style="margin-top: 5px;">${a.titulo}</h3><span class="anuncio-fecha">Publicado por: ${a.autor} | ${a.fecha}</span></div>
-                        ${botonEliminar}
-                    </div>
-                    <div class="anuncio-mensaje">${a.mensaje}</div>
-                </div>
-            `;
-        });
-    }
-    renderAnuncios();
-
-    if(document.getElementById('btnGuardarAnuncio')) {
-        document.getElementById('btnGuardarAnuncio').addEventListener('click', () => {
-            const titulo = document.getElementById('anuncioTitulo').value;
-            const mensaje = document.getElementById('anuncioMensaje').value;
-            const prioridad = document.getElementById('anuncioPrioridad').value;
-            if (titulo && mensaje) {
-                const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-                anunciosDB.push({ id: Date.now(), titulo, mensaje, prioridad, autor: nombreStaff, fecha: fechaActual });
-                localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
-                renderAnuncios();
-                document.getElementById('formNuevoAnuncio').style.display = 'none';
-                document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = '';
-            } else { alert("Por favor, escribe el título y el mensaje."); }
-        });
-    }
-
-    window.eliminarAnuncio = function(id) {
-        if (confirm("¿Eliminar este comunicado?")) {
-            anunciosDB = anunciosDB.filter(a => a.id !== id);
-            localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
-            renderAnuncios();
-        }
-    };
-
-    // ================= NOTIFICACIONES =================
+    // ================= NOTIFICACIONES (LOCALES) =================
     let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -202,14 +74,153 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= SISTEMA DE EXÁMENES =================
-    let examenesDB = JSON.parse(localStorage.getItem('examenesSpotlight')) || [];
-    let resultadosDB = JSON.parse(localStorage.getItem('resultadosSpotlight')) || [];
-    let examenActivoId = null;
+    function crearNotificacion(para, mensaje) {
+        notificaciones.push({ id: Date.now(), para, mensaje, leida: false });
+        localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
+        if (para === nombreStaff) renderNotificaciones();
+    }
 
+    // ================= DIRECTORIO =================
+    const gridDirectorio = document.getElementById('gridDirectorio');
+    let directorioDB = [];
+
+    db.collection("directorio").onSnapshot((snapshot) => {
+        directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderDirectorio();
+    });
+
+    window.renderDirectorio = function() {
+        if(!gridDirectorio) return;
+        gridDirectorio.innerHTML = '';
+        directorioDB.forEach(persona => {
+            const inicial = persona.nombre.charAt(0).toUpperCase();
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro('${persona.id}')" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
+            let avatarHTML = persona.foto ? `<img src="${persona.foto}" class="miembro-avatar-img">` : `<div class="miembro-avatar">${inicial}</div>`;
+            gridDirectorio.innerHTML += `
+                <div class="miembro-card">
+                    ${botonEliminar}
+                    ${avatarHTML}
+                    <h3 class="miembro-nombre">${persona.nombre}</h3>
+                    <span class="miembro-rol">${persona.rol}</span>
+                    <div class="miembro-contacto">
+                        <span><i class="fa-solid fa-envelope"></i> ${persona.correo}</span>
+                        <span><i class="fa-solid fa-phone"></i> ${persona.telefono}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    if(document.getElementById('btnGuardarDirectorio')) {
+        document.getElementById('btnGuardarDirectorio').addEventListener('click', async () => {
+            const nombre = document.getElementById('dirNombre').value;
+            const rol = document.getElementById('dirRol').value;
+            const correo = document.getElementById('dirCorreo').value;
+            const telefono = document.getElementById('dirTelefono').value;
+            const fileInput = document.getElementById('dirFoto');
+            const boton = document.getElementById('btnGuardarDirectorio');
+
+            if (nombre && rol) {
+                let fotoUrl = "";
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                    boton.innerHTML = "Subiendo foto..."; boton.disabled = true;
+                    try {
+                        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+                        const data = await response.json();
+                        if (data.secure_url) { fotoUrl = data.secure_url; }
+                    } catch (error) { console.log(error); }
+                    boton.innerHTML = "Guardar Integrante"; boton.disabled = false;
+                }
+
+                db.collection("directorio").add({
+                    nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl 
+                }).then(() => {
+                    document.getElementById('formNuevoDirectorio').style.display = 'none';
+                    document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
+                });
+            } else { alert("El nombre y el puesto son obligatorios."); }
+        });
+    }
+
+    window.eliminarMiembro = function(id) {
+        if (confirm("¿Eliminar a este integrante?")) { db.collection("directorio").doc(id).delete(); }
+    };
+
+    // ================= TABLÓN DE ANUNCIOS =================
+    const listaAnuncios = document.getElementById('listaAnuncios');
+    let anunciosDB = [];
+
+    db.collection("anuncios").onSnapshot((snapshot) => {
+        anunciosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderAnuncios();
+    });
+
+    window.renderAnuncios = function() {
+        if(!listaAnuncios) return;
+        listaAnuncios.innerHTML = '';
+        if (anunciosDB.length === 0) { listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>'; return; }
+        const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
+            if (a.prioridad === 'Urgente' && b.prioridad !== 'Urgente') return -1;
+            if (a.prioridad !== 'Urgente' && b.prioridad === 'Urgente') return 1;
+            return b.timestamp - a.timestamp;
+        });
+        anunciosOrdenados.forEach(a => {
+            const esUrgente = a.prioridad === 'Urgente';
+            const claseCard = esUrgente ? 'anuncio-urgente' : 'anuncio-normal';
+            const badge = esUrgente ? '<span class="badge-urgente">URGENTE 🚨</span>' : '';
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarAnuncio('${a.id}')" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+            listaAnuncios.innerHTML += `
+                <div class="anuncio-card ${claseCard}">
+                    <div class="anuncio-header">
+                        <div>${badge}<h3 style="margin-top: 5px;">${a.titulo}</h3><span class="anuncio-fecha">Publicado por: ${a.autor} | ${a.fecha}</span></div>
+                        ${botonEliminar}
+                    </div>
+                    <div class="anuncio-mensaje">${a.mensaje}</div>
+                </div>
+            `;
+        });
+    }
+
+    if(document.getElementById('btnGuardarAnuncio')) {
+        document.getElementById('btnGuardarAnuncio').addEventListener('click', () => {
+            const titulo = document.getElementById('anuncioTitulo').value;
+            const mensaje = document.getElementById('anuncioMensaje').value;
+            const prioridad = document.getElementById('anuncioPrioridad').value;
+            if (titulo && mensaje) {
+                const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                db.collection("anuncios").add({ titulo, mensaje, prioridad, autor: nombreStaff, fecha: fechaActual, timestamp: Date.now() }).then(() => {
+                    document.getElementById('formNuevoAnuncio').style.display = 'none';
+                    document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = '';
+                });
+            } else { alert("Por favor, escribe el título y el mensaje."); }
+        });
+    }
+
+    window.eliminarAnuncio = function(id) {
+        if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); }
+    };
+
+    // ================= SISTEMA DE EXÁMENES =================
+    let examenesDB = [];
+    let resultadosDB = [];
+    let examenActivoId = null;
     const listaExamenes = document.getElementById('listaExamenes');
     const tablaResultados = document.getElementById('tablaResultados');
     const contenedorPreguntas = document.getElementById('contenedorPreguntas');
+
+    db.collection("examenes").onSnapshot((snapshot) => {
+        examenesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderExamenes();
+    });
+
+    db.collection("resultados").onSnapshot((snapshot) => {
+        resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderExamenes();
+    });
 
     function crearBloquePregunta() {
         if(!contenedorPreguntas) return;
@@ -239,10 +250,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (preg && opA && opB) { preguntas.push({ pregunta: preg, opcionA: opA, opcionB: opB, correcta: corr }); }
             });
             if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta completa."); return; }
-            examenesDB.push({ id: Date.now(), titulo, preguntas });
-            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-            document.getElementById('examenTitulo').value = ''; contenedorPreguntas.innerHTML = ''; crearBloquePregunta(); 
-            document.getElementById('formNuevoExamen').style.display = 'none'; renderExamenes();
+            
+            db.collection("examenes").add({ titulo, preguntas }).then(() => {
+                document.getElementById('examenTitulo').value = ''; contenedorPreguntas.innerHTML = ''; crearBloquePregunta(); 
+                document.getElementById('formNuevoExamen').style.display = 'none';
+            });
         });
     }
 
@@ -252,11 +264,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if(examenesDB.length === 0) { listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>'; } 
         else {
             examenesDB.forEach((ex) => {
-                const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarExamen(${ex.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+                const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarExamen('${ex.id}')" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
                 listaExamenes.innerHTML += `
                     <li class="examen-card">
                         <div><h3>${ex.titulo}</h3><p style="color:#a0a0b8; font-size: 0.9rem; margin-top: 5px;">${ex.preguntas.length} preguntas</p></div>
-                        <div>${botonEliminar}<button class="btn-primary" onclick="abrirExamenParaResponder(${ex.id})" style="margin-left: 10px;">Responder</button></div>
+                        <div>${botonEliminar}<button class="btn-primary" onclick="abrirExamenParaResponder('${ex.id}')" style="margin-left: 10px;">Responder</button></div>
                     </li>
                 `;
             });
@@ -265,21 +277,17 @@ document.addEventListener('DOMContentLoaded', function() {
             tablaResultados.innerHTML = '';
             if(resultadosDB.length === 0) { tablaResultados.innerHTML = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #666;">Aún no hay resultados registrados.</td></tr>'; } 
             else {
-                [...resultadosDB].reverse().forEach(res => {
+                const resOrdenados = [...resultadosDB].sort((a,b) => b.timestamp - a.timestamp);
+                resOrdenados.forEach(res => {
                     const color = res.porcentaje >= 70 ? '#4CAF50' : '#ff5e5e';
                     tablaResultados.innerHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 15px; color: white;">${res.alumno}</td><td style="padding: 15px; color: #a0a0b8;">${res.tituloExamen}</td><td style="padding: 15px; font-weight: bold; color: ${color};">${res.porcentaje}% (${res.aciertos}/${res.total})</td></tr>`;
                 });
             }
         }
     }
-    renderExamenes();
 
     window.eliminarExamen = function(id) {
-        if (confirm("¿Eliminar este examen?")) {
-            examenesDB = examenesDB.filter(ex => ex.id !== id);
-            localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-            renderExamenes();
-        }
+        if (confirm("¿Eliminar este examen?")) { db.collection("examenes").doc(id).delete(); }
     };
 
     window.abrirExamenParaResponder = function(id) {
@@ -315,69 +323,74 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!todasRespondidas) { alert("Por favor, responde todas las preguntas."); return; }
             const total = examen.preguntas.length;
             const porcentaje = Math.round((aciertos / total) * 100);
-            resultadosDB.push({ id: Date.now(), examenId: examen.id, tituloExamen: examen.titulo, alumno: nombreStaff, porcentaje: porcentaje, aciertos: aciertos, total: total });
-            localStorage.setItem('resultadosSpotlight', JSON.stringify(resultadosDB));
-            cerrarModalExamen(); renderExamenes();
-            if (porcentaje >= 70) { confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`); } 
-            else { alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`); }
+            
+            db.collection("resultados").add({
+                examenId: examen.id, tituloExamen: examen.titulo, alumno: nombreStaff, porcentaje: porcentaje, aciertos: aciertos, total: total, timestamp: Date.now()
+            }).then(() => {
+                cerrarModalExamen();
+                if (porcentaje >= 70) { confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`); } 
+                else { alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`); }
+            });
         });
     }
 
     // ================= PROYECTOS =================
-    let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [{ id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }];
+    const listaProyectos = document.getElementById('listaProyectos'); 
+    let proyectosDB = [];
+
+    db.collection("proyectos").onSnapshot((snapshot) => {
+        proyectosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderProyectosLista();
+    });
+
     window.renderProyectosLista = function() {
-        const listaProyectos = document.getElementById('listaProyectos'); 
         if(!listaProyectos) return;
         listaProyectos.innerHTML = '';
         proyectosDB.forEach(p => {
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` : '';
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto('${p.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             listaProyectos.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')"><div><i class="fa-solid fa-folder" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${p.nombre}</strong></div>${botonEliminar}</li>`;
         });
     }
-    renderProyectosLista();
 
     if(document.getElementById('btnGuardarProyecto')) {
         document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
             const nombre = document.getElementById('inputProyectoNom').value;
             const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
             if (nombre && !proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-                proyectosDB.push({ id: Date.now(), nombre, cliente });
-                localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-                renderProyectosLista();
-                document.getElementById('formNuevoProyecto').style.display = 'none';
-                document.getElementById('inputProyectoNom').value = '';
-            }
+                db.collection("proyectos").add({ nombre, cliente }).then(() => {
+                    document.getElementById('formNuevoProyecto').style.display = 'none';
+                    document.getElementById('inputProyectoNom').value = '';
+                });
+            } else { alert("El proyecto ya existe o el nombre está vacío."); }
         });
     }
 
     window.eliminarProyecto = function(id) {
-        if (confirm("¿Eliminar este proyecto?")) {
-            proyectosDB = proyectosDB.filter(p => p.id !== id);
-            localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-            renderProyectosLista();
-        }
+        if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); }
     };
 
     // ================= TAREAS =================
-    // NOTA: Se agregó el campo "calificacion: null" a la tarea de prueba
-    let tareas = JSON.parse(localStorage.getItem('tareasSpotlight')) || [{ id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip", proyecto: "General", archivos: [], calificacion: null }];
-    let tareaActivaIndex = -1;
+    const listaTareas = document.getElementById('listaTareas');
+    const listaTareasCompletadas = document.getElementById('listaTareasCompletadas');
+    let tareas = [];
+    let tareaActivaId = null;
+
+    db.collection("tareas").onSnapshot((snapshot) => {
+        tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderTareas();
+    });
 
     window.renderTareas = function() {
-        const listaTareas = document.getElementById('listaTareas');
-        const listaTareasCompletadas = document.getElementById('listaTareasCompletadas');
         if(!listaTareas) return;
         listaTareas.innerHTML = ''; listaTareasCompletadas.innerHTML = '';
-        tareas.forEach((t, index) => {
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` : '';
+        tareas.forEach((t) => {
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea('${t.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
-            const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})"><i class="fa-solid fa-check"></i></button>` : '';
-            
-            // ETIQUETA DE CALIFICACIÓN
+            const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea('${t.id}')"><i class="fa-solid fa-check"></i></button>` : '';
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
 
             const html = `
-                <div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})">
+                <div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea('${t.id}')">
                     <div style="display: flex; align-items: center; gap: 20px;">
                         <div class="task-status ${t.estado}"></div>
                         <div class="task-details">
@@ -396,48 +409,47 @@ document.addEventListener('DOMContentLoaded', function() {
             if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } else { listaTareas.innerHTML += html; }
         });
     }
-    renderTareas();
 
     if(document.getElementById('btnGuardarTarea')) {
-        document.getElementById('btnGuardarTarea').addEventListener('click', () => {
+        document.getElementById('btnGuardarTarea').addEventListener('click', async () => {
             const titulo = document.getElementById('inputTarea').value;
             const asignado = document.getElementById('inputAsignado').value;
             const fecha = document.getElementById('inputFecha').value;
             const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
             const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
+            
             if (titulo) {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
-                    proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
-                    localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-                    renderProyectosLista();
+                    await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente" });
                 }
-                tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null });
-                localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-                notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
-                localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
-                renderNotificaciones();
-                renderTareas(); document.getElementById('formNuevaTarea').style.display = 'none';
-                document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
+                db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null }).then(() => {
+                    crearNotificacion(asignado, `Nueva tarea asignada: ${titulo}`);
+                    document.getElementById('formNuevaTarea').style.display = 'none';
+                    document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
+                });
             } else { alert("Escribe qué hay que hacer."); }
         });
     }
 
-    window.completarTarea = function(index) {
-        tareas[index].estado = 'completed';
-        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-        renderTareas();
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    window.completarTarea = function(id) {
+        db.collection("tareas").doc(id).update({ estado: 'completed' }).then(() => {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        });
     };
-    window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
+    
+    window.eliminarTarea = function(id) { 
+        if (confirm("¿Eliminar tarea?")) { db.collection("tareas").doc(id).delete(); } 
+    };
 
-    window.abrirModalTarea = function(index) {
-        tareaActivaIndex = index; const t = tareas[index];
+    window.abrirModalTarea = function(id) {
+        const t = tareas.find(tarea => tarea.id === id);
+        if(!t) return;
+
+        tareaActivaId = id;
         document.getElementById('mTareaTitulo').textContent = t.titulo;
         document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`;
         document.getElementById('mTareaDesc').textContent = t.desc;
         
-        // LÓGICA DE LA CALIFICACIÓN EN EL MODAL
-        const seccionCalificacion = document.getElementById('seccionCalificacion');
         const calificacionAdmin = document.getElementById('calificacionAdmin');
         const calificacionStaff = document.getElementById('calificacionStaff');
         const textoCalificacion = document.getElementById('textoCalificacion');
@@ -458,39 +470,31 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        renderArchivosModal(); document.getElementById('modalTarea').style.display = 'flex';
+        renderArchivosModal(t); 
+        document.getElementById('modalTarea').style.display = 'flex';
     }
 
-    // FUNCIÓN PARA GUARDAR LA CALIFICACIÓN
     window.guardarCalificacion = function() {
         const nota = document.getElementById('inputCalificacion').value;
+        const t = tareas.find(tarea => tarea.id === tareaActivaId);
+
         if (nota < 1 || nota > 10 || nota === '') {
             alert("Por favor, ingresa una nota válida del 1 al 10.");
             return;
         }
         
-        const tarea = tareas[tareaActivaIndex];
-        tarea.calificacion = nota;
-        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-        
-        // Enviar notificación al asignado
-        notificaciones.push({ 
-            id: Date.now(), 
-            para: tarea.asignado, 
-            mensaje: `Has recibido una calificación de ${nota}/10 en la tarea: ${tarea.titulo}`, 
-            leida: false 
+        db.collection("tareas").doc(tareaActivaId).update({ calificacion: nota }).then(() => {
+            crearNotificacion(t.asignado, `Has recibido una calificación de ${nota}/10 en la tarea: ${t.titulo}`);
+            alert("Calificación guardada y notificada exitosamente.");
+            cerrarModal();
         });
-        localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
-        
-        renderTareas(); // Actualiza la vista principal (aparece la etiqueta verde)
-        alert("Calificación guardada y notificada exitosamente.");
-        cerrarModal();
     }
     
-    function renderArchivosModal() {
-        const lista = document.getElementById('mTareaArchivos'); if(!lista) return;
+    function renderArchivosModal(tarea) {
+        const lista = document.getElementById('mTareaArchivos'); 
+        if(!lista) return;
         lista.innerHTML = '';
-        const archivos = tareas[tareaActivaIndex].archivos || [];
+        const archivos = tarea.archivos || [];
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
         else {
             archivos.forEach(a => {
@@ -502,32 +506,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.subirArchivosTarea = async function(event) {
         if (event) event.preventDefault();
+        const t = tareas.find(tarea => tarea.id === tareaActivaId);
         const input = document.getElementById('inputArchivoTarea'); if(input.files.length === 0) return;
+        
         const boton = document.querySelector('.upload-area button'); const textOrig = boton.innerHTML;
         boton.innerHTML = "Subiendo..."; boton.disabled = true;
+        let nuevosArchivos = t.archivos || [];
+
         for(let i=0; i<input.files.length; i++) {
             const file = input.files[i]; const formData = new FormData();
             formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
                 const data = await response.json();
-                if (data.secure_url) { tareas[tareaActivaIndex].archivos.push({ nombre: file.name, url: data.secure_url }); } 
-                else { alert(`Error de Cloudinary: ${data.error.message}`); }
-            } catch (error) { alert(`Error de red`); }
+                if (data.secure_url) { nuevosArchivos.push({ nombre: file.name, url: data.secure_url }); } 
+            } catch (error) { console.log(error); }
         }
-        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); 
-        boton.innerHTML = textOrig; boton.disabled = false; input.value = ''; renderArchivosModal();
+        
+        db.collection("tareas").doc(tareaActivaId).update({ archivos: nuevosArchivos }).then(() => {
+            boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
+            t.archivos = nuevosArchivos;
+            renderArchivosModal(t);
+        });
     }
 
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
+        
         if(tareasDelProyecto.length === 0) { lista.innerHTML = '<p style="color:#666;">No hay tareas en este proyecto.</p>'; } 
         else {
             tareasDelProyecto.forEach(t => {
-                const idx = tareas.findIndex(o => o.id === t.id);
-                lista.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${idx})"><div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div><div style="display:flex; gap:10px; align-items:center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div></li>`;
+                lista.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea('${t.id}')"><div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div><div style="display:flex; gap:10px; align-items: center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div></li>`;
                 if (t.archivos) {
                     t.archivos.forEach(a => {
                         const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
@@ -541,8 +552,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
     // ================= CALENDARIO =================
-    let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
+    let eventos = [];
     let fechaCalendario = new Date();
+
+    db.collection("eventos").onSnapshot((snapshot) => {
+        eventos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCalendario();
+        renderListaEventos();
+    });
 
     window.renderCalendario = function() {
         const grid = document.getElementById('calendarDays'); const display = document.getElementById('monthYearDisplay');
@@ -568,44 +585,53 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderListaEventos() {
         const listaEventos = document.getElementById('listaEventos'); if(!listaEventos) return;
         listaEventos.innerHTML = '';
-        eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-        eventos.forEach(ev => {
+        const evOrdenados = [...eventos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        evOrdenados.forEach(ev => {
             const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#a0a0b8; text-transform: capitalize;">${fechaFormat}</span></div></li>`;
         });
     }
-    renderListaEventos();
 
     if(document.getElementById('btnAgendarEvento')) {
         document.getElementById('btnAgendarEvento').addEventListener('click', () => {
             const nombre = document.getElementById('inputEvento').value; const fecha = document.getElementById('inputFechaEvento').value;
             if (nombre && fecha) {
-                eventos.push({ nombre, fecha }); localStorage.setItem('eventosSpotlight', JSON.stringify(eventos));
-                renderCalendario(); renderListaEventos(); document.getElementById('inputEvento').value = '';
+                db.collection("eventos").add({ nombre, fecha }).then(() => { document.getElementById('inputEvento').value = ''; });
             } else { alert("Escribe el nombre y la fecha."); }
         });
     }
 
     // ================= CLIENTES =================
-    let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [{ id: 1, nombre: "Panasonic México" }];
+    const listaClientes = document.getElementById('listaClientes'); 
+    let clientesDB = [];
+
+    db.collection("clientes").onSnapshot((snapshot) => {
+        clientesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderClientes();
+    });
+
     window.renderClientes = function() {
-        const listaClientes = document.getElementById('listaClientes'); if(!listaClientes) return;
+        if(!listaClientes) return;
         listaClientes.innerHTML = '';
         clientesDB.forEach(cliente => {
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})"><i class="fa-solid fa-trash"></i></button>` : '';
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarCliente('${cliente.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             listaClientes.innerHTML += `<li class="archivo-item" style="justify-content: space-between;"><div><i class="fa-solid fa-building" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${cliente.nombre}</strong></div>${botonEliminar}</li>`;
         });
     }
-    renderClientes();
 
     if(document.getElementById('btnGuardarCliente')) {
         document.getElementById('btnGuardarCliente').addEventListener('click', () => {
             const nombre = document.getElementById('inputCliente').value;
-            if (nombre) { clientesDB.push({ id: Date.now(), nombre }); localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); renderClientes(); document.getElementById('formNuevoCliente').style.display = 'none'; document.getElementById('inputCliente').value = ''; }
+            if (nombre) { 
+                db.collection("clientes").add({ nombre }).then(() => {
+                    document.getElementById('formNuevoCliente').style.display = 'none'; 
+                    document.getElementById('inputCliente').value = ''; 
+                });
+            }
         });
     }
 
-    window.eliminarCliente = function(id) { if (confirm("¿Eliminar cliente?")) { clientesDB = clientesDB.filter(c => c.id !== id); localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); renderClientes(); } };
+    window.eliminarCliente = function(id) { if (confirm("¿Eliminar cliente?")) { db.collection("clientes").doc(id).delete(); } };
 
     // ================= NAVEGACIÓN =================
     document.querySelectorAll('.nav-link').forEach(link => {
