@@ -21,6 +21,8 @@
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
+            <!-- NUEVA SECCIÓN DE OBJETIVOS -->
+            <a href="#" class="nav-link" data-target="objetivos"><i class="fa-solid fa-bullseye"></i> Objetivos</a>
             <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
@@ -54,13 +56,27 @@
             </div>
         </header>
 
+        <!-- ===== VISTA: OBJETIVOS ===== -->
+        <section id="view-objetivos" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Objetivos del Equipo</h2>
+                <button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear Objetivo</button>
+            </div>
+            
+            <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;">
+                <input type="text" id="objetivoTitulo" placeholder="¿Cuál es la meta? (Ej. Conseguir 10 clientes nuevos)" style="font-weight: bold;">
+                <input type="number" id="objetivoMeta" placeholder="Meta numérica (Ej. 10)" min="1">
+                <button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar Objetivo</button>
+            </div>
+
+            <div id="listaObjetivos" class="objetivos-grid"></div>
+        </section>
+
         <!-- ===== VISTA: DIRECTORIO ===== -->
         <section id="view-directorio" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Nuestro Equipo</h2>
-                <button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')">
-                    <i class="fa-solid fa-plus"></i> Añadir Integrante
-                </button>
+                <button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir Integrante</button>
             </div>
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -98,7 +114,7 @@
             <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </section>
 
-        <!-- ===== VISTA: INICIO (TAREAS) ===== -->
+        <!-- ===== VISTA: INICIO (TAREAS KANBAN) ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -108,12 +124,12 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <option value="Johan Sebastián">Johan Sebastián (Gerente General)</option>
-                        <option value="Brayan Alexander">Brayan Alexander (Gerente de Marketing)</option>
-                        <option value="Beatriz">Beatriz (Jefa de Producción)</option>
-                        <option value="Jair">Jair (Jefe de Finanzas)</option>
-                        <option value="Ximena">Ximena (Jefa de RRHH)</option>
-                        <option value="Maria Fernanda">Maria Fernanda (Diseñadora Gráfica)</option>
+                        <option value="Johan Sebastián">Johan Sebastián</option>
+                        <option value="Brayan Alexander">Brayan Alexander</option>
+                        <option value="Beatriz">Beatriz</option>
+                        <option value="Jair">Jair</option>
+                        <option value="Ximena">Ximena</option>
+                        <option value="Maria Fernanda">Maria Fernanda</option>
                     </select>
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -124,24 +140,34 @@
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
             </div>
 
-            <!-- TABLERO KANBAN -->
             <div class="kanban-board">
-                <!-- Columna Pendientes -->
                 <div class="kanban-column">
                     <h3><i class="fa-solid fa-list-check"></i> Por Hacer</h3>
                     <div class="kanban-items" id="kanban-pending"></div>
                 </div>
-                <!-- Columna En Proceso -->
                 <div class="kanban-column">
                     <h3><i class="fa-solid fa-spinner"></i> En Proceso</h3>
                     <div class="kanban-items" id="kanban-progress"></div>
                 </div>
-                <!-- Columna Completadas -->
                 <div class="kanban-column">
                     <h3><i class="fa-solid fa-check-circle"></i> Completadas</h3>
                     <div class="kanban-items" id="kanban-completed"></div>
                 </div>
             </div>
+        </section>
+
+        <!-- ===== VISTA: PROYECTOS ===== -->
+        <section id="view-proyectos" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Gestión de Proyectos</h2>
+                <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
+            </div>
+            <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
+                <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
+                <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
+                <button id="btnGuardarProyecto" class="btn-primary">Guardar</button>
+            </div>
+            <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
         <!-- ===== VISTA: CALENDARIO ===== -->
@@ -230,7 +256,6 @@
                 <button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
             </div>
 
-            <!-- SECCIÓN DE CALIFICACIÓN -->
             <div id="seccionCalificacion" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                 <h4 style="color:#f7c948; margin-bottom: 10px;"><i class="fa-solid fa-star"></i> Calificación de la Tarea</h4>
                 

@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. SEGURIDAD
     if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
-    // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
     document.getElementById('nombreStaff').textContent = nombreStaff;
@@ -18,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormExamen')) document.getElementById('btnMostrarFormExamen').style.display = 'flex';
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
+        if(document.getElementById('btnMostrarFormObjetivo')) document.getElementById('btnMostrarFormObjetivo').style.display = 'flex';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -47,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= NOTIFICACIONES (LOCALES) =================
+    // ================= NOTIFICACIONES =================
     let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -79,6 +78,109 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
         if (para === nombreStaff) renderNotificaciones();
     }
+
+    // ================= OBJETIVOS EN EQUIPO =================
+    const listaObjetivos = document.getElementById('listaObjetivos');
+    let objetivosDB = [];
+
+    db.collection("metas").onSnapshot((snapshot) => {
+        objetivosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderObjetivos();
+    });
+
+    window.renderObjetivos = function() {
+        if(!listaObjetivos) return;
+        listaObjetivos.innerHTML = '';
+        
+        if (objetivosDB.length === 0) {
+            listaObjetivos.innerHTML = '<p style="color:#666;">No hay objetivos activos. ¡Crea uno para motivar al equipo!</p>';
+            return;
+        }
+
+        objetivosDB.forEach(meta => {
+            const porcentaje = Math.min(Math.round((meta.progreso / meta.metaTotal) * 100), 100);
+            const estaCompleto = porcentaje >= 100;
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarObjetivo('${meta.id}')" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+            
+            let botonAccion = '';
+            if (estaCompleto) {
+                botonAccion = `<button class="btn-aportar completado" disabled><i class="fa-solid fa-trophy"></i> ¡Meta Cumplida!</button>`;
+            } else {
+                botonAccion = `<button class="btn-aportar" onclick="aportarProgreso('${meta.id}', ${meta.progreso}, ${meta.metaTotal})"><i class="fa-solid fa-hand-holding-heart"></i> ¡Aportar Avance +1!</button>`;
+            }
+
+            listaObjetivos.innerHTML += `
+                <div class="objetivo-card ${estaCompleto ? 'completado' : ''}">
+                    <div class="objetivo-titulo">
+                        ${meta.titulo}
+                        ${botonEliminar}
+                    </div>
+                    <div class="objetivo-info">
+                        <span>Progreso del equipo</span>
+                        <span class="objetivo-numero">${meta.progreso} / ${meta.metaTotal}</span>
+                    </div>
+                    <div class="barra-progreso-bg">
+                        <div class="barra-progreso-fill ${estaCompleto ? 'completado' : ''}" style="width: ${porcentaje}%;"></div>
+                    </div>
+                    ${botonAccion}
+                </div>
+            `;
+        });
+    }
+
+    if(document.getElementById('btnGuardarObjetivo')) {
+        document.getElementById('btnGuardarObjetivo').addEventListener('click', () => {
+            const titulo = document.getElementById('objetivoTitulo').value;
+            const metaTotal = parseInt(document.getElementById('objetivoMeta').value);
+            
+            if (titulo && metaTotal > 0) {
+                db.collection("metas").add({ titulo, metaTotal, progreso: 0 }).then(() => {
+                    document.getElementById('formNuevoObjetivo').style.display = 'none';
+                    document.getElementById('objetivoTitulo').value = '';
+                    document.getElementById('objetivoMeta').value = '';
+                });
+            } else { alert("Por favor, escribe un título y una meta mayor a 0."); }
+        });
+    }
+
+    window.aportarProgreso = function(id, progresoActual, metaTotal) {
+        const nuevoProgreso = progresoActual + 1;
+        
+        db.collection("metas").doc(id).update({ progreso: nuevoProgreso }).then(() => {
+            if (nuevoProgreso >= metaTotal) {
+                // ¡LLUVIA DE CONFETI ÉPICA!
+                const duration = 3000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        });
+    };
+
+    window.eliminarObjetivo = function(id) {
+        if (confirm("¿Eliminar este objetivo del equipo?")) {
+            db.collection("metas").doc(id).delete();
+        }
+    };
 
     // ================= DIRECTORIO =================
     const gridDirectorio = document.getElementById('gridDirectorio');
@@ -125,9 +227,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                    boton.innerHTML = "Subiendo foto..."; boton.disabled = true;
+                    formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                    boton.innerHTML = "Subiendo..."; boton.disabled = true;
                     try {
                         const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
                         const data = await response.json();
@@ -135,10 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) { console.log(error); }
                     boton.innerHTML = "Guardar Integrante"; boton.disabled = false;
                 }
-
-                db.collection("directorio").add({
-                    nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl 
-                }).then(() => {
+                db.collection("directorio").add({ nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl }).then(() => {
                     document.getElementById('formNuevoDirectorio').style.display = 'none';
                     document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
                 });
@@ -150,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm("¿Eliminar a este integrante?")) { db.collection("directorio").doc(id).delete(); }
     };
 
-    // ================= TABLÓN DE ANUNCIOS =================
+    // ================= ANUNCIOS =================
     const listaAnuncios = document.getElementById('listaAnuncios');
     let anunciosDB = [];
 
@@ -196,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('formNuevoAnuncio').style.display = 'none';
                     document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = '';
                 });
-            } else { alert("Por favor, escribe el título y el mensaje."); }
+            } else { alert("Escribe el título y el mensaje."); }
         });
     }
 
@@ -204,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); }
     };
 
-    // ================= SISTEMA DE EXÁMENES =================
+    // ================= EXÁMENES =================
     let examenesDB = [];
     let resultadosDB = [];
     let examenActivoId = null;
@@ -249,8 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const corr = b.querySelector('.p-correcta').value;
                 if (preg && opA && opB) { preguntas.push({ pregunta: preg, opcionA: opA, opcionB: opB, correcta: corr }); }
             });
-            if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta completa."); return; }
-            
+            if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta."); return; }
             db.collection("examenes").add({ titulo, preguntas }).then(() => {
                 document.getElementById('examenTitulo').value = ''; contenedorPreguntas.innerHTML = ''; crearBloquePregunta(); 
                 document.getElementById('formNuevoExamen').style.display = 'none';
@@ -286,9 +383,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    window.eliminarExamen = function(id) {
-        if (confirm("¿Eliminar este examen?")) { db.collection("examenes").doc(id).delete(); }
-    };
+    window.eliminarExamen = function(id) { if (confirm("¿Eliminar este examen?")) { db.collection("examenes").doc(id).delete(); } };
 
     window.abrirExamenParaResponder = function(id) {
         const examen = examenesDB.find(ex => ex.id === id);
@@ -385,14 +480,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if(!colPending) return;
 
-        colPending.innerHTML = '';
-        colProgress.innerHTML = '';
-        colCompleted.innerHTML = '';
+        colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
 
         tareas.forEach((t) => {
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
-            
             let botonesAccion = '';
 
             if (t.estado === 'pending') {
@@ -413,9 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h4>${t.titulo}</h4>
                     <p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p>
                     ${etiquetaNota}
-                    <div class="kanban-actions">
-                        ${botonesAccion}
-                    </div>
+                    <div class="kanban-actions">${botonesAccion}</div>
                 </div>
             `;
 
@@ -427,9 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.cambiarEstadoTarea = function(id, nuevoEstado) {
         db.collection("tareas").doc(id).update({ estado: nuevoEstado }).then(() => {
-            if (nuevoEstado === 'completed') {
-                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-            }
+            if (nuevoEstado === 'completed') { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
         });
     };
 
@@ -454,9 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.eliminarTarea = function(id) { 
-        if (confirm("¿Eliminar tarea?")) { db.collection("tareas").doc(id).delete(); } 
-    };
+    window.eliminarTarea = function(id) { if (confirm("¿Eliminar tarea?")) { db.collection("tareas").doc(id).delete(); } };
 
     window.abrirModalTarea = function(id) {
         const t = tareas.find(tarea => tarea.id === id);
@@ -472,19 +558,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const textoCalificacion = document.getElementById('textoCalificacion');
 
         if (esGerente) {
-            calificacionAdmin.style.display = 'flex';
-            calificacionStaff.style.display = 'none';
+            calificacionAdmin.style.display = 'flex'; calificacionStaff.style.display = 'none';
             document.getElementById('inputCalificacion').value = t.calificacion || '';
         } else {
-            calificacionAdmin.style.display = 'none';
-            calificacionStaff.style.display = 'flex';
-            if (t.calificacion) {
-                textoCalificacion.textContent = `${t.calificacion} / 10`;
-                textoCalificacion.style.color = '#4CAF50';
-            } else {
-                textoCalificacion.textContent = 'Sin calificar aún';
-                textoCalificacion.style.color = '#a0a0b8';
-            }
+            calificacionAdmin.style.display = 'none'; calificacionStaff.style.display = 'flex';
+            if (t.calificacion) { textoCalificacion.textContent = `${t.calificacion} / 10`; textoCalificacion.style.color = '#4CAF50'; } 
+            else { textoCalificacion.textContent = 'Sin calificar aún'; textoCalificacion.style.color = '#a0a0b8'; }
         }
 
         renderArchivosModal(t); 
@@ -494,22 +573,16 @@ document.addEventListener('DOMContentLoaded', function() {
     window.guardarCalificacion = function() {
         const nota = document.getElementById('inputCalificacion').value;
         const t = tareas.find(tarea => tarea.id === tareaActivaId);
-
-        if (nota < 1 || nota > 10 || nota === '') {
-            alert("Por favor, ingresa una nota válida del 1 al 10.");
-            return;
-        }
+        if (nota < 1 || nota > 10 || nota === '') { alert("Ingresa una nota del 1 al 10."); return; }
         
         db.collection("tareas").doc(tareaActivaId).update({ calificacion: nota }).then(() => {
-            crearNotificacion(t.asignado, `Has recibido una calificación de ${nota}/10 en la tarea: ${t.titulo}`);
-            alert("Calificación guardada y notificada exitosamente.");
-            cerrarModal();
+            crearNotificacion(t.asignado, `Has recibido una calificación de ${nota}/10 en: ${t.titulo}`);
+            alert("Calificación guardada."); cerrarModal();
         });
     }
     
     function renderArchivosModal(tarea) {
-        const lista = document.getElementById('mTareaArchivos'); 
-        if(!lista) return;
+        const lista = document.getElementById('mTareaArchivos'); if(!lista) return;
         lista.innerHTML = '';
         const archivos = tarea.archivos || [];
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
@@ -542,8 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         db.collection("tareas").doc(tareaActivaId).update({ archivos: nuevosArchivos }).then(() => {
             boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
-            t.archivos = nuevosArchivos;
-            renderArchivosModal(t);
+            t.archivos = nuevosArchivos; renderArchivosModal(t);
         });
     }
 
@@ -574,8 +646,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     db.collection("eventos").onSnapshot((snapshot) => {
         eventos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderCalendario();
-        renderListaEventos();
+        renderCalendario(); renderListaEventos();
     });
 
     window.renderCalendario = function() {
@@ -612,9 +683,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('btnAgendarEvento')) {
         document.getElementById('btnAgendarEvento').addEventListener('click', () => {
             const nombre = document.getElementById('inputEvento').value; const fecha = document.getElementById('inputFechaEvento').value;
-            if (nombre && fecha) {
-                db.collection("eventos").add({ nombre, fecha }).then(() => { document.getElementById('inputEvento').value = ''; });
-            } else { alert("Escribe el nombre y la fecha."); }
+            if (nombre && fecha) { db.collection("eventos").add({ nombre, fecha }).then(() => { document.getElementById('inputEvento').value = ''; }); } 
+            else { alert("Escribe el nombre y la fecha."); }
         });
     }
 
@@ -639,12 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('btnGuardarCliente')) {
         document.getElementById('btnGuardarCliente').addEventListener('click', () => {
             const nombre = document.getElementById('inputCliente').value;
-            if (nombre) { 
-                db.collection("clientes").add({ nombre }).then(() => {
-                    document.getElementById('formNuevoCliente').style.display = 'none'; 
-                    document.getElementById('inputCliente').value = ''; 
-                });
-            }
+            if (nombre) { db.collection("clientes").add({ nombre }).then(() => { document.getElementById('formNuevoCliente').style.display = 'none'; document.getElementById('inputCliente').value = ''; }); }
         });
     }
 
@@ -664,6 +729,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'examenes') renderExamenes();
             if (target === 'anuncios') renderAnuncios();
             if (target === 'directorio') renderDirectorio();
+            if (target === 'objetivos') renderObjetivos();
         });
     });
 
