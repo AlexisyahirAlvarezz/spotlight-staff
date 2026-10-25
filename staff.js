@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    // 1. SEGURIDAD
     if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
     
-    // 2. DATOS DEL USUARIO
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
     document.getElementById('nombreStaff').textContent = nombreStaff;
@@ -16,22 +14,97 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormProyecto')) document.getElementById('btnMostrarFormProyecto').style.display = 'flex';
         if(document.getElementById('btnMostrarFormCliente')) document.getElementById('btnMostrarFormCliente').style.display = 'flex';
         if(document.getElementById('btnMostrarFormExamen')) document.getElementById('btnMostrarFormExamen').style.display = 'flex';
+        if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
     }
 
-    // FUNCIÓN GLOBAL PARA ABRIR/CERRAR FORMULARIOS (Evita fallos con los botones)
     window.toggleForm = function(idFormulario) {
         const form = document.getElementById(idFormulario);
         if (form) {
-            if (form.style.display === 'none' || form.style.display === '') {
-                form.style.display = 'flex';
-            } else {
-                form.style.display = 'none';
-            }
+            if (form.style.display === 'none' || form.style.display === '') { form.style.display = 'flex'; } 
+            else { form.style.display = 'none'; }
         }
     };
 
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
+
+    // ================= TABLÓN DE ANUNCIOS =================
+    let anunciosDB = JSON.parse(localStorage.getItem('anunciosSpotlight')) || [];
+    const listaAnuncios = document.getElementById('listaAnuncios');
+
+    window.renderAnuncios = function() {
+        if(!listaAnuncios) return;
+        listaAnuncios.innerHTML = '';
+        
+        if (anunciosDB.length === 0) {
+            listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>';
+            return;
+        }
+
+        // Ordenar para que los urgentes salgan primero
+        const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
+            if (a.prioridad === 'Urgente' && b.prioridad !== 'Urgente') return -1;
+            if (a.prioridad !== 'Urgente' && b.prioridad === 'Urgente') return 1;
+            return b.id - a.id; // Los más nuevos primero
+        });
+
+        anunciosOrdenados.forEach(a => {
+            const esUrgente = a.prioridad === 'Urgente';
+            const claseCard = esUrgente ? 'anuncio-urgente' : 'anuncio-normal';
+            const badge = esUrgente ? '<span class="badge-urgente">URGENTE 🚨</span>' : '';
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarAnuncio(${a.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+
+            listaAnuncios.innerHTML += `
+                <div class="anuncio-card ${claseCard}">
+                    <div class="anuncio-header">
+                        <div>
+                            ${badge}
+                            <h3 style="margin-top: 5px;">${a.titulo}</h3>
+                            <span class="anuncio-fecha">Publicado por: ${a.autor} | ${a.fecha}</span>
+                        </div>
+                        ${botonEliminar}
+                    </div>
+                    <div class="anuncio-mensaje">${a.mensaje}</div>
+                </div>
+            `;
+        });
+    }
+    renderAnuncios();
+
+    if(document.getElementById('btnGuardarAnuncio')) {
+        document.getElementById('btnGuardarAnuncio').addEventListener('click', () => {
+            const titulo = document.getElementById('anuncioTitulo').value;
+            const mensaje = document.getElementById('anuncioMensaje').value;
+            const prioridad = document.getElementById('anuncioPrioridad').value;
+
+            if (titulo && mensaje) {
+                const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+                anunciosDB.push({ 
+                    id: Date.now(), 
+                    titulo, 
+                    mensaje, 
+                    prioridad, 
+                    autor: nombreStaff, 
+                    fecha: fechaActual 
+                });
+                localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
+                renderAnuncios();
+                document.getElementById('formNuevoAnuncio').style.display = 'none';
+                document.getElementById('anuncioTitulo').value = '';
+                document.getElementById('anuncioMensaje').value = '';
+            } else {
+                alert("Por favor, escribe el título y el mensaje del anuncio.");
+            }
+        });
+    }
+
+    window.eliminarAnuncio = function(id) {
+        if (confirm("¿Eliminar este comunicado?")) {
+            anunciosDB = anunciosDB.filter(a => a.id !== id);
+            localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
+            renderAnuncios();
+        }
+    };
 
     // ================= NOTIFICACIONES =================
     let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
@@ -49,12 +122,9 @@ document.addEventListener('DOMContentLoaded', function() {
         else { badge.style.display = 'none'; }
         
         listaNotificaciones.innerHTML = '';
-        if (misNotificaciones.length === 0) { 
-            listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; 
-        } else {
-            misNotificaciones.forEach(n => { 
-                listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; 
-            });
+        if (misNotificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
+        else {
+            misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; });
         }
     }
     renderNotificaciones();
@@ -77,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const tablaResultados = document.getElementById('tablaResultados');
     const contenedorPreguntas = document.getElementById('contenedorPreguntas');
 
-    // 1. Crear Examen (Añadir preguntas)
     function crearBloquePregunta() {
         if(!contenedorPreguntas) return;
         const bloque = document.createElement('div');
@@ -97,8 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (document.getElementById('contenedorPreguntas')) {
-        crearBloquePregunta(); // Iniciar con un bloque vacío
-        
+        crearBloquePregunta();
         document.getElementById('btnAgregarPregunta').addEventListener('click', crearBloquePregunta);
 
         document.getElementById('btnGuardarExamen').addEventListener('click', () => {
@@ -123,17 +191,14 @@ document.addEventListener('DOMContentLoaded', function() {
             examenesDB.push({ id: Date.now(), titulo, preguntas });
             localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
             
-            // Limpiar formulario
             document.getElementById('examenTitulo').value = '';
             contenedorPreguntas.innerHTML = '';
             crearBloquePregunta(); 
             document.getElementById('formNuevoExamen').style.display = 'none';
-            
             renderExamenes();
         });
     }
 
-    // 2. Renderizar Exámenes y Tabla de Resultados
     window.renderExamenes = function() {
         if(!listaExamenes) return;
         listaExamenes.innerHTML = '';
@@ -158,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Llenar Tabla de Resultados
         if (tablaResultados) {
             tablaResultados.innerHTML = '';
             if(resultadosDB.length === 0) {
@@ -180,14 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
     renderExamenes();
 
     window.eliminarExamen = function(id) {
-        if (confirm("¿Eliminar este examen? (Los resultados se mantendrán)")) {
+        if (confirm("¿Eliminar este examen?")) {
             examenesDB = examenesDB.filter(ex => ex.id !== id);
             localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
             renderExamenes();
         }
     };
 
-    // 3. Responder Examen
     window.abrirExamenParaResponder = function(id) {
         const examen = examenesDB.find(ex => ex.id === id);
         if(!examen) return;
@@ -206,7 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
-
         document.getElementById('modalExamen').style.display = 'flex';
     }
 
@@ -214,7 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalExamen').style.display = 'none';
     }
 
-    // 4. Calificar Examen
     if (document.getElementById('btnCalificarExamen')) {
         document.getElementById('btnCalificarExamen').addEventListener('click', () => {
             const examen = examenesDB.find(ex => ex.id === examenActivoId);
@@ -225,22 +286,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
             examen.preguntas.forEach((p, index) => {
                 const seleccion = document.querySelector(`input[name="resp_${index}"]:checked`);
-                if (!seleccion) {
-                    todasRespondidas = false;
-                } else if (seleccion.value === p.correcta) {
-                    aciertos++;
-                }
+                if (!seleccion) { todasRespondidas = false; } 
+                else if (seleccion.value === p.correcta) { aciertos++; }
             });
 
-            if (!todasRespondidas) {
-                alert("Por favor, responde todas las preguntas antes de enviar.");
-                return;
-            }
+            if (!todasRespondidas) { alert("Por favor, responde todas las preguntas."); return; }
 
             const total = examen.preguntas.length;
             const porcentaje = Math.round((aciertos / total) * 100);
 
-            // Guardar en base de datos
             resultadosDB.push({
                 id: Date.now(),
                 examenId: examen.id,
@@ -253,33 +307,26 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('resultadosSpotlight', JSON.stringify(resultadosDB));
 
             cerrarModalExamen();
-            renderExamenes(); // Actualiza tabla
+            renderExamenes();
 
             if (porcentaje >= 70) {
                 confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
-                alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}% (${aciertos}/${total} aciertos). 🎉`);
+                alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`);
             } else {
-                alert(`Obtuviste un ${porcentaje}% (${aciertos}/${total} aciertos). Necesitas al menos 70% para aprobar. ¡Sigue practicando! 😢`);
+                alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`);
             }
         });
     }
 
     // ================= PROYECTOS =================
     let proyectosDB = JSON.parse(localStorage.getItem('proyectosSpotlight')) || [{ id: 1, nombre: "Cortometraje Búho de Oro", cliente: "Interno" }];
-    
     window.renderProyectosLista = function() {
         const listaProyectos = document.getElementById('listaProyectos'); 
         if(!listaProyectos) return;
         listaProyectos.innerHTML = '';
-        
         proyectosDB.forEach(p => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarProyecto(${p.id})"><i class="fa-solid fa-trash"></i></button>` : '';
-            listaProyectos.innerHTML += `
-                <li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')">
-                    <div><i class="fa-solid fa-folder" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${p.nombre}</strong></div>
-                    ${botonEliminar}
-                </li>
-            `;
+            listaProyectos.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer;" onclick="abrirModalProyecto('${p.nombre}')"><div><i class="fa-solid fa-folder" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${p.nombre}</strong></div>${botonEliminar}</li>`;
         });
     }
     renderProyectosLista();
@@ -288,16 +335,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
             const nombre = document.getElementById('inputProyectoNom').value;
             const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
-            if (nombre) {
-                if (!proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-                    proyectosDB.push({ id: Date.now(), nombre, cliente });
-                    localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
-                    renderProyectosLista();
-                    document.getElementById('formNuevoProyecto').style.display = 'none';
-                    document.getElementById('inputProyectoNom').value = '';
-                } else {
-                    alert("Ya existe un proyecto con ese nombre.");
-                }
+            if (nombre && !proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
+                proyectosDB.push({ id: Date.now(), nombre, cliente });
+                localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
+                renderProyectosLista();
+                document.getElementById('formNuevoProyecto').style.display = 'none';
+                document.getElementById('inputProyectoNom').value = '';
             }
         });
     }
@@ -318,34 +361,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const listaTareas = document.getElementById('listaTareas');
         const listaTareasCompletadas = document.getElementById('listaTareasCompletadas');
         if(!listaTareas) return;
-        
         listaTareas.innerHTML = ''; listaTareasCompletadas.innerHTML = '';
-        
         tareas.forEach((t, index) => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` : '';
-            
-            // Solo el asignado ve la palomita
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})"><i class="fa-solid fa-check"></i></button>` : '';
-
-            const html = `
-                <div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <div class="task-status ${t.estado}"></div>
-                        <div class="task-details">
-                            <h4>${t.titulo}</h4>
-                            <p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span class="task-tag">${t.estado === 'pending' ? 'Pendiente' : (t.estado === 'progress' ? 'En Proceso' : 'Completada')}</span>
-                        ${botonCompletar}
-                        ${botonEliminar}
-                    </div>
-                </div>
-            `;
-            if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } 
-            else { listaTareas.innerHTML += html; }
+            const html = `<div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})"><div style="display: flex; align-items: center; gap: 20px;"><div class="task-status ${t.estado}"></div><div class="task-details"><h4>${t.titulo}</h4><p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p></div></div><div style="display: flex; align-items: center; gap: 10px;"><span class="task-tag">${t.estado}</span>${botonCompletar}${botonEliminar}</div></div>`;
+            if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } else { listaTareas.innerHTML += html; }
         });
     }
     renderTareas();
@@ -366,12 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
                 localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
-                
-                // Notificación
                 notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
                 localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
                 renderNotificaciones();
-
                 renderTareas(); 
                 document.getElementById('formNuevaTarea').style.display = 'none';
                 document.getElementById('inputTarea').value = ''; 
@@ -387,23 +406,14 @@ document.addEventListener('DOMContentLoaded', function() {
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     };
     
-    window.eliminarTarea = function(index) { 
-        if (confirm("¿Eliminar tarea?")) { 
-            tareas.splice(index, 1); 
-            localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); 
-            renderTareas(); 
-        } 
-    };
+    window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
 
-    // MODAL DE TAREA Y ARCHIVOS
     window.abrirModalTarea = function(index) {
-        tareaActivaIndex = index; 
-        const t = tareas[index];
+        tareaActivaIndex = index; const t = tareas[index];
         document.getElementById('mTareaTitulo').textContent = t.titulo;
         document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`;
         document.getElementById('mTareaDesc').textContent = t.desc;
-        renderArchivosModal(); 
-        document.getElementById('modalTarea').style.display = 'flex';
+        renderArchivosModal(); document.getElementById('modalTarea').style.display = 'flex';
     }
     
     function renderArchivosModal() {
@@ -411,83 +421,47 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!lista) return;
         lista.innerHTML = '';
         const archivos = tareas[tareaActivaIndex].archivos || [];
-        
-        if(archivos.length === 0) { 
-            lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; 
-        } else {
+        if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
+        else {
             archivos.forEach(a => {
                 const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
-                lista.innerHTML += `
-                    <li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                        <a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a>
-                        <a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a>
-                    </li>
-                `;
+                lista.innerHTML += `<li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
             });
         }
     }
 
     window.subirArchivosTarea = async function(event) {
         if (event) event.preventDefault();
-        const input = document.getElementById('inputArchivoTarea'); 
-        if(input.files.length === 0) return;
-        
-        const boton = document.querySelector('.upload-area button'); 
-        const textOrig = boton.innerHTML;
-        boton.innerHTML = "Subiendo..."; 
-        boton.disabled = true;
-        
+        const input = document.getElementById('inputArchivoTarea'); if(input.files.length === 0) return;
+        const boton = document.querySelector('.upload-area button'); const textOrig = boton.innerHTML;
+        boton.innerHTML = "Subiendo..."; boton.disabled = true;
         for(let i=0; i<input.files.length; i++) {
-            const file = input.files[i]; 
-            const formData = new FormData();
-            formData.append('file', file); 
-            formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            const file = input.files[i]; const formData = new FormData();
+            formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
                 const data = await response.json();
-                if (data.secure_url) { 
-                    tareas[tareaActivaIndex].archivos.push({ nombre: file.name, url: data.secure_url }); 
-                } else { 
-                    alert(`Error de Cloudinary: ${data.error.message}`); 
-                }
-            } catch (error) { 
-                alert(`Error de red al subir archivo`); 
-            }
+                if (data.secure_url) { tareas[tareaActivaIndex].archivos.push({ nombre: file.name, url: data.secure_url }); } 
+                else { alert(`Error de Cloudinary: ${data.error.message}`); }
+            } catch (error) { alert(`Error de red`); }
         }
         localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); 
-        boton.innerHTML = textOrig; 
-        boton.disabled = false; 
-        input.value = ''; 
-        renderArchivosModal();
+        boton.innerHTML = textOrig; boton.disabled = false; input.value = ''; renderArchivosModal();
     }
 
-    // MODAL PROYECTO
     window.abrirModalProyecto = function(nombreProyecto) {
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
-        const lista = document.getElementById('mProyectoTareas'); 
-        lista.innerHTML = '';
+        const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
-        
-        if(tareasDelProyecto.length === 0) { 
-            lista.innerHTML = '<p style="color:#666;">No hay tareas en este proyecto.</p>'; 
-        } else {
+        if(tareasDelProyecto.length === 0) { lista.innerHTML = '<p style="color:#666;">No hay tareas en este proyecto.</p>'; } 
+        else {
             tareasDelProyecto.forEach(t => {
                 const idx = tareas.findIndex(o => o.id === t.id);
-                lista.innerHTML += `
-                    <li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${idx})">
-                        <div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div>
-                        <div style="display:flex; gap:10px; align-items:center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div>
-                    </li>
-                `;
+                lista.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea(${idx})"><div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div><div style="display:flex; gap:10px; align-items:center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div></li>`;
                 if (t.archivos) {
                     t.archivos.forEach(a => {
                         const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
-                        lista.innerHTML += `
-                            <li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; background: transparent; display: flex; justify-content: space-between;">
-                                <a href="${a.url}" target="_blank" style="color: #a0a0b8; text-decoration: none;"><i class="fa-solid fa-file"></i> ${a.nombre}</a>
-                                <a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a>
-                            </li>
-                        `;
+                        lista.innerHTML += `<li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; background: transparent; display: flex; justify-content: space-between;"><a href="${a.url}" target="_blank" style="color: #a0a0b8; text-decoration: none;"><i class="fa-solid fa-file"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
                     });
                 }
             });
@@ -495,10 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalProyecto').style.display = 'flex';
     }
     
-    window.cerrarModal = function() { 
-        document.getElementById('modalTarea').style.display = 'none'; 
-        document.getElementById('modalProyecto').style.display = 'none'; 
-    }
+    window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
     // ================= CALENDARIO =================
     let eventos = JSON.parse(localStorage.getItem('eventosSpotlight')) || [];
@@ -509,18 +480,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const display = document.getElementById('monthYearDisplay');
         if(!grid) return;
         grid.innerHTML = '';
-        
-        const year = fechaCalendario.getFullYear(); 
-        const month = fechaCalendario.getMonth();
+        const year = fechaCalendario.getFullYear(); const month = fechaCalendario.getMonth();
         const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        
         display.textContent = `${meses[month]} ${year}`;
-        
-        const primerDia = new Date(year, month, 1).getDay(); 
-        const diasEnMes = new Date(year, month + 1, 0).getDate();
-        
+        const primerDia = new Date(year, month, 1).getDay(); const diasEnMes = new Date(year, month + 1, 0).getDate();
         for (let i = 0; i < primerDia; i++) grid.innerHTML += `<div class="calendar-day empty"></div>`;
-        
         for (let dia = 1; dia <= diasEnMes; dia++) {
             const fechaStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             const tieneEvento = eventos.some(e => e.fecha === fechaStr);
@@ -540,46 +504,30 @@ document.addEventListener('DOMContentLoaded', function() {
         eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         eventos.forEach(ev => {
             const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            listaEventos.innerHTML += `
-                <li class="archivo-item">
-                    <i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i>
-                    <div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#a0a0b8; text-transform: capitalize;">${fechaFormat}</span></div>
-                </li>
-            `;
+            listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#a0a0b8; text-transform: capitalize;">${fechaFormat}</span></div></li>`;
         });
     }
     renderListaEventos();
 
     if(document.getElementById('btnAgendarEvento')) {
         document.getElementById('btnAgendarEvento').addEventListener('click', () => {
-            const nombre = document.getElementById('inputEvento').value; 
-            const fecha = document.getElementById('inputFechaEvento').value;
+            const nombre = document.getElementById('inputEvento').value; const fecha = document.getElementById('inputFechaEvento').value;
             if (nombre && fecha) {
-                eventos.push({ nombre, fecha }); 
-                localStorage.setItem('eventosSpotlight', JSON.stringify(eventos));
-                renderCalendario(); 
-                renderListaEventos(); 
-                document.getElementById('inputEvento').value = '';
+                eventos.push({ nombre, fecha }); localStorage.setItem('eventosSpotlight', JSON.stringify(eventos));
+                renderCalendario(); renderListaEventos(); document.getElementById('inputEvento').value = '';
             } else { alert("Escribe el nombre y la fecha."); }
         });
     }
 
     // ================= CLIENTES =================
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [{ id: 1, nombre: "Panasonic México" }];
-    
     window.renderClientes = function() {
         const listaClientes = document.getElementById('listaClientes'); 
         if(!listaClientes) return;
         listaClientes.innerHTML = '';
-        
         clientesDB.forEach(cliente => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})"><i class="fa-solid fa-trash"></i></button>` : '';
-            listaClientes.innerHTML += `
-                <li class="archivo-item" style="justify-content: space-between;">
-                    <div><i class="fa-solid fa-building" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${cliente.nombre}</strong></div>
-                    ${botonEliminar}
-                </li>
-            `;
+            listaClientes.innerHTML += `<li class="archivo-item" style="justify-content: space-between;"><div><i class="fa-solid fa-building" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${cliente.nombre}</strong></div>${botonEliminar}</li>`;
         });
     }
     renderClientes();
@@ -587,23 +535,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('btnGuardarCliente')) {
         document.getElementById('btnGuardarCliente').addEventListener('click', () => {
             const nombre = document.getElementById('inputCliente').value;
-            if (nombre) { 
-                clientesDB.push({ id: Date.now(), nombre }); 
-                localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); 
-                renderClientes(); 
-                document.getElementById('formNuevoCliente').style.display = 'none'; 
-                document.getElementById('inputCliente').value = ''; 
-            }
+            if (nombre) { clientesDB.push({ id: Date.now(), nombre }); localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); renderClientes(); document.getElementById('formNuevoCliente').style.display = 'none'; document.getElementById('inputCliente').value = ''; }
         });
     }
 
-    window.eliminarCliente = function(id) { 
-        if (confirm("¿Eliminar cliente?")) { 
-            clientesDB = clientesDB.filter(c => c.id !== id); 
-            localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); 
-            renderClientes(); 
-        } 
-    };
+    window.eliminarCliente = function(id) { if (confirm("¿Eliminar cliente?")) { clientesDB = clientesDB.filter(c => c.id !== id); localStorage.setItem('clientesSpotlight', JSON.stringify(clientesDB)); renderClientes(); } };
 
     // ================= NAVEGACIÓN =================
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -611,19 +547,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
-            
             this.classList.add('active');
             const target = this.getAttribute('data-target');
             document.getElementById('view-' + target).style.display = 'block';
             
             if (target === 'calendario') renderCalendario();
-            if (target === 'examenes') renderExamenes(); 
+            if (target === 'examenes') renderExamenes();
+            if (target === 'anuncios') renderAnuncios();
         });
     });
 
-    document.getElementById('btnLogout').addEventListener('click', function(e) { 
-        e.preventDefault(); 
-        localStorage.removeItem('staffLogueado'); 
-        window.location.href = "login"; 
-    });
+    document.getElementById('btnLogout').addEventListener('click', function(e) { e.preventDefault(); localStorage.removeItem('staffLogueado'); window.location.href = "login"; });
 });

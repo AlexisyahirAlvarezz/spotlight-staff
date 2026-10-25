@@ -95,4 +95,14 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
 .opcion-examen:hover { border-color: #f7c948; background: rgba(247, 201, 72, 0.1); }
 .opcion-examen input { margin-right: 10px; accent-color: #f7c948; }
 
+/* ANUNCIOS (TABLÓN) */
+.anuncio-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 25px; position: relative; }
+.anuncio-urgente { border-left: 4px solid #ff5e5e; background: rgba(255, 94, 94, 0.05); }
+.anuncio-normal { border-left: 4px solid #f7c948; }
+.anuncio-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.anuncio-header h3 { color: white; margin: 0; font-size: 1.3rem; }
+.anuncio-fecha { color: #a0a0b8; font-size: 0.85rem; margin-top: 5px; display: block; }
+.anuncio-mensaje { color: #ccc; font-size: 1rem; line-height: 1.6; margin-top: 15px; white-space: pre-wrap; }
+.badge-urgente { background: #ff5e5e; color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; }
+
 @media (max-width: 900px) { body { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; padding: 20px; } .sidebar-nav { flex-direction: row; flex-wrap: wrap; } .main-content { margin-left: 0; width: 100%; padding: 20px; } }

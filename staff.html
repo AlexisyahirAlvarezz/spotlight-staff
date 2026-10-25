@@ -17,6 +17,7 @@
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
+            <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
@@ -49,6 +50,31 @@
                 <div class="user-profile"><div class="avatar" id="avatarLetra">S</div></div>
             </div>
         </header>
+
+        <!-- ===== VISTA: TABLÓN DE ANUNCIOS ===== -->
+        <section id="view-anuncios" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Comunicados Oficiales</h2>
+                <!-- SOLO GERENTES VEN ESTE BOTÓN -->
+                <button id="btnMostrarFormAnuncio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoAnuncio')">
+                    <i class="fa-solid fa-plus"></i> Nuevo Anuncio
+                </button>
+            </div>
+
+            <!-- FORMULARIO PARA CREAR ANUNCIO -->
+            <div id="formNuevoAnuncio" class="form-tarea" style="display: none; flex-direction: column;">
+                <input type="text" id="anuncioTitulo" placeholder="Título del Anuncio (Ej. Rodaje el Viernes)" style="font-weight: bold;">
+                <textarea id="anuncioMensaje" placeholder="Escribe el mensaje o comunicado aquí..." rows="3"></textarea>
+                <select id="anuncioPrioridad" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <option value="Normal">Prioridad: Normal</option>
+                    <option value="Urgente">Prioridad: URGENTE 🚨</option>
+                </select>
+                <button id="btnGuardarAnuncio" class="btn-primary" style="align-self: flex-end;">Publicar Anuncio</button>
+            </div>
+
+            <!-- LISTA DE ANUNCIOS -->
+            <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </section>
 
         <!-- ===== VISTA: INICIO (TAREAS) ===== -->
         <section id="view-inicio" class="view-section active">
@@ -119,44 +145,25 @@
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Exámenes de Capacitación</h2>
-                <!-- BOTÓN CON ONCLICK DIRECTO PARA EVITAR ERRORES -->
-                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoExamen')">
-                    <i class="fa-solid fa-plus"></i> Crear Nuevo Examen
-                </button>
+                <button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoExamen')"><i class="fa-solid fa-plus"></i> Crear Nuevo Examen</button>
             </div>
-
-            <!-- FORMULARIO PARA CREAR EXAMEN -->
             <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="examenTitulo" placeholder="Título del Examen (Ej. Protocolo de Rodaje)" style="font-weight: bold; font-size: 1.1rem;">
-                
-                <div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
-                    <!-- Las preguntas se agregan dinámicamente aquí -->
-                </div>
-
+                <input type="text" id="examenTitulo" placeholder="Título del Examen" style="font-weight: bold; font-size: 1.1rem;">
+                <div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div>
                 <div style="display: flex; gap: 15px; margin-top: 15px;">
                     <button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;"><i class="fa-solid fa-plus"></i> Añadir otra pregunta</button>
                     <button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar Examen Completo</button>
                 </div>
             </div>
-
-            <!-- LISTA DE EXÁMENES DISPONIBLES -->
             <h3 style="margin-top: 20px; color: white; margin-bottom: 15px;">Exámenes Disponibles</h3>
             <ul id="listaExamenes" class="archivos-lista"></ul>
-
-            <!-- TABLA DE RESULTADOS -->
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-chart-simple"></i> Resultados de los Exámenes</h3>
             <div style="background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
-                        <tr>
-                            <th style="padding: 15px;">Nombre</th>
-                            <th style="padding: 15px;">Examen</th>
-                            <th style="padding: 15px;">Calificación</th>
-                        </tr>
+                        <tr><th style="padding: 15px;">Nombre</th><th style="padding: 15px;">Examen</th><th style="padding: 15px;">Calificación</th></tr>
                     </thead>
-                    <tbody id="tablaResultados">
-                        <!-- Los resultados se cargan con JS -->
-                    </tbody>
+                    <tbody id="tablaResultados"></tbody>
                 </table>
             </div>
         </section>
@@ -175,19 +182,16 @@
         </section>
     </main>
 
-    <!-- MODAL PARA RESPONDER EXAMEN -->
+    <!-- MODALES -->
     <div id="modalExamen" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <span class="close" onclick="cerrarModalExamen()">&times;</span>
-            <h2 id="mExamenTitulo" style="color:#f7c948; margin-bottom: 20px;">Título del Examen</h2>
-            <div id="mExamenPreguntas" style="display: flex; flex-direction: column; gap: 20px;">
-                <!-- Preguntas para responder -->
-            </div>
+            <h2 id="mExamenTitulo" style="color:#f7c948; margin-bottom: 20px;">Título</h2>
+            <div id="mExamenPreguntas" style="display: flex; flex-direction: column; gap: 20px;"></div>
             <button id="btnCalificarExamen" class="btn-primary" style="margin-top: 25px; width: 100%;">Enviar Respuestas</button>
         </div>
     </div>
 
-    <!-- MODALES DE TAREA Y PROYECTO -->
     <div id="modalTarea" class="modal">
         <div class="modal-content">
             <span class="close" onclick="cerrarModal()">&times;</span>
@@ -207,7 +211,7 @@
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
-            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas y archivos de este proyecto:</p>
+            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas y archivos:</p>
             <ul id="mProyectoTareas" class="archivos-lista"></ul>
         </div>
     </div>
