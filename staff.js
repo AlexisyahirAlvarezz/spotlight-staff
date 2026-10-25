@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= DIRECTORIO =================
     let directorioDB = JSON.parse(localStorage.getItem('directorioSpotlight')) || [
-        { id: 1, nombre: "Johan Sebastián", rol: "Gerente General", correo: "johan@spotlight.com", telefono: "555-100-2001" },
-        { id: 2, nombre: "Brayan Alexander", rol: "Gerente de Marketing", correo: "brayan@spotlight.com", telefono: "555-100-2002" },
-        { id: 3, nombre: "Beatriz", rol: "Jefa de Producción", correo: "beatriz@spotlight.com", telefono: "555-100-2003" },
-        { id: 4, nombre: "Jair", rol: "Jefe de Finanzas", correo: "jair@spotlight.com", telefono: "555-100-2004" },
-        { id: 5, nombre: "Ximena", rol: "Jefa de RRHH", correo: "ximena@spotlight.com", telefono: "555-100-2005" },
-        { id: 6, nombre: "Maria Fernanda", rol: "Diseñadora Gráfica", correo: "maria@spotlight.com", telefono: "555-100-2006" }
+        { id: 1, nombre: "Johan Sebastián", rol: "Gerente General", correo: "johan@spotlight.com", telefono: "555-100-2001", foto: "" },
+        { id: 2, nombre: "Brayan Alexander", rol: "Gerente de Marketing", correo: "brayan@spotlight.com", telefono: "555-100-2002", foto: "" },
+        { id: 3, nombre: "Beatriz", rol: "Jefa de Producción", correo: "beatriz@spotlight.com", telefono: "555-100-2003", foto: "" },
+        { id: 4, nombre: "Jair", rol: "Jefe de Finanzas", correo: "jair@spotlight.com", telefono: "555-100-2004", foto: "" },
+        { id: 5, nombre: "Ximena", rol: "Jefa de RRHH", correo: "ximena@spotlight.com", telefono: "555-100-2005", foto: "" },
+        { id: 6, nombre: "Maria Fernanda", rol: "Diseñadora Gráfica", correo: "maria@spotlight.com", telefono: "555-100-2006", foto: "" }
     ];
     
     const gridDirectorio = document.getElementById('gridDirectorio');
@@ -49,10 +49,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro(${persona.id})" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
 
+            // EVALUAR SI TIENE FOTO O NO
+            let avatarHTML = '';
+            if (persona.foto && persona.foto !== "") {
+                avatarHTML = `<img src="${persona.foto}" alt="${persona.nombre}" class="miembro-avatar-img">`;
+            } else {
+                avatarHTML = `<div class="miembro-avatar">${inicial}</div>`;
+            }
+
             gridDirectorio.innerHTML += `
                 <div class="miembro-card">
                     ${botonEliminar}
-                    <div class="miembro-avatar">${inicial}</div>
+                    ${avatarHTML}
                     <h3 class="miembro-nombre">${persona.nombre}</h3>
                     <span class="miembro-rol">${persona.rol}</span>
                     <div class="miembro-contacto">
@@ -66,22 +74,64 @@ document.addEventListener('DOMContentLoaded', function() {
     renderDirectorio();
 
     if(document.getElementById('btnGuardarDirectorio')) {
-        document.getElementById('btnGuardarDirectorio').addEventListener('click', () => {
+        document.getElementById('btnGuardarDirectorio').addEventListener('click', async () => {
             const nombre = document.getElementById('dirNombre').value;
             const rol = document.getElementById('dirRol').value;
             const correo = document.getElementById('dirCorreo').value;
             const telefono = document.getElementById('dirTelefono').value;
+            const fileInput = document.getElementById('dirFoto');
+            const boton = document.getElementById('btnGuardarDirectorio');
 
             if (nombre && rol) {
-                directorioDB.push({ id: Date.now(), nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono" });
+                let fotoUrl = ""; // Por defecto vacía
+                
+                // Si el usuario seleccionó una foto, la subimos a Cloudinary
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                    boton.innerHTML = "Subiendo foto...";
+                    boton.disabled = true;
+
+                    try {
+                        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const data = await response.json();
+                        if (data.secure_url) {
+                            fotoUrl = data.secure_url; // Guardamos el link de la foto
+                        }
+                    } catch (error) {
+                        alert("Error al subir la foto. Se guardará sin imagen.");
+                    }
+                    
+                    boton.innerHTML = "Guardar Integrante";
+                    boton.disabled = false;
+                }
+
+                // Guardamos al nuevo integrante en la base de datos
+                directorioDB.push({ 
+                    id: Date.now(), 
+                    nombre, 
+                    rol, 
+                    correo: correo || "Sin correo", 
+                    telefono: telefono || "Sin teléfono",
+                    foto: fotoUrl 
+                });
+                
                 localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
                 renderDirectorio();
                 
+                // Limpiar formulario
                 document.getElementById('formNuevoDirectorio').style.display = 'none';
                 document.getElementById('dirNombre').value = '';
                 document.getElementById('dirRol').value = '';
                 document.getElementById('dirCorreo').value = '';
                 document.getElementById('dirTelefono').value = '';
+                fileInput.value = '';
             } else {
                 alert("El nombre y el puesto son obligatorios.");
             }

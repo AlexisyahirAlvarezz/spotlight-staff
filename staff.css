@@ -110,6 +110,18 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
 .miembro-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 30px 20px; text-align: center; position: relative; transition: 0.3s; }
 .miembro-card:hover { border-color: rgba(247, 201, 72, 0.4); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .miembro-avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #f7c948, #ff9a3c); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #0b0b1a; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); }
+
+/* NUEVO ESTILO PARA LA FOTO DEL INTEGRANTE */
+.miembro-avatar-img { 
+    width: 80px; 
+    height: 80px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    margin: 0 auto 15px; 
+    box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); 
+    border: 2px solid #f7c948;
+}
+
 .miembro-nombre { font-size: 1.3rem; font-weight: 700; color: white; margin-bottom: 5px; }
 .miembro-rol { display: inline-block; background: rgba(247, 201, 72, 0.15); color: #f7c948; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 15px; }
 .miembro-contacto { display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; color: #a0a0b8; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; }

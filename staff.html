@@ -21,7 +21,6 @@
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
-            <!-- NUEVA SECCIÓN DEL DIRECTORIO -->
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
             <a href="#" class="nav-link" data-target="clientes"><i class="fa-solid fa-users"></i> Clientes</a>
         </nav>
@@ -34,9 +33,7 @@
         <header class="top-header">
             <div class="welcome-text">
                 <h1>¡Hola, <span id="nombreStaff">Staff</span>! 👋</h1>
-                <p>Panel de control. <br>
-                   <span id="rolStaff" style="color: #f7c948; font-weight: bold; font-size: 0.9rem;"></span>
-                </p>
+                <p>Panel de control. <br><span id="rolStaff" style="color: #f7c948; font-weight: bold; font-size: 0.9rem;"></span></p>
             </div>
             <div class="header-actions">
                 <div class="notification-container">
@@ -57,13 +54,11 @@
         <section id="view-directorio" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Nuestro Equipo</h2>
-                <!-- SOLO GERENTES VEN ESTO -->
                 <button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')">
                     <i class="fa-solid fa-plus"></i> Añadir Integrante
                 </button>
             </div>
 
-            <!-- FORMULARIO PARA AÑADIR INTEGRANTE -->
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;">
@@ -73,10 +68,13 @@
                     <input type="email" id="dirCorreo" placeholder="Correo Electrónico" style="flex: 1;">
                     <input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;">
                 </div>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #a0a0b8; font-size: 0.85rem;">Foto de Perfil (Opcional):</label>
+                    <input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                </div>
                 <button id="btnGuardarDirectorio" class="btn-primary" style="align-self: flex-end;">Guardar Integrante</button>
             </div>
 
-            <!-- TARJETAS DEL EQUIPO -->
             <div id="gridDirectorio" class="directorio-grid"></div>
         </section>
 
