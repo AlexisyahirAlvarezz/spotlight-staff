@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (esGerente) {
         if(document.getElementById('btnMostrarFormTarea')) document.getElementById('btnMostrarFormTarea').style.display = 'flex';
         if(document.getElementById('btnMostrarFormProyecto')) document.getElementById('btnMostrarFormProyecto').style.display = 'flex';
-        if(document.getElementById('btnMostrarFormCliente')) document.getElementById('btnMostrarFormCliente').style.display = 'flex';
         if(document.getElementById('btnMostrarFormExamen')) document.getElementById('btnMostrarFormExamen').style.display = 'flex';
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
@@ -148,38 +147,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         db.collection("metas").doc(id).update({ progreso: nuevoProgreso }).then(() => {
             if (nuevoProgreso >= metaTotal) {
-                // ¡LLUVIA DE CONFETI ÉPICA!
                 const duration = 3000;
                 const end = Date.now() + duration;
-
                 (function frame() {
-                    confetti({
-                        particleCount: 5,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff']
-                    });
-                    confetti({
-                        particleCount: 5,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff']
-                    });
-
-                    if (Date.now() < end) {
-                        requestAnimationFrame(frame);
-                    }
+                    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff'] });
+                    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff'] });
+                    if (Date.now() < end) { requestAnimationFrame(frame); }
                 }());
             }
         });
     };
 
     window.eliminarObjetivo = function(id) {
-        if (confirm("¿Eliminar este objetivo del equipo?")) {
-            db.collection("metas").doc(id).delete();
-        }
+        if (confirm("¿Eliminar este objetivo del equipo?")) { db.collection("metas").doc(id).delete(); }
     };
 
     // ================= DIRECTORIO =================
@@ -687,33 +667,6 @@ document.addEventListener('DOMContentLoaded', function() {
             else { alert("Escribe el nombre y la fecha."); }
         });
     }
-
-    // ================= CLIENTES =================
-    const listaClientes = document.getElementById('listaClientes'); 
-    let clientesDB = [];
-
-    db.collection("clientes").onSnapshot((snapshot) => {
-        clientesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderClientes();
-    });
-
-    window.renderClientes = function() {
-        if(!listaClientes) return;
-        listaClientes.innerHTML = '';
-        clientesDB.forEach(cliente => {
-            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarCliente('${cliente.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
-            listaClientes.innerHTML += `<li class="archivo-item" style="justify-content: space-between;"><div><i class="fa-solid fa-building" style="color:#f7c948;"></i> <strong style="color:white; margin-left:10px;">${cliente.nombre}</strong></div>${botonEliminar}</li>`;
-        });
-    }
-
-    if(document.getElementById('btnGuardarCliente')) {
-        document.getElementById('btnGuardarCliente').addEventListener('click', () => {
-            const nombre = document.getElementById('inputCliente').value;
-            if (nombre) { db.collection("clientes").add({ nombre }).then(() => { document.getElementById('formNuevoCliente').style.display = 'none'; document.getElementById('inputCliente').value = ''; }); }
-        });
-    }
-
-    window.eliminarCliente = function(id) { if (confirm("¿Eliminar cliente?")) { db.collection("clientes").doc(id).delete(); } };
 
     // ================= NAVEGACIÓN =================
     document.querySelectorAll('.nav-link').forEach(link => {

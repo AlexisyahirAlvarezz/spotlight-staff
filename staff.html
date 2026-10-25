@@ -21,14 +21,12 @@
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-link active" data-target="inicio"><i class="fa-solid fa-house"></i> Inicio</a>
-            <!-- NUEVA SECCIÓN DE OBJETIVOS -->
-            <a href="#" class="nav-link" data-target="objetivos"><i class="fa-solid fa-bullseye"></i> Objetivos</a>
-            <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="proyectos"><i class="fa-solid fa-video"></i> Proyectos</a>
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
+            <a href="#" class="nav-link" data-target="objetivos"><i class="fa-solid fa-bullseye"></i> Objetivos</a>
+            <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
-            <a href="#" class="nav-link" data-target="clientes"><i class="fa-solid fa-users"></i> Clientes</a>
         </nav>
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
@@ -216,19 +214,6 @@
                     <tbody id="tablaResultados"></tbody>
                 </table>
             </div>
-        </section>
-
-        <!-- ===== VISTA: CLIENTES ===== -->
-        <section id="view-clientes" class="view-section" style="display: none;">
-            <div class="recent-tasks-header">
-                <h2>Directorio de Clientes</h2>
-                <button id="btnMostrarFormCliente" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoCliente')"><i class="fa-solid fa-plus"></i> Nuevo Cliente</button>
-            </div>
-            <div id="formNuevoCliente" class="form-tarea" style="display: none;">
-                <input type="text" id="inputCliente" placeholder="Nombre de la Empresa">
-                <button id="btnGuardarCliente" class="btn-primary">Guardar</button>
-            </div>
-            <ul id="listaClientes" class="archivos-lista"></ul>
         </section>
     </main>
 
