@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormObjetivo')) document.getElementById('btnMostrarFormObjetivo').style.display = 'flex';
+        if(document.getElementById('btnMostrarFormMoodboard')) document.getElementById('btnMostrarFormMoodboard').style.display = 'flex';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -78,6 +79,128 @@ document.addEventListener('DOMContentLoaded', function() {
         if (para === nombreStaff) renderNotificaciones();
     }
 
+    // ================= SISTEMA DE LOGROS =================
+    // Este objeto guarda el diccionario de medallas con su emoji y descripción
+    const DICCIONARIO_LOGROS = {
+        'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' },
+        'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
+        'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' },
+        'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
+    };
+
+    function otorgarLogro(logro, usuario) {
+        db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                const docId = querySnapshot.docs[0].id;
+                const data = querySnapshot.docs[0].data();
+                let logrosActuales = data.logros || [];
+                
+                if (!logrosActuales.includes(logro)) {
+                    logrosActuales.push(logro);
+                    db.collection("directorio").doc(docId).update({ logros: logrosActuales }).then(() => {
+                        crearNotificacion(usuario, `¡Has desbloqueado la medalla: ${logro}! ${DICCIONARIO_LOGROS[logro].icono}`);
+                        // Si el que recibe la medalla es el que está en pantalla, lanzamos confeti
+                        if (usuario === nombreStaff) {
+                            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    function evaluarLogros() {
+        // 1. Evaluar El Incansable y El Creativo
+        let tareasCompletadas = 0;
+        let tareasConArchivos = 0;
+        
+        tareas.forEach(t => {
+            if (t.asignado === nombreStaff && t.estado === 'completed') tareasCompletadas++;
+            if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) tareasConArchivos++;
+        });
+
+        if (tareasCompletadas >= 10) otorgarLogro('El Incansable', nombreStaff);
+        if (tareasConArchivos >= 5) otorgarLogro('El Creativo', nombreStaff);
+
+        // 2. Evaluar El Cerebrito
+        if (resultadosDB.some(r => r.alumno === nombreStaff && r.porcentaje === 100)) {
+            otorgarLogro('El Cerebrito', nombreStaff);
+        }
+
+        // 3. Evaluar El Inspirador
+        if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) {
+            otorgarLogro('El Inspirador', nombreStaff);
+        }
+    }
+
+    // ================= MOODBOARD =================
+    const gridMoodboard = document.getElementById('gridMoodboard');
+    let moodboardDB = [];
+
+    db.collection("moodboard").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+        moodboardDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderMoodboard();
+        evaluarLogros(); // Evaluamos si ya merece la medalla
+    });
+
+    window.renderMoodboard = function() {
+        if(!gridMoodboard) return;
+        gridMoodboard.innerHTML = '';
+        
+        if (moodboardDB.length === 0) {
+            gridMoodboard.innerHTML = '<p style="color:#666;">El muro está vacío. ¡Sube la primera imagen de inspiración!</p>';
+            return;
+        }
+
+        moodboardDB.forEach(img => {
+            const botonEliminar = esGerente || img.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarMoodboard('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+            gridMoodboard.innerHTML += `
+                <div class="moodboard-card">
+                    ${botonEliminar}
+                    <img src="${img.url}" class="moodboard-img" alt="Referencia">
+                    <div class="moodboard-info">
+                        <div class="moodboard-titulo">${img.titulo}</div>
+                        <div class="moodboard-autor">Subido por: ${img.autor}</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    if(document.getElementById('btnGuardarMoodboard')) {
+        document.getElementById('btnGuardarMoodboard').addEventListener('click', async () => {
+            const titulo = document.getElementById('moodboardTitulo').value;
+            const fileInput = document.getElementById('moodboardFoto');
+            const boton = document.getElementById('btnGuardarMoodboard');
+
+            if (titulo && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const formData = new FormData();
+                formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                
+                boton.innerHTML = "Subiendo..."; boton.disabled = true;
+                try {
+                    const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
+                    const data = await response.json();
+                    
+                    if (data.secure_url) {
+                        db.collection("moodboard").add({
+                            titulo, url: data.secure_url, autor: nombreStaff, timestamp: Date.now()
+                        }).then(() => {
+                            document.getElementById('formNuevoMoodboard').style.display = 'none';
+                            document.getElementById('moodboardTitulo').value = ''; fileInput.value = '';
+                        });
+                    }
+                } catch (error) { alert("Error al subir."); }
+                boton.innerHTML = "Guardar en el Muro"; boton.disabled = false;
+            } else { alert("Escribe un título y selecciona una imagen."); }
+        });
+    }
+
+    window.eliminarMoodboard = function(id) {
+        if (confirm("¿Eliminar esta referencia?")) { db.collection("moodboard").doc(id).delete(); }
+    };
+
     // ================= OBJETIVOS EN EQUIPO =================
     const listaObjetivos = document.getElementById('listaObjetivos');
     let objetivosDB = [];
@@ -110,10 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             listaObjetivos.innerHTML += `
                 <div class="objetivo-card ${estaCompleto ? 'completado' : ''}">
-                    <div class="objetivo-titulo">
-                        ${meta.titulo}
-                        ${botonEliminar}
-                    </div>
+                    <div class="objetivo-titulo">${meta.titulo}${botonEliminar}</div>
                     <div class="objetivo-info">
                         <span>Progreso del equipo</span>
                         <span class="objetivo-numero">${meta.progreso} / ${meta.metaTotal}</span>
@@ -131,36 +251,30 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('btnGuardarObjetivo').addEventListener('click', () => {
             const titulo = document.getElementById('objetivoTitulo').value;
             const metaTotal = parseInt(document.getElementById('objetivoMeta').value);
-            
             if (titulo && metaTotal > 0) {
                 db.collection("metas").add({ titulo, metaTotal, progreso: 0 }).then(() => {
                     document.getElementById('formNuevoObjetivo').style.display = 'none';
-                    document.getElementById('objetivoTitulo').value = '';
-                    document.getElementById('objetivoMeta').value = '';
+                    document.getElementById('objetivoTitulo').value = ''; document.getElementById('objetivoMeta').value = '';
                 });
-            } else { alert("Por favor, escribe un título y una meta mayor a 0."); }
+            } else { alert("Escribe un título y una meta mayor a 0."); }
         });
     }
 
     window.aportarProgreso = function(id, progresoActual, metaTotal) {
         const nuevoProgreso = progresoActual + 1;
-        
         db.collection("metas").doc(id).update({ progreso: nuevoProgreso }).then(() => {
             if (nuevoProgreso >= metaTotal) {
-                const duration = 3000;
-                const end = Date.now() + duration;
+                const duration = 3000; const end = Date.now() + duration;
                 (function frame() {
-                    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff'] });
-                    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50', '#ffffff'] });
-                    if (Date.now() < end) { requestAnimationFrame(frame); }
+                    confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50'] });
+                    confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#f7c948', '#ff9a3c', '#4CAF50'] });
+                    if (Date.now() < end) requestAnimationFrame(frame);
                 }());
             }
         });
     };
 
-    window.eliminarObjetivo = function(id) {
-        if (confirm("¿Eliminar este objetivo del equipo?")) { db.collection("metas").doc(id).delete(); }
-    };
+    window.eliminarObjetivo = function(id) { if (confirm("¿Eliminar este objetivo?")) { db.collection("metas").doc(id).delete(); } };
 
     // ================= DIRECTORIO =================
     const gridDirectorio = document.getElementById('gridDirectorio');
@@ -178,12 +292,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro('${persona.id}')" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
             let avatarHTML = persona.foto ? `<img src="${persona.foto}" class="miembro-avatar-img">` : `<div class="miembro-avatar">${inicial}</div>`;
+            
+            // RENDERIZAR MEDALLAS
+            let medallasHTML = '';
+            if (persona.logros && persona.logros.length > 0) {
+                medallasHTML = `<div class="logros-container">`;
+                persona.logros.forEach(logroKey => {
+                    const info = DICCIONARIO_LOGROS[logroKey];
+                    if (info) {
+                        medallasHTML += `<span class="medalla" title="${info.desc}">${info.icono}</span>`;
+                    }
+                });
+                medallasHTML += `</div>`;
+            }
+
             gridDirectorio.innerHTML += `
                 <div class="miembro-card">
                     ${botonEliminar}
                     ${avatarHTML}
                     <h3 class="miembro-nombre">${persona.nombre}</h3>
                     <span class="miembro-rol">${persona.rol}</span>
+                    ${medallasHTML}
                     <div class="miembro-contacto">
                         <span><i class="fa-solid fa-envelope"></i> ${persona.correo}</span>
                         <span><i class="fa-solid fa-phone"></i> ${persona.telefono}</span>
@@ -205,8 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nombre && rol) {
                 let fotoUrl = "";
                 if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const formData = new FormData();
+                    const file = fileInput.files[0]; const formData = new FormData();
                     formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
                     boton.innerHTML = "Subiendo..."; boton.disabled = true;
                     try {
@@ -216,7 +344,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) { console.log(error); }
                     boton.innerHTML = "Guardar Integrante"; boton.disabled = false;
                 }
-                db.collection("directorio").add({ nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl }).then(() => {
+                db.collection("directorio").add({ 
+                    nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl, logros: [] 
+                }).then(() => {
                     document.getElementById('formNuevoDirectorio').style.display = 'none';
                     document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
                 });
@@ -224,9 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.eliminarMiembro = function(id) {
-        if (confirm("¿Eliminar a este integrante?")) { db.collection("directorio").doc(id).delete(); }
-    };
+    window.eliminarMiembro = function(id) { if (confirm("¿Eliminar a este integrante?")) { db.collection("directorio").doc(id).delete(); } };
 
     // ================= ANUNCIOS =================
     const listaAnuncios = document.getElementById('listaAnuncios');
@@ -278,9 +406,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.eliminarAnuncio = function(id) {
-        if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); }
-    };
+    window.eliminarAnuncio = function(id) { if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); } };
 
     // ================= EXÁMENES =================
     let examenesDB = [];
@@ -298,6 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("resultados").onSnapshot((snapshot) => {
         resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderExamenes();
+        evaluarLogros(); // Evaluamos si ya merece la medalla "El Cerebrito"
     });
 
     function crearBloquePregunta() {
@@ -440,9 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.eliminarProyecto = function(id) {
-        if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); }
-    };
+    window.eliminarProyecto = function(id) { if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); } };
 
     // ================= TAREAS (TABLERO KANBAN) =================
     let tareas = [];
@@ -451,6 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("tareas").onSnapshot((snapshot) => {
         tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTareas();
+        evaluarLogros(); // Evaluamos los logros "El Incansable" y "El Creativo"
     });
 
     window.renderTareas = function() {
@@ -683,6 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'anuncios') renderAnuncios();
             if (target === 'directorio') renderDirectorio();
             if (target === 'objetivos') renderObjetivos();
+            if (target === 'moodboard') renderMoodboard();
         });
     });
 

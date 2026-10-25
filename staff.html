@@ -25,6 +25,7 @@
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
             <a href="#" class="nav-link" data-target="objetivos"><i class="fa-solid fa-bullseye"></i> Objetivos</a>
+            <a href="#" class="nav-link" data-target="moodboard"><i class="fa-solid fa-images"></i> Muro de Inspiración</a>
             <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
         </nav>
@@ -53,6 +54,36 @@
                 <div class="user-profile"><div class="avatar" id="avatarLetra">S</div></div>
             </div>
         </header>
+
+        <!-- ===== VISTA: MOODBOARD (MURO DE INSPIRACIÓN) ===== -->
+        <section id="view-moodboard" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Muro de Inspiración</h2>
+                <button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir Referencia</button>
+            </div>
+
+            <!-- AVISO DE REGLAS Y ADVERTENCIA -->
+            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                <h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro
+                </h4>
+                <p style="color: #ddd; font-size: 0.95rem; line-height: 1.5;">
+                    Aquí puedes subir imágenes que nos inspiren a seguir adelante (iluminación, encuadres, arte, etc.). <br>
+                    <strong>⚠️ Queda estrictamente prohibido subir contenido explícito, desnudos, violencia o material ofensivo.</strong> Cualquier imagen que viole estas reglas será eliminada inmediatamente y el usuario será sancionado.
+                </p>
+            </div>
+            
+            <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;">
+                <p style="color: #ff5e5e; font-size: 0.85rem; margin-bottom: 10px; font-weight: bold;">
+                    <i class="fa-solid fa-circle-info"></i> Al subir una imagen, confirmas que cumple con las reglas de la productora.
+                </p>
+                <input type="text" id="moodboardTitulo" placeholder="Título o descripción (Ej. Iluminación para el Búho)">
+                <input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                <button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar en el Muro</button>
+            </div>
+
+            <div id="gridMoodboard" class="moodboard-grid"></div>
+        </section>
 
         <!-- ===== VISTA: OBJETIVOS ===== -->
         <section id="view-objetivos" class="view-section" style="display: none;">
