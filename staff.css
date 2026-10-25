@@ -56,6 +56,9 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
 .task-details p { font-size: 0.85rem; color: #a0a0b8; }
 .task-tag { background: rgba(255, 255, 255, 0.08); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; color: #f7c948; }
 
+/* ESTILO DE LA NOTA EN LA LISTA DE TAREAS */
+.nota-tag { background: rgba(76, 175, 80, 0.15); color: #4CAF50; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+
 .archivos-lista { list-style: none; margin-top: 20px; }
 .archivo-item { background: rgba(255, 255, 255, 0.03); padding: 15px 20px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; }
 .btn-eliminar { background: rgba(255, 94, 94, 0.1); color: #ff5e5e; border: 1px solid rgba(255, 94, 94, 0.2); padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
@@ -112,15 +115,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-
 .miembro-avatar { width: 80px; height: 80px; background: linear-gradient(135deg, #f7c948, #ff9a3c); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: #0b0b1a; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); }
 
 /* NUEVO ESTILO PARA LA FOTO DEL INTEGRANTE */
-.miembro-avatar-img { 
-    width: 80px; 
-    height: 80px; 
-    border-radius: 50%; 
-    object-fit: cover; 
-    margin: 0 auto 15px; 
-    box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); 
-    border: 2px solid #f7c948;
-}
+.miembro-avatar-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); border: 2px solid #f7c948; }
 
 .miembro-nombre { font-size: 1.3rem; font-weight: 700; color: white; margin-bottom: 5px; }
 .miembro-rol { display: inline-block; background: rgba(247, 201, 72, 0.15); color: #f7c948; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 15px; }

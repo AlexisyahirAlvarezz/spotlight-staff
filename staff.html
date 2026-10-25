@@ -54,11 +54,8 @@
         <section id="view-directorio" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Nuestro Equipo</h2>
-                <button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')">
-                    <i class="fa-solid fa-plus"></i> Añadir Integrante
-                </button>
+                <button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir Integrante</button>
             </div>
-
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;">
@@ -74,7 +71,6 @@
                 </div>
                 <button id="btnGuardarDirectorio" class="btn-primary" style="align-self: flex-end;">Guardar Integrante</button>
             </div>
-
             <div id="gridDirectorio" class="directorio-grid"></div>
         </section>
 
@@ -218,11 +214,29 @@
             <h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2>
             <p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p>
             <div class="instrucciones-box"><h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4><p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p></div>
+            
             <h4 style="color:white; margin-top: 20px;">Archivos Adjuntos:</h4>
-            <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px;"></ul>
+            <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px; margin-bottom: 15px;"></ul>
             <div class="upload-area">
                 <input type="file" id="inputArchivoTarea" multiple>
                 <button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button>
+            </div>
+
+            <!-- NUEVA SECCIÓN DE CALIFICACIÓN -->
+            <div id="seccionCalificacion" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <h4 style="color:#f7c948; margin-bottom: 10px;"><i class="fa-solid fa-star"></i> Calificación de la Tarea</h4>
+                
+                <!-- Vista para Gerentes (Input para poner nota) -->
+                <div id="calificacionAdmin" style="display: none; align-items: center; gap: 10px;">
+                    <input type="number" id="inputCalificacion" min="1" max="10" placeholder="1-10" style="width: 80px; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #f7c948; outline: none; font-weight: bold;">
+                    <button onclick="guardarCalificacion()" class="btn-primary" style="padding: 10px 20px;">Guardar Nota</button>
+                </div>
+
+                <!-- Vista para el Staff (Muestra la nota) -->
+                <div id="calificacionStaff" style="display: none; align-items: center; gap: 10px; background: rgba(247, 201, 72, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed #f7c948;">
+                    <span style="color: #f7c948; font-size: 1.5rem;"><i class="fa-solid fa-medal"></i></span>
+                    <span id="textoCalificacion" style="color: white; font-size: 1.2rem; font-weight: bold;">Sin calificar</span>
+                </div>
             </div>
         </div>
     </div>

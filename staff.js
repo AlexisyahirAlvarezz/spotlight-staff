@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro(${persona.id})" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
 
-            // EVALUAR SI TIENE FOTO O NO
             let avatarHTML = '';
             if (persona.foto && persona.foto !== "") {
                 avatarHTML = `<img src="${persona.foto}" alt="${persona.nombre}" class="miembro-avatar-img">`;
@@ -83,9 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const boton = document.getElementById('btnGuardarDirectorio');
 
             if (nombre && rol) {
-                let fotoUrl = ""; // Por defecto vacía
-                
-                // Si el usuario seleccionó una foto, la subimos a Cloudinary
+                let fotoUrl = "";
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const formData = new FormData();
@@ -96,50 +93,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     boton.disabled = true;
 
                     try {
-                        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
-                            method: 'POST',
-                            body: formData
-                        });
+                        const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
                         const data = await response.json();
-                        if (data.secure_url) {
-                            fotoUrl = data.secure_url; // Guardamos el link de la foto
-                        }
-                    } catch (error) {
-                        alert("Error al subir la foto. Se guardará sin imagen.");
-                    }
+                        if (data.secure_url) { fotoUrl = data.secure_url; }
+                    } catch (error) { alert("Error al subir la foto."); }
                     
                     boton.innerHTML = "Guardar Integrante";
                     boton.disabled = false;
                 }
 
-                // Guardamos al nuevo integrante en la base de datos
-                directorioDB.push({ 
-                    id: Date.now(), 
-                    nombre, 
-                    rol, 
-                    correo: correo || "Sin correo", 
-                    telefono: telefono || "Sin teléfono",
-                    foto: fotoUrl 
-                });
-                
+                directorioDB.push({ id: Date.now(), nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl });
                 localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
                 renderDirectorio();
                 
-                // Limpiar formulario
                 document.getElementById('formNuevoDirectorio').style.display = 'none';
-                document.getElementById('dirNombre').value = '';
-                document.getElementById('dirRol').value = '';
-                document.getElementById('dirCorreo').value = '';
-                document.getElementById('dirTelefono').value = '';
-                fileInput.value = '';
-            } else {
-                alert("El nombre y el puesto son obligatorios.");
-            }
+                document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
+            } else { alert("El nombre y el puesto son obligatorios."); }
         });
     }
 
     window.eliminarMiembro = function(id) {
-        if (confirm("¿Eliminar a este integrante del directorio?")) {
+        if (confirm("¿Eliminar a este integrante?")) {
             directorioDB = directorioDB.filter(p => p.id !== id);
             localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
             renderDirectorio();
@@ -154,19 +128,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!listaAnuncios) return;
         listaAnuncios.innerHTML = '';
         if (anunciosDB.length === 0) { listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>'; return; }
-
         const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
             if (a.prioridad === 'Urgente' && b.prioridad !== 'Urgente') return -1;
             if (a.prioridad !== 'Urgente' && b.prioridad === 'Urgente') return 1;
             return b.id - a.id;
         });
-
         anunciosOrdenados.forEach(a => {
             const esUrgente = a.prioridad === 'Urgente';
             const claseCard = esUrgente ? 'anuncio-urgente' : 'anuncio-normal';
             const badge = esUrgente ? '<span class="badge-urgente">URGENTE 🚨</span>' : '';
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarAnuncio(${a.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
-
             listaAnuncios.innerHTML += `
                 <div class="anuncio-card ${claseCard}">
                     <div class="anuncio-header">
@@ -191,8 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
                 renderAnuncios();
                 document.getElementById('formNuevoAnuncio').style.display = 'none';
-                document.getElementById('anuncioTitulo').value = '';
-                document.getElementById('anuncioMensaje').value = '';
+                document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = '';
             } else { alert("Por favor, escribe el título y el mensaje."); }
         });
     }
@@ -247,14 +217,8 @@ document.addEventListener('DOMContentLoaded', function() {
         bloque.className = 'pregunta-bloque';
         bloque.innerHTML = `
             <input type="text" class="p-pregunta" placeholder="Escribe la pregunta..." style="width: 100%; margin-bottom: 10px;">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" class="p-opA" placeholder="Opción A" style="flex:1;">
-                <input type="text" class="p-opB" placeholder="Opción B" style="flex:1;">
-            </div>
-            <select class="p-correcta" style="width: 100%; margin-top: 10px; padding: 10px; background: #05050f; color: white; border-radius: 8px; border: 1px solid #333;">
-                <option value="A">Correcta: Opción A</option>
-                <option value="B">Correcta: Opción B</option>
-            </select>
+            <div style="display: flex; gap: 10px;"><input type="text" class="p-opA" placeholder="Opción A" style="flex:1;"><input type="text" class="p-opB" placeholder="Opción B" style="flex:1;"></div>
+            <select class="p-correcta" style="width: 100%; margin-top: 10px; padding: 10px; background: #05050f; color: white; border-radius: 8px; border: 1px solid #333;"><option value="A">Correcta: Opción A</option><option value="B">Correcta: Opción B</option></select>
         `;
         contenedorPreguntas.appendChild(bloque);
     }
@@ -277,11 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta completa."); return; }
             examenesDB.push({ id: Date.now(), titulo, preguntas });
             localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-            document.getElementById('examenTitulo').value = '';
-            contenedorPreguntas.innerHTML = '';
-            crearBloquePregunta(); 
-            document.getElementById('formNuevoExamen').style.display = 'none';
-            renderExamenes();
+            document.getElementById('examenTitulo').value = ''; contenedorPreguntas.innerHTML = ''; crearBloquePregunta(); 
+            document.getElementById('formNuevoExamen').style.display = 'none'; renderExamenes();
         });
     }
 
@@ -398,7 +359,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // ================= TAREAS =================
-    let tareas = JSON.parse(localStorage.getItem('tareasSpotlight')) || [{ id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip", proyecto: "General", archivos: [] }];
+    // NOTA: Se agregó el campo "calificacion: null" a la tarea de prueba
+    let tareas = JSON.parse(localStorage.getItem('tareasSpotlight')) || [{ id: 1, titulo: "Edición de video - Panasonic", asignado: "Beatriz", fecha: "2026-10-21", estado: "progress", desc: "Cortar el clip", proyecto: "General", archivos: [], calificacion: null }];
     let tareaActivaIndex = -1;
 
     window.renderTareas = function() {
@@ -410,7 +372,27 @@ document.addEventListener('DOMContentLoaded', function() {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="event.stopPropagation(); eliminarTarea(${index})"><i class="fa-solid fa-trash"></i></button>` : '';
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const botonCompletar = (t.estado !== 'completed' && esAsignado) ? `<button class="btn-completar" onclick="event.stopPropagation(); completarTarea(${index})"><i class="fa-solid fa-check"></i></button>` : '';
-            const html = `<div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})"><div style="display: flex; align-items: center; gap: 20px;"><div class="task-status ${t.estado}"></div><div class="task-details"><h4>${t.titulo}</h4><p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p></div></div><div style="display: flex; align-items: center; gap: 10px;"><span class="task-tag">${t.estado}</span>${botonCompletar}${botonEliminar}</div></div>`;
+            
+            // ETIQUETA DE CALIFICACIÓN
+            const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
+
+            const html = `
+                <div class="task-item" style="justify-content: space-between; ${t.estado === 'completed' ? 'opacity: 0.6;' : ''}" onclick="abrirModalTarea(${index})">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="task-status ${t.estado}"></div>
+                        <div class="task-details">
+                            <h4>${t.titulo}</h4>
+                            <p>Para: ${t.asignado} | Proyecto: ${t.proyecto}</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        ${etiquetaNota}
+                        <span class="task-tag">${t.estado}</span>
+                        ${botonCompletar}
+                        ${botonEliminar}
+                    </div>
+                </div>
+            `;
             if (t.estado === 'completed') { listaTareasCompletadas.innerHTML += html; } else { listaTareas.innerHTML += html; }
         });
     }
@@ -429,7 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('proyectosSpotlight', JSON.stringify(proyectosDB));
                     renderProyectosLista();
                 }
-                tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [] });
+                tareas.unshift({ id: Date.now(), titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null });
                 localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
                 notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
                 localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
@@ -453,7 +435,56 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('mTareaTitulo').textContent = t.titulo;
         document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`;
         document.getElementById('mTareaDesc').textContent = t.desc;
+        
+        // LÓGICA DE LA CALIFICACIÓN EN EL MODAL
+        const seccionCalificacion = document.getElementById('seccionCalificacion');
+        const calificacionAdmin = document.getElementById('calificacionAdmin');
+        const calificacionStaff = document.getElementById('calificacionStaff');
+        const textoCalificacion = document.getElementById('textoCalificacion');
+
+        if (esGerente) {
+            calificacionAdmin.style.display = 'flex';
+            calificacionStaff.style.display = 'none';
+            document.getElementById('inputCalificacion').value = t.calificacion || '';
+        } else {
+            calificacionAdmin.style.display = 'none';
+            calificacionStaff.style.display = 'flex';
+            if (t.calificacion) {
+                textoCalificacion.textContent = `${t.calificacion} / 10`;
+                textoCalificacion.style.color = '#4CAF50';
+            } else {
+                textoCalificacion.textContent = 'Sin calificar aún';
+                textoCalificacion.style.color = '#a0a0b8';
+            }
+        }
+
         renderArchivosModal(); document.getElementById('modalTarea').style.display = 'flex';
+    }
+
+    // FUNCIÓN PARA GUARDAR LA CALIFICACIÓN
+    window.guardarCalificacion = function() {
+        const nota = document.getElementById('inputCalificacion').value;
+        if (nota < 1 || nota > 10 || nota === '') {
+            alert("Por favor, ingresa una nota válida del 1 al 10.");
+            return;
+        }
+        
+        const tarea = tareas[tareaActivaIndex];
+        tarea.calificacion = nota;
+        localStorage.setItem('tareasSpotlight', JSON.stringify(tareas));
+        
+        // Enviar notificación al asignado
+        notificaciones.push({ 
+            id: Date.now(), 
+            para: tarea.asignado, 
+            mensaje: `Has recibido una calificación de ${nota}/10 en la tarea: ${tarea.titulo}`, 
+            leida: false 
+        });
+        localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
+        
+        renderTareas(); // Actualiza la vista principal (aparece la etiqueta verde)
+        alert("Calificación guardada y notificada exitosamente.");
+        cerrarModal();
     }
     
     function renderArchivosModal() {
