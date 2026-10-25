@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormCliente')) document.getElementById('btnMostrarFormCliente').style.display = 'flex';
         if(document.getElementById('btnMostrarFormExamen')) document.getElementById('btnMostrarFormExamen').style.display = 'flex';
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
+        if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -28,6 +29,73 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
+    // ================= DIRECTORIO =================
+    let directorioDB = JSON.parse(localStorage.getItem('directorioSpotlight')) || [
+        { id: 1, nombre: "Johan Sebastián", rol: "Gerente General", correo: "johan@spotlight.com", telefono: "555-100-2001" },
+        { id: 2, nombre: "Brayan Alexander", rol: "Gerente de Marketing", correo: "brayan@spotlight.com", telefono: "555-100-2002" },
+        { id: 3, nombre: "Beatriz", rol: "Jefa de Producción", correo: "beatriz@spotlight.com", telefono: "555-100-2003" },
+        { id: 4, nombre: "Jair", rol: "Jefe de Finanzas", correo: "jair@spotlight.com", telefono: "555-100-2004" },
+        { id: 5, nombre: "Ximena", rol: "Jefa de RRHH", correo: "ximena@spotlight.com", telefono: "555-100-2005" },
+        { id: 6, nombre: "Maria Fernanda", rol: "Diseñadora Gráfica", correo: "maria@spotlight.com", telefono: "555-100-2006" }
+    ];
+    
+    const gridDirectorio = document.getElementById('gridDirectorio');
+
+    window.renderDirectorio = function() {
+        if(!gridDirectorio) return;
+        gridDirectorio.innerHTML = '';
+        
+        directorioDB.forEach(persona => {
+            const inicial = persona.nombre.charAt(0).toUpperCase();
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro(${persona.id})" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
+
+            gridDirectorio.innerHTML += `
+                <div class="miembro-card">
+                    ${botonEliminar}
+                    <div class="miembro-avatar">${inicial}</div>
+                    <h3 class="miembro-nombre">${persona.nombre}</h3>
+                    <span class="miembro-rol">${persona.rol}</span>
+                    <div class="miembro-contacto">
+                        <span><i class="fa-solid fa-envelope"></i> ${persona.correo}</span>
+                        <span><i class="fa-solid fa-phone"></i> ${persona.telefono}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    renderDirectorio();
+
+    if(document.getElementById('btnGuardarDirectorio')) {
+        document.getElementById('btnGuardarDirectorio').addEventListener('click', () => {
+            const nombre = document.getElementById('dirNombre').value;
+            const rol = document.getElementById('dirRol').value;
+            const correo = document.getElementById('dirCorreo').value;
+            const telefono = document.getElementById('dirTelefono').value;
+
+            if (nombre && rol) {
+                directorioDB.push({ id: Date.now(), nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono" });
+                localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
+                renderDirectorio();
+                
+                document.getElementById('formNuevoDirectorio').style.display = 'none';
+                document.getElementById('dirNombre').value = '';
+                document.getElementById('dirRol').value = '';
+                document.getElementById('dirCorreo').value = '';
+                document.getElementById('dirTelefono').value = '';
+            } else {
+                alert("El nombre y el puesto son obligatorios.");
+            }
+        });
+    }
+
+    window.eliminarMiembro = function(id) {
+        if (confirm("¿Eliminar a este integrante del directorio?")) {
+            directorioDB = directorioDB.filter(p => p.id !== id);
+            localStorage.setItem('directorioSpotlight', JSON.stringify(directorioDB));
+            renderDirectorio();
+        }
+    };
+
     // ================= TABLÓN DE ANUNCIOS =================
     let anunciosDB = JSON.parse(localStorage.getItem('anunciosSpotlight')) || [];
     const listaAnuncios = document.getElementById('listaAnuncios');
@@ -35,17 +103,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderAnuncios = function() {
         if(!listaAnuncios) return;
         listaAnuncios.innerHTML = '';
-        
-        if (anunciosDB.length === 0) {
-            listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>';
-            return;
-        }
+        if (anunciosDB.length === 0) { listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>'; return; }
 
-        // Ordenar para que los urgentes salgan primero
         const anunciosOrdenados = [...anunciosDB].sort((a, b) => {
             if (a.prioridad === 'Urgente' && b.prioridad !== 'Urgente') return -1;
             if (a.prioridad !== 'Urgente' && b.prioridad === 'Urgente') return 1;
-            return b.id - a.id; // Los más nuevos primero
+            return b.id - a.id;
         });
 
         anunciosOrdenados.forEach(a => {
@@ -57,11 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             listaAnuncios.innerHTML += `
                 <div class="anuncio-card ${claseCard}">
                     <div class="anuncio-header">
-                        <div>
-                            ${badge}
-                            <h3 style="margin-top: 5px;">${a.titulo}</h3>
-                            <span class="anuncio-fecha">Publicado por: ${a.autor} | ${a.fecha}</span>
-                        </div>
+                        <div>${badge}<h3 style="margin-top: 5px;">${a.titulo}</h3><span class="anuncio-fecha">Publicado por: ${a.autor} | ${a.fecha}</span></div>
                         ${botonEliminar}
                     </div>
                     <div class="anuncio-mensaje">${a.mensaje}</div>
@@ -76,25 +135,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const titulo = document.getElementById('anuncioTitulo').value;
             const mensaje = document.getElementById('anuncioMensaje').value;
             const prioridad = document.getElementById('anuncioPrioridad').value;
-
             if (titulo && mensaje) {
                 const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-                anunciosDB.push({ 
-                    id: Date.now(), 
-                    titulo, 
-                    mensaje, 
-                    prioridad, 
-                    autor: nombreStaff, 
-                    fecha: fechaActual 
-                });
+                anunciosDB.push({ id: Date.now(), titulo, mensaje, prioridad, autor: nombreStaff, fecha: fechaActual });
                 localStorage.setItem('anunciosSpotlight', JSON.stringify(anunciosDB));
                 renderAnuncios();
                 document.getElementById('formNuevoAnuncio').style.display = 'none';
                 document.getElementById('anuncioTitulo').value = '';
                 document.getElementById('anuncioMensaje').value = '';
-            } else {
-                alert("Por favor, escribe el título y el mensaje del anuncio.");
-            }
+            } else { alert("Por favor, escribe el título y el mensaje."); }
         });
     }
 
@@ -117,15 +166,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!listaNotificaciones) return;
         const misNotificaciones = notificaciones.filter(n => n.para === nombreStaff);
         const noLeidas = misNotificaciones.filter(n => !n.leida).length;
-        
-        if (noLeidas > 0) { badge.textContent = noLeidas; badge.style.display = 'flex'; } 
-        else { badge.style.display = 'none'; }
-        
+        if (noLeidas > 0) { badge.textContent = noLeidas; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
         listaNotificaciones.innerHTML = '';
         if (misNotificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
-        else {
-            misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; });
-        }
+        else { misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; }); }
     }
     renderNotificaciones();
 
@@ -168,29 +212,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('contenedorPreguntas')) {
         crearBloquePregunta();
         document.getElementById('btnAgregarPregunta').addEventListener('click', crearBloquePregunta);
-
         document.getElementById('btnGuardarExamen').addEventListener('click', () => {
             const titulo = document.getElementById('examenTitulo').value;
             const bloques = document.querySelectorAll('.pregunta-bloque');
             const preguntas = [];
-
             if (!titulo) { alert("El examen necesita un título."); return; }
-
             bloques.forEach(b => {
                 const preg = b.querySelector('.p-pregunta').value;
                 const opA = b.querySelector('.p-opA').value;
                 const opB = b.querySelector('.p-opB').value;
                 const corr = b.querySelector('.p-correcta').value;
-                if (preg && opA && opB) {
-                    preguntas.push({ pregunta: preg, opcionA: opA, opcionB: opB, correcta: corr });
-                }
+                if (preg && opA && opB) { preguntas.push({ pregunta: preg, opcionA: opA, opcionB: opB, correcta: corr }); }
             });
-
             if (preguntas.length === 0) { alert("Debes llenar al menos una pregunta completa."); return; }
-
             examenesDB.push({ id: Date.now(), titulo, preguntas });
             localStorage.setItem('examenesSpotlight', JSON.stringify(examenesDB));
-            
             document.getElementById('examenTitulo').value = '';
             contenedorPreguntas.innerHTML = '';
             crearBloquePregunta(); 
@@ -202,41 +238,25 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderExamenes = function() {
         if(!listaExamenes) return;
         listaExamenes.innerHTML = '';
-        
-        if(examenesDB.length === 0) {
-            listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>';
-        } else {
+        if(examenesDB.length === 0) { listaExamenes.innerHTML = '<p style="color:#666;">No hay exámenes publicados aún.</p>'; } 
+        else {
             examenesDB.forEach((ex) => {
                 const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarExamen(${ex.id})" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
                 listaExamenes.innerHTML += `
                     <li class="examen-card">
-                        <div>
-                            <h3>${ex.titulo}</h3>
-                            <p style="color:#a0a0b8; font-size: 0.9rem; margin-top: 5px;">${ex.preguntas.length} preguntas</p>
-                        </div>
-                        <div>
-                            ${botonEliminar}
-                            <button class="btn-primary" onclick="abrirExamenParaResponder(${ex.id})" style="margin-left: 10px;">Responder</button>
-                        </div>
+                        <div><h3>${ex.titulo}</h3><p style="color:#a0a0b8; font-size: 0.9rem; margin-top: 5px;">${ex.preguntas.length} preguntas</p></div>
+                        <div>${botonEliminar}<button class="btn-primary" onclick="abrirExamenParaResponder(${ex.id})" style="margin-left: 10px;">Responder</button></div>
                     </li>
                 `;
             });
         }
-
         if (tablaResultados) {
             tablaResultados.innerHTML = '';
-            if(resultadosDB.length === 0) {
-                tablaResultados.innerHTML = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #666;">Aún no hay resultados registrados.</td></tr>';
-            } else {
+            if(resultadosDB.length === 0) { tablaResultados.innerHTML = '<tr><td colspan="3" style="padding: 15px; text-align: center; color: #666;">Aún no hay resultados registrados.</td></tr>'; } 
+            else {
                 [...resultadosDB].reverse().forEach(res => {
                     const color = res.porcentaje >= 70 ? '#4CAF50' : '#ff5e5e';
-                    tablaResultados.innerHTML += `
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                            <td style="padding: 15px; color: white;">${res.alumno}</td>
-                            <td style="padding: 15px; color: #a0a0b8;">${res.tituloExamen}</td>
-                            <td style="padding: 15px; font-weight: bold; color: ${color};">${res.porcentaje}% (${res.aciertos}/${res.total})</td>
-                        </tr>
-                    `;
+                    tablaResultados.innerHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 15px; color: white;">${res.alumno}</td><td style="padding: 15px; color: #a0a0b8;">${res.tituloExamen}</td><td style="padding: 15px; font-weight: bold; color: ${color};">${res.porcentaje}% (${res.aciertos}/${res.total})</td></tr>`;
                 });
             }
         }
@@ -254,12 +274,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.abrirExamenParaResponder = function(id) {
         const examen = examenesDB.find(ex => ex.id === id);
         if(!examen) return;
-
         examenActivoId = id;
         document.getElementById('mExamenTitulo').textContent = examen.titulo;
         const contenedor = document.getElementById('mExamenPreguntas');
         contenedor.innerHTML = '';
-
         examen.preguntas.forEach((p, index) => {
             contenedor.innerHTML += `
                 <div class="pregunta-bloque">
@@ -272,49 +290,25 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('modalExamen').style.display = 'flex';
     }
 
-    window.cerrarModalExamen = function() {
-        document.getElementById('modalExamen').style.display = 'none';
-    }
+    window.cerrarModalExamen = function() { document.getElementById('modalExamen').style.display = 'none'; }
 
     if (document.getElementById('btnCalificarExamen')) {
         document.getElementById('btnCalificarExamen').addEventListener('click', () => {
             const examen = examenesDB.find(ex => ex.id === examenActivoId);
             if(!examen) return;
-
-            let aciertos = 0;
-            let todasRespondidas = true;
-
+            let aciertos = 0; let todasRespondidas = true;
             examen.preguntas.forEach((p, index) => {
                 const seleccion = document.querySelector(`input[name="resp_${index}"]:checked`);
-                if (!seleccion) { todasRespondidas = false; } 
-                else if (seleccion.value === p.correcta) { aciertos++; }
+                if (!seleccion) { todasRespondidas = false; } else if (seleccion.value === p.correcta) { aciertos++; }
             });
-
             if (!todasRespondidas) { alert("Por favor, responde todas las preguntas."); return; }
-
             const total = examen.preguntas.length;
             const porcentaje = Math.round((aciertos / total) * 100);
-
-            resultadosDB.push({
-                id: Date.now(),
-                examenId: examen.id,
-                tituloExamen: examen.titulo,
-                alumno: nombreStaff,
-                porcentaje: porcentaje,
-                aciertos: aciertos,
-                total: total
-            });
+            resultadosDB.push({ id: Date.now(), examenId: examen.id, tituloExamen: examen.titulo, alumno: nombreStaff, porcentaje: porcentaje, aciertos: aciertos, total: total });
             localStorage.setItem('resultadosSpotlight', JSON.stringify(resultadosDB));
-
-            cerrarModalExamen();
-            renderExamenes();
-
-            if (porcentaje >= 70) {
-                confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
-                alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`);
-            } else {
-                alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`);
-            }
+            cerrarModalExamen(); renderExamenes();
+            if (porcentaje >= 70) { confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`); } 
+            else { alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`); }
         });
     }
 
@@ -379,7 +373,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const fecha = document.getElementById('inputFecha').value;
             const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
             const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
-            
             if (titulo) {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                     proyectosDB.push({ id: Date.now(), nombre: proyecto, cliente: "Sin cliente" });
@@ -391,10 +384,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 notificaciones.push({ id: Date.now(), para: asignado, mensaje: `Nueva tarea asignada: ${titulo}`, leida: false });
                 localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
                 renderNotificaciones();
-                renderTareas(); 
-                document.getElementById('formNuevaTarea').style.display = 'none';
-                document.getElementById('inputTarea').value = ''; 
-                document.getElementById('inputProyecto').value = '';
+                renderTareas(); document.getElementById('formNuevaTarea').style.display = 'none';
+                document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
             } else { alert("Escribe qué hay que hacer."); }
         });
     }
@@ -405,7 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTareas();
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
     };
-    
     window.eliminarTarea = function(index) { if (confirm("¿Eliminar tarea?")) { tareas.splice(index, 1); localStorage.setItem('tareasSpotlight', JSON.stringify(tareas)); renderTareas(); } };
 
     window.abrirModalTarea = function(index) {
@@ -417,8 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function renderArchivosModal() {
-        const lista = document.getElementById('mTareaArchivos'); 
-        if(!lista) return;
+        const lista = document.getElementById('mTareaArchivos'); if(!lista) return;
         lista.innerHTML = '';
         const archivos = tareas[tareaActivaIndex].archivos || [];
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
@@ -468,7 +457,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         document.getElementById('modalProyecto').style.display = 'flex';
     }
-    
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
     // ================= CALENDARIO =================
@@ -476,8 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let fechaCalendario = new Date();
 
     window.renderCalendario = function() {
-        const grid = document.getElementById('calendarDays'); 
-        const display = document.getElementById('monthYearDisplay');
+        const grid = document.getElementById('calendarDays'); const display = document.getElementById('monthYearDisplay');
         if(!grid) return;
         grid.innerHTML = '';
         const year = fechaCalendario.getFullYear(); const month = fechaCalendario.getMonth();
@@ -498,8 +485,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderListaEventos() {
-        const listaEventos = document.getElementById('listaEventos'); 
-        if(!listaEventos) return;
+        const listaEventos = document.getElementById('listaEventos'); if(!listaEventos) return;
         listaEventos.innerHTML = '';
         eventos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         eventos.forEach(ev => {
@@ -522,8 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ================= CLIENTES =================
     let clientesDB = JSON.parse(localStorage.getItem('clientesSpotlight')) || [{ id: 1, nombre: "Panasonic México" }];
     window.renderClientes = function() {
-        const listaClientes = document.getElementById('listaClientes'); 
-        if(!listaClientes) return;
+        const listaClientes = document.getElementById('listaClientes'); if(!listaClientes) return;
         listaClientes.innerHTML = '';
         clientesDB.forEach(cliente => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarCliente(${cliente.id})"><i class="fa-solid fa-trash"></i></button>` : '';
@@ -554,6 +539,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'calendario') renderCalendario();
             if (target === 'examenes') renderExamenes();
             if (target === 'anuncios') renderAnuncios();
+            if (target === 'directorio') renderDirectorio();
         });
     });
 
