@@ -1,6 +1,4 @@
-/* ============================================================
-   MODO DESCANSO
-   ============================================================ */
+/* (Se mantiene el CSS anterior, solo agrego las clases del Radar al final) */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0d0d12; color: #d1d5db; display: flex; min-height: 100vh; }
 h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
@@ -207,7 +205,7 @@ h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
 .btn-canjear:hover { background: #3b82f6; color: white; }
 .btn-canjear:disabled { background: #1a1a24; color: #555; border-color: #333; cursor: not-allowed; }
 
-/* NUEVOS ESTILOS: BÓVEDA, PLANTILLAS Y WIKI */
+/* NUEVOS ESTILOS: BÓVEDA, PLANTILLAS, WIKI Y RADAR */
 .btn-ver-pass { background: transparent; border: none; color: #f7c948; cursor: pointer; padding: 5px; font-size: 1.1rem; transition: 0.3s; }
 .btn-ver-pass:hover { color: #fff; transform: scale(1.1); }
 .plantilla-card { background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
@@ -218,12 +216,21 @@ h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
 .plantilla-desc { font-size: 0.85rem; color: #9ca3af; margin-bottom: 15px; flex-grow: 1; }
 .btn-usar-plantilla { background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; margin-top: auto; }
 .btn-usar-plantilla:hover { background: #2563eb; }
-
 .wiki-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
 .wiki-card { background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 25px; position: relative; transition: 0.3s; }
 .wiki-card:hover { border-color: #f7c948; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
 .wiki-card h4 { color: #f7c948; font-size: 1.2rem; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 .wiki-card p { color: #d1d5db; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; }
+
+/* RADAR DE TENDENCIAS */
+.radar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 20px; }
+.radar-card { background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 20px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
+.radar-card:hover { border-color: #3b82f6; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+.radar-badge { display: inline-block; background: rgba(59, 130, 246, 0.15); color: #3b82f6; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; align-self: flex-start; margin-bottom: 10px; border: 1px solid rgba(59, 130, 246, 0.3); }
+.radar-titulo { font-size: 1.2rem; color: white; font-weight: 600; margin-bottom: 8px; }
+.radar-desc { font-size: 0.9rem; color: #9ca3af; margin-bottom: 15px; line-height: 1.5; flex-grow: 1; }
+.btn-radar-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #3b82f6; color: white; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; transition: 0.3s; width: 100%; margin-top: auto; }
+.btn-radar-link:hover { background: #2563eb; }
 
 /* RESPONSIVE (MÓVIL CON ARREGLO DE CALENDARIO) */
 .mobile-header { display: none; }

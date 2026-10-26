@@ -11,12 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const esGerente = (rolStaff === "Gerente General" || rolStaff === "Gerente de Marketing");
     const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
     const puedeVerGastos = esGerente || esFinanzas;
+    const esMarketing = (rolStaff === "Gerente de Marketing");
     
     const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     const esDisenadora = (nombreStaff === "Maria Fernanda" || rolStaff.includes("Diseñadora"));
 
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
     if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
+    if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex'; // SOLO MARKETING Y GERENTE GENERAL
+    
     if (esGerente) {
         document.getElementById('link-gerencia').style.display = 'flex';
         if(document.getElementById('btnMostrarFormWiki')) document.getElementById('btnMostrarFormWiki').style.display = 'flex';
@@ -61,13 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function playNotificationSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
-            oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1); 
-            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            const oscillator = audioCtx.createOscillator(); const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1); 
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
             oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.5);
         } catch(e) { console.log("Audio no soportado"); }
     }
@@ -93,9 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cambios.forEach((cambio) => {
             if (cambio.type === "added") {
                 const nuevaNoti = cambio.doc.data();
-                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) {
-                    mostrarToast(nuevaNoti.mensaje); playNotificationSound();
-                }
+                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { mostrarToast(nuevaNoti.mensaje); playNotificationSound(); }
             }
         });
     });
@@ -121,7 +118,6 @@ document.addEventListener('DOMContentLoaded', function() {
         'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' }, 'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
         'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' }, 'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
     };
-
     function darPuntos(usuario, cantidad) {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
             if (!querySnapshot.empty) {
@@ -130,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
     function otorgarLogro(logro, usuario) {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
             if (!querySnapshot.empty) {
@@ -155,34 +150,53 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= VARIABLES GLOBALES =================
     let directorioDB = [], resultadosDB = [], tareas = [], proyectosDB = [], examenesDB = [], moodboardDB = [], anunciosDB = [], eventos = [];
-    let tiendaDB = [], canjesDB = [], plantillasDB = [], bovedaDB = [], btsDB = [], wikiDB = [];
+    let tiendaDB = [], canjesDB = [], plantillasDB = [], bovedaDB = [], btsDB = [], wikiDB = [], radarDB = [];
     let graficoTareasInstance = null, graficoPresupuestoInstance = null;
     let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null, imgPlantillaActiva = "";
 
-    // ================= LOOT BOX (MISIÓN SORPRESA) =================
+    // ================= LOOT BOX =================
     window.verificarLootBox = function() {
-        const hoy = new Date().toDateString();
-        const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff);
-        const container = document.getElementById('lootBoxContainer');
-        
-        if (container) {
-            if (hoy !== ultimaApertura) { container.style.display = 'block'; } 
-            else { container.style.display = 'none'; }
-        }
+        const hoy = new Date().toDateString(); const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff); const container = document.getElementById('lootBoxContainer');
+        if (container) { if (hoy !== ultimaApertura) { container.style.display = 'block'; } else { container.style.display = 'none'; } }
     }
     window.abrirLootBox = function() {
-        const hoy = new Date().toDateString();
-        const recompensasPosibles = [10, 20, 30, 50, 100];
-        const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
-        
-        localStorage.setItem('lootBox_' + nombreStaff, hoy);
-        document.getElementById('lootBoxContainer').style.display = 'none';
-        
+        const hoy = new Date().toDateString(); const recompensasPosibles = [10, 20, 30, 50, 100]; const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
+        localStorage.setItem('lootBox_' + nombreStaff, hoy); document.getElementById('lootBoxContainer').style.display = 'none';
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 }, colors: ['#f7c948', '#3b82f6', '#ef4444', '#22c55e'] });
-        darPuntos(nombreStaff, puntosGanados);
-        mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP de la Caja Misteriosa.`);
+        darPuntos(nombreStaff, puntosGanados); mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP.`);
     };
     verificarLootBox();
+
+    // ================= RADAR DE TENDENCIAS (MARKETING) =================
+    db.collection("radar").onSnapshot((snapshot) => { radarDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderRadar(); });
+    window.renderRadar = function() {
+        const grid = document.getElementById('gridRadar'); if (!grid) return; grid.innerHTML = '';
+        if (radarDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay tendencias guardadas. ¡Añade la primera!</p>'; return; }
+        radarDB.forEach(r => {
+            const botonEliminar = (esGerente || esMarketing) ? `<button class="moodboard-delete" onclick="eliminarRadar('${r.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+            grid.innerHTML += `
+                <div class="radar-card">
+                    ${botonEliminar}
+                    <span class="radar-badge">${r.categoria || 'General'}</span>
+                    <div class="radar-titulo">${r.titulo}</div>
+                    <div class="radar-desc">${r.descripcion}</div>
+                    <a href="${r.link}" target="_blank" class="btn-radar-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Tendencia</a>
+                </div>
+            `;
+        });
+    };
+    if(document.getElementById('btnGuardarRadar')) {
+        document.getElementById('btnGuardarRadar').addEventListener('click', () => {
+            const titulo = document.getElementById('radarTitulo').value; const categoria = document.getElementById('radarCategoria').value || 'General'; const link = document.getElementById('radarLink').value; const descripcion = document.getElementById('radarDesc').value;
+            if (titulo && link) {
+                db.collection("radar").add({ titulo, categoria, link, descripcion, autor: nombreStaff, timestamp: Date.now() }).then(() => {
+                    document.getElementById('formNuevoRadar').style.display = 'none'; document.getElementById('radarTitulo').value = ''; document.getElementById('radarCategoria').value = ''; document.getElementById('radarLink').value = ''; document.getElementById('radarDesc').value = '';
+                    mostrarToast("¡Tendencia guardada en el Radar!");
+                });
+            } else { alert("El título y el link son obligatorios."); }
+        });
+    }
+    window.eliminarRadar = function(id) { if (confirm("¿Eliminar esta tendencia?")) { db.collection("radar").doc(id).delete(); } };
 
     // ================= WIKI / PROCESOS =================
     db.collection("wiki").onSnapshot((snapshot) => { wikiDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderWiki(); });
@@ -191,32 +205,21 @@ document.addEventListener('DOMContentLoaded', function() {
         if (wikiDB.length === 0) { grid.innerHTML = '<p style="color:#666;">No hay artículos en la Wiki aún.</p>'; return; }
         wikiDB.forEach(w => {
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarWiki('${w.id}')" style="padding: 2px 8px;"><i class="fa-solid fa-trash"></i></button>` : '';
-            grid.innerHTML += `
-                <div class="wiki-card">
-                    <h4>${w.titulo} ${botonEliminar}</h4>
-                    <p>${w.contenido}</p>
-                </div>
-            `;
+            grid.innerHTML += `<div class="wiki-card"><h4>${w.titulo} ${botonEliminar}</h4><p>${w.contenido}</p></div>`;
         });
     };
     if(document.getElementById('btnGuardarWiki')) {
         document.getElementById('btnGuardarWiki').addEventListener('click', () => {
             const titulo = document.getElementById('wikiTitulo').value; const contenido = document.getElementById('wikiContenido').value;
-            if (titulo && contenido) {
-                db.collection("wiki").add({ titulo, contenido, timestamp: Date.now() }).then(() => {
-                    document.getElementById('formNuevaWiki').style.display = 'none'; document.getElementById('wikiTitulo').value = ''; document.getElementById('wikiContenido').value = '';
-                });
-            } else { alert("Escribe un título y el contenido."); }
+            if (titulo && contenido) { db.collection("wiki").add({ titulo, contenido, timestamp: Date.now() }).then(() => { document.getElementById('formNuevaWiki').style.display = 'none'; document.getElementById('wikiTitulo').value = ''; document.getElementById('wikiContenido').value = ''; }); } 
+            else { alert("Escribe un título y el contenido."); }
         });
     }
     window.eliminarWiki = function(id) { if (confirm("¿Eliminar este artículo?")) { db.collection("wiki").doc(id).delete(); } };
 
     // ================= DETRÁS DE CÁMARAS (BTS) =================
     const gridBTS = document.getElementById('gridBTS');
-    db.collection("bts").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-        btsDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderBTS();
-    });
+    db.collection("bts").orderBy("timestamp", "desc").onSnapshot((snapshot) => { btsDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderBTS(); });
     window.renderBTS = function() {
         if (!gridBTS) return; gridBTS.innerHTML = '';
         if (btsDB.length === 0) { gridBTS.innerHTML = '<p style="color:#666;">Aún no hay fotos. ¡Sube la primera!</p>'; return; }
@@ -238,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarBTS = function(id) { if (confirm("¿Eliminar esta foto?")) { db.collection("bts").doc(id).delete(); } };
 
-    // ================= PLANTILLAS DE TAREAS =================
+    // ================= PLANTILLAS =================
     db.collection("plantillas").onSnapshot((snapshot) => { plantillasDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderPlantillas(); });
     window.renderPlantillas = function() {
         const grid = document.getElementById('gridPlantillas'); if (!grid) return; grid.innerHTML = '';
@@ -691,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
-    // ================= CALENDARIO (CON TAREAS) =================
+    // ================= CALENDARIO =================
     let fechaCalendario = new Date();
     db.collection("eventos").onSnapshot((snapshot) => { eventos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCalendario(); renderListaEventos(); });
     window.renderCalendario = function() {
@@ -724,7 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); }
         });
     });
 
