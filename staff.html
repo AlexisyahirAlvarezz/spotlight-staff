@@ -9,13 +9,11 @@
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <!-- CONTENEDOR DE NOTIFICACIONES FLOTANTES (TOASTS) -->
     <div id="toastContainer" class="toast-container"></div>
 
     <header class="mobile-header">
@@ -23,9 +21,7 @@
             <img src="logo-blanco.jpg" alt="SPOTLIGHT">
             <span>SPOTLIGHT</span>
         </div>
-        <button id="btnMobileMenu" class="btn-mobile-menu">
-            <i class="fa-solid fa-bars"></i>
-        </button>
+        <button id="btnMobileMenu" class="btn-mobile-menu"><i class="fa-solid fa-bars"></i></button>
     </header>
     
     <div id="sidebarOverlay" class="sidebar-overlay"></div>
@@ -46,10 +42,12 @@
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
             <a href="#" class="nav-link" data-target="hall"><i class="fa-solid fa-trophy"></i> Hall de la Fama</a>
             <a href="#" class="nav-link" data-target="tienda"><i class="fa-solid fa-store"></i> Tienda de Recompensas</a>
+            <a href="#" class="nav-link" data-target="plantillas"><i class="fa-solid fa-layer-group"></i> Plantillas de Tareas</a>
             
             <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
             <a href="#" class="nav-link" id="link-entregas" data-target="entregas" style="display: none;"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
             <a href="#" class="nav-link" id="link-gerencia" data-target="gerencia" style="display: none;"><i class="fa-solid fa-chart-pie"></i> Panel de Gerencia</a>
+            <a href="#" class="nav-link" id="link-boveda" data-target="boveda" style="display: none;"><i class="fa-solid fa-lock"></i> Bóveda de Accesos</a>
         </nav>
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
@@ -83,66 +81,97 @@
             </div>
         </header>
 
+        <!-- ===== VISTA: PLANTILLAS DE TAREAS ===== -->
+        <section id="view-plantillas" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Plantillas de Tareas</h2>
+                <button id="btnMostrarFormPlantilla" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaPlantilla')"><i class="fa-solid fa-plus"></i> Crear Plantilla</button>
+            </div>
+            <div class="info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    Agiliza el trabajo. Usa estas plantillas predefinidas con instrucciones y material visual (flyers, referencias) para crear tareas en segundos.
+                </div>
+            </div>
+
+            <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="plantillaTitulo" placeholder="Título de la tarea (Ej: Diseño de Flyer)" style="flex: 2;">
+                    <input type="number" id="plantillaXP" placeholder="XP (Ej: 15)" value="15" style="flex: 1;">
+                </div>
+                <textarea id="plantillaDesc" placeholder="Instrucciones fijas..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #a0a0b8; font-size: 0.85rem;">Subir Foto/Flyer de Referencia (Opcional):</label>
+                    <input type="file" id="plantillaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                </div>
+                <button id="btnGuardarPlantilla" class="btn-primary" style="align-self: flex-end;">Guardar Plantilla</button>
+            </div>
+
+            <div id="gridPlantillas" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: BÓVEDA DE ACCESOS ===== -->
+        <section id="view-boveda" class="view-section" style="display: none;">
+            <h2>Bóveda de Accesos</h2>
+            <p class="section-subtitle">Contraseñas y servicios de la productora</p>
+            
+            <div class="info-banner">
+                <i class="fa-solid fa-lock" style="color: #ef4444;"></i>
+                <div>
+                    <strong>Zona restringida.</strong> Aquí puedes guardar contraseñas de Wi-Fi, correos, Adobe, o servidores de clientes.
+                </div>
+            </div>
+
+            <div class="form-tarea" style="flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="bovedaServicio" placeholder="Servicio (Ej: Wi-Fi Oficina)" style="flex: 1;">
+                    <input type="text" id="bovedaUsuario" placeholder="Usuario / Correo" style="flex: 1;">
+                    <input type="text" id="bovedaPassword" placeholder="Contraseña" style="flex: 1;">
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="bovedaNota" placeholder="Nota (Opcional)" style="flex: 2;">
+                    <button id="btnGuardarBoveda" class="btn-primary" style="flex: 1;">Guardar Acceso</button>
+                </div>
+            </div>
+
+            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
+                        <tr><th style="padding: 15px;">Servicio</th><th style="padding: 15px;">Usuario</th><th style="padding: 15px;">Contraseña</th><th style="padding: 15px;">Notas</th><th style="padding: 15px;">Acción</th></tr>
+                    </thead>
+                    <tbody id="tablaBoveda"></tbody>
+                </table>
+            </div>
+        </section>
+
         <!-- ===== VISTA: HALL DE LA FAMA ===== -->
         <section id="view-hall" class="view-section" style="display: none;">
             <h2>Hall de la Fama</h2>
             <p class="section-subtitle">Reconocimiento a los líderes de SPOTLIGHT</p>
-            
-            <div class="info-banner">
-                <i class="fa-solid fa-crown" style="color: #f7c948;"></i>
-                <div>
-                    Aquí se coronan los integrantes del equipo que han acumulado más Puntos XP completando tareas, exámenes y aportando al equipo. ¡El Top 1 recibe la corona de la productora!
-                </div>
-            </div>
-
+            <div class="info-banner"><i class="fa-solid fa-crown" style="color: #f7c948;"></i><div>Aquí se coronan los integrantes del equipo que han acumulado más Puntos XP completando tareas, exámenes y aportando al equipo.</div></div>
             <div id="hallDeLaFamaContent" class="podium-container"></div>
         </section>
 
-        <!-- ===== VISTA: TIENDA DE RECOMPENSAS ===== -->
+        <!-- ===== VISTA: TIENDA ===== -->
         <section id="view-tienda" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Tienda de Recompensas</h2>
-                <div class="saldo-xp-container">
-                    <span>Tu saldo:</span>
-                    <strong id="saldoXP">0 XP</strong>
-                </div>
+                <div class="saldo-xp-container"><span>Tu saldo:</span><strong id="saldoXP">0 XP</strong></div>
             </div>
-
-            <div class="info-banner">
-                <i class="fa-solid fa-circle-info"></i>
-                <div>
-                    ¡Canjea los Puntos XP que has ganado completando tareas y exámenes! Al canjear, Gerencia recibirá una notificación para entregarte tu premio.
-                </div>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-                <button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button>
-            </div>
-
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>¡Canjea los Puntos XP que has ganado completando tareas y exámenes! Al canjear, Gerencia recibirá una notificación.</div></div>
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;"><button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button></div>
             <div id="formNuevaRecompensa" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="text" id="tiendaTitulo" placeholder="Ej: Café gratis" style="flex: 2;">
-                    <input type="number" id="tiendaCosto" placeholder="Costo en XP (Ej: 50)" style="flex: 1;">
-                    <input type="text" id="tiendaIcono" placeholder="Emoji (Ej: ☕)" style="flex: 0.5;" maxlength="2">
+                    <input type="text" id="tiendaTitulo" placeholder="Ej: Café gratis" style="flex: 2;"><input type="number" id="tiendaCosto" placeholder="Costo en XP (Ej: 50)" style="flex: 1;"><input type="text" id="tiendaIcono" placeholder="Emoji (Ej: ☕)" style="flex: 0.5;" maxlength="2">
                 </div>
                 <button id="btnGuardarRecompensa" class="btn-primary" style="align-self: flex-end;">Añadir a la Tienda</button>
             </div>
-
             <div id="gridTienda" class="tienda-grid"></div>
-
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
                 <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-clipboard-list"></i> Historial de Canjes (Admin)</h3>
                 <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
-                            <tr>
-                                <th style="padding: 15px;">Empleado</th>
-                                <th style="padding: 15px;">Recompensa</th>
-                                <th style="padding: 15px;">Costo</th>
-                                <th style="padding: 15px;">Estado</th>
-                                <th style="padding: 15px;">Acción</th>
-                            </tr>
-                        </thead>
+                        <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Recompensa</th><th style="padding: 15px;">Costo</th><th style="padding: 15px;">Estado</th><th style="padding: 15px;">Acción</th></tr></thead>
                         <tbody id="tablaCanjes"></tbody>
                     </table>
                 </div>
@@ -153,27 +182,12 @@
         <section id="view-gerencia" class="view-section" style="display: none;">
             <h2>Panel de Gerencia</h2>
             <p class="section-subtitle">Resumen ejecutivo de SPOTLIGHT</p>
-            <div class="info-banner">
-                <i class="fa-solid fa-circle-info"></i>
-                <div>Bienvenido al centro de mando. Aquí tienes una vista rápida del estado de la productora.</div>
-            </div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Bienvenido al centro de mando. Aquí tienes una vista rápida del estado de la productora.</div></div>
             <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div>
-                    <div class="kpi-info"><span>Tareas Totales</span><strong id="kpiTareasTotal">0</strong><span class="kpi-sub" id="kpiTareasSub">0 Completadas</span></div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div>
-                    <div class="kpi-info"><span>Proyectos</span><strong id="kpiProyectos">0</strong><span class="kpi-sub" id="kpiProyectosSub">Activos</span></div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon azul"><i class="fa-solid fa-wallet"></i></div>
-                    <div class="kpi-info"><span>Presupuesto</span><strong id="kpiPresupuesto">$0</strong><span class="kpi-sub" id="kpiGastadoSub">$0 Gastados</span></div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon rojo"><i class="fa-solid fa-users"></i></div>
-                    <div class="kpi-info"><span>Equipo</span><strong id="kpiEquipo">0</strong><span class="kpi-sub" id="kpiEquipoSub">Integrantes</span></div>
-                </div>
+                <div class="kpi-card"><div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><span>Tareas Totales</span><strong id="kpiTareasTotal">0</strong><span class="kpi-sub" id="kpiTareasSub">0 Completadas</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div><div class="kpi-info"><span>Proyectos</span><strong id="kpiProyectos">0</strong><span class="kpi-sub" id="kpiProyectosSub">Activos</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon azul"><i class="fa-solid fa-wallet"></i></div><div class="kpi-info"><span>Presupuesto</span><strong id="kpiPresupuesto">$0</strong><span class="kpi-sub" id="kpiGastadoSub">$0 Gastados</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon rojo"><i class="fa-solid fa-users"></i></div><div class="kpi-info"><span>Equipo</span><strong id="kpiEquipo">0</strong><span class="kpi-sub" id="kpiEquipoSub">Integrantes</span></div></div>
             </div>
             <div class="charts-grid">
                 <div class="chart-box"><h3>Rendimiento del Equipo</h3><canvas id="graficoTareas"></canvas></div>
@@ -212,13 +226,9 @@
         <!-- ===== VISTA: MOODBOARD ===== -->
         <section id="view-moodboard" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Muro de Inspiración</h2><button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir Referencia</button></div>
-            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
-                <h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro</h4>
-                <p style="color: #ddd; font-size: 0.95rem; line-height: 1.5;">Aquí puedes subir imágenes que nos inspiren. <strong>⚠️ Prohibido subir contenido explícito o violento.</strong></p>
-            </div>
+            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;"><h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro</h4><p style="color: #ddd; font-size: 0.95rem; line-height: 1.5;">Aquí puedes subir imágenes que nos inspiren. <strong>⚠️ Prohibido subir contenido explícito o violento.</strong></p></div>
             <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="moodboardTitulo" placeholder="Título o descripción">
-                <input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                <input type="text" id="moodboardTitulo" placeholder="Título o descripción"><input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
                 <button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar en el Muro</button>
             </div>
             <div id="gridMoodboard" class="moodboard-grid"></div>
@@ -229,9 +239,7 @@
             <div class="recent-tasks-header"><h2>Objetivos del Equipo</h2><button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear Objetivo</button></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Metas del equipo. Si logras cumplir una tarea, haz clic en <strong>"¡Aportar Avance +1!"</strong>.</div></div>
             <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="objetivoTitulo" placeholder="¿Cuál es la meta?" style="font-weight: bold;">
-                <input type="number" id="objetivoMeta" placeholder="Meta numérica" min="1">
-                <button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar Objetivo</button>
+                <input type="text" id="objetivoTitulo" placeholder="¿Cuál es la meta?" style="font-weight: bold;"><input type="number" id="objetivoMeta" placeholder="Meta numérica" min="1"><button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar Objetivo</button>
             </div>
             <div id="listaObjetivos" class="objetivos-grid"></div>
         </section>
@@ -241,12 +249,8 @@
             <div class="recent-tasks-header"><h2>Nuestro Equipo</h2><button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir Integrante</button></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Conoce a tu equipo. Datos de contacto, puntos XP y medallas de desempeño.</div></div>
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;"><input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;">
-                </div>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="email" id="dirCorreo" placeholder="Correo Electrónico" style="flex: 1;"><input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;">
-                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;"><input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;"></div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="email" id="dirCorreo" placeholder="Correo Electrónico" style="flex: 1;"><input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;"></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Fecha de Cumpleaños:</label><input type="date" id="dirCumpleanos" style="width: 100%;"></div>
                     <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Foto de Perfil (Opcional):</label><input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div>
@@ -306,9 +310,7 @@
             <div class="recent-tasks-header"><h2>Gestión de Proyectos</h2><button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Administra los proyectos. Haz clic en uno para ver sus tareas y presupuesto.</div></div>
             <div id="formNuevoProyecto" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto" style="flex: 2;"><input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)" style="flex: 1;">
-                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto" style="flex: 2;"><input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)" style="flex: 1;"></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto" style="flex: 1;"></div>
                 <button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar Proyecto</button>
             </div>
