@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
     const puedeVerGastos = esGerente || esFinanzas;
     const esMarketing = (rolStaff === "Gerente de Marketing");
-    
     const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     const esDisenadora = (nombreStaff === "Maria Fernanda" || rolStaff.includes("Diseñadora"));
 
@@ -122,7 +121,10 @@ document.addEventListener('DOMContentLoaded', function() {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
             if (!querySnapshot.empty) {
                 const docId = querySnapshot.docs[0].id; const data = querySnapshot.docs[0].data(); let puntosActuales = data.puntos || 0;
-                db.collection("directorio").doc(docId).update({ puntos: puntosActuales + cantidad }).then(() => { crearNotificacion(usuario, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); });
+                db.collection("directorio").doc(docId).update({ puntos: puntosActuales + cantidad }).then(() => { 
+                    crearNotificacion(usuario, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
+                    if (usuario === nombreStaff) { renderDashboard(nombreStaff); } // Solo actualiza el dashboard si es el usuario activo
+                });
             }
         });
     }
@@ -154,6 +156,99 @@ document.addEventListener('DOMContentLoaded', function() {
     let graficoTareasInstance = null, graficoPresupuestoInstance = null;
     let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null, imgPlantillaActiva = "";
 
+    // ================= DASHBOARD Y NIVELES =================
+    const NIVELES_SP = [
+        { nivel: 1, nombre: "SP POBRE", xpMin: 0 },
+        { nivel: 2, nombre: "SP MEDIO", xpMin: 100 },
+        { nivel: 3, nombre: "SEMI SP", xpMin: 300 },
+        { nivel: 4, nombre: "PRO SP", xpMin: 600 },
+        { nivel: 5, nombre: "SUPER SUPREMO", xpMin: 1000 }
+    ];
+
+    const frasesDelDia = [
+        "La creatividad es la inteligencia divirtiéndose. - Albert Einstein",
+        "El cine es verdad 24 veces por segundo. - Jean-Luc Godard",
+        "No es lo que ves, es cómo lo ves. - Alfred Hitchcock",
+        "El trabajo en equipo es la capacidad de trabajar juntos hacia una visión común. - Andrew Carnegie",
+        "La mejor manera de predecir el futuro es crearlo. - Peter Drucker"
+    ];
+
+    function renderDashboard(usuarioActivo) {
+        // 1. Frase del día
+        const diaDelAno = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+        const fraseHoy = frasesDelDia[diaDelAno % frasesDelDia.length];
+        const quoteEl = document.getElementById('quoteText');
+        if (quoteEl) quoteEl.textContent = fraseHoy;
+
+        // 2. Mi Nivel (Nuevos Rangos SP)
+        const perfil = directorioDB.find(p => p.nombre === usuarioActivo);
+        if (perfil) {
+            const puntos = perfil.puntos || 0;
+            
+            let nivelActual = NIVELES_SP[0];
+            let nivelSiguiente = NIVELES_SP[1];
+            
+            for (let i = 0; i < NIVELES_SP.length; i++) {
+                if (puntos >= NIVELES_SP[i].xpMin) {
+                    nivelActual = NIVELES_SP[i];
+                    nivelSiguiente = NIVELES_SP[i + 1] || null;
+                }
+            }
+
+            const dashNivel = document.getElementById('dashNivel');
+            const dashXPText = document.getElementById('dashXPText');
+            const dashXPBar = document.getElementById('dashXPBar');
+
+            if (dashNivel) dashNivel.textContent = nivelActual.nombre;
+            
+            if (dashXPText) {
+                if (nivelSiguiente) {
+                    dashXPText.textContent = `${puntos} / ${nivelSiguiente.xpMin} XP`;
+                    const progreso = ((puntos - nivelActual.xpMin) / (nivelSiguiente.xpMin - nivelActual.xpMin)) * 100;
+                    if (dashXPBar) dashXPBar.style.width = `${progreso}%`;
+                } else {
+                    dashXPText.textContent = `${puntos} XP (Nivel Máximo)`;
+                    if (dashXPBar) dashXPBar.style.width = `100%`;
+                }
+            }
+        }
+
+        // 3. Mis Próximas Tareas
+        const misTareas = tareas.filter(t => t.asignado === usuarioActivo && t.estado !== 'completed').slice(0, 3);
+        const listaTareas = document.getElementById('dashTareasList');
+        if (listaTareas) {
+            listaTareas.innerHTML = '';
+            if (misTareas.length === 0) {
+                listaTareas.innerHTML = '<li style="color: #666; font-size: 0.9rem;">¡Todo al día! No tienes tareas pendientes.</li>';
+            } else {
+                misTareas.forEach(t => {
+                    const colorTag = t.estado === 'pending' ? '#ef4444' : '#f7c948';
+                    const textoTag = t.estado === 'pending' ? 'Por Hacer' : 'En Proceso';
+                    listaTareas.innerHTML += `
+                        <li class="dash-task-item" onclick="abrirModalTarea('${t.id}')" style="cursor: pointer;">
+                            <span>${t.titulo}</span>
+                            <span class="tag" style="background: rgba(247, 201, 72, 0.1); color: ${colorTag}; border: 1px solid ${colorTag};">${textoTag}</span>
+                        </li>
+                    `;
+                });
+            }
+        }
+
+        // 4. Último Anuncio
+        const dashAnuncio = document.getElementById('dashAnuncio');
+        if (dashAnuncio) {
+            if (anunciosDB.length > 0) {
+                const ultimo = anunciosDB[0];
+                dashAnuncio.innerHTML = `
+                    <h4 style="color: #f3f4f6; font-size: 1rem; margin-bottom: 5px;">${ultimo.titulo}</h4>
+                    <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${ultimo.mensaje}</p>
+                `;
+            } else {
+                dashAnuncio.innerHTML = '<p style="color: #666; font-size: 0.9rem;">No hay anuncios recientes.</p>';
+            }
+        }
+    }
+
     // ================= SIMULADOR DE POST (MOCKUP) =================
     window.previewMockup = function(event) {
         const input = event.target;
@@ -170,11 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= CAJA MISTERIOSA =================
     window.verificarCaja = function() {
-        const hoy = new Date().toDateString();
-        const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff);
-        const status = document.getElementById('lootBoxStatus');
-        const icon = document.getElementById('lootBoxIcon');
-
+        const hoy = new Date().toDateString(); const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff);
+        const status = document.getElementById('lootBoxStatus'); const icon = document.getElementById('lootBoxIcon');
         if (hoy === ultimaApertura) {
             if(status) status.textContent = "Vuelve mañana por otra recompensa.";
             if(icon) { icon.style.opacity = '0.5'; icon.style.cursor = 'not-allowed'; icon.onclick = null; }
@@ -184,50 +276,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     window.abrirLootBox = function() {
-        const hoy = new Date().toDateString();
-        const recompensasPosibles = [10, 20, 30, 50, 100];
-        const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
-        
-        localStorage.setItem('lootBox_' + nombreStaff, hoy);
-        verificarCaja();
-        
+        const hoy = new Date().toDateString(); const recompensasPosibles = [10, 20, 30, 50, 100]; const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
+        localStorage.setItem('lootBox_' + nombreStaff, hoy); verificarCaja();
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 }, colors: ['#f7c948', '#3b82f6', '#ef4444', '#22c55e'] });
-        darPuntos(nombreStaff, puntosGanados);
-        mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP.`);
+        darPuntos(nombreStaff, puntosGanados); mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP.`);
     };
     verificarCaja();
 
     // ================= RULETA DIARIA =================
     let girando = false;
     window.girarRuleta = function() {
-        if (girando) return;
-        const hoy = new Date().toDateString();
-        const ultimaTirada = localStorage.getItem('ruleta_' + nombreStaff);
-
-        if (hoy === ultimaTirada) {
-            mostrarToast("Ya giraste la ruleta hoy. Vuelve mañana.");
-            return;
-        }
-
-        girando = true;
-        const wheel = document.getElementById('wheel');
-        const grados = 1800 + Math.floor(Math.random() * 360); // 5 vueltas + ángulo aleatorio
+        if (girando) return; const hoy = new Date().toDateString(); const ultimaTirada = localStorage.getItem('ruleta_' + nombreStaff);
+        if (hoy === ultimaTirada) { mostrarToast("Ya giraste la ruleta hoy. Vuelve mañana."); return; }
+        girando = true; const wheel = document.getElementById('wheel'); const grados = 1800 + Math.floor(Math.random() * 360);
         wheel.style.transform = `rotate(${grados}deg)`;
-
         setTimeout(() => {
-            const premios = [10, 20, 50, 100, 5, 15, 30, 200];
-            const premio = premios[Math.floor(Math.random() * premios.length)];
-            
-            localStorage.setItem('ruleta_' + nombreStaff, hoy);
-            document.getElementById('ruletaResultado').textContent = `¡Ganaste ${premio} XP! 🎉`;
-            
-            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
-            darPuntos(nombreStaff, premio);
-            girando = false;
-        }, 3500); // Espera a que termine la animación CSS
+            const premios = [10, 20, 50, 100, 5, 15, 30, 200]; const premio = premios[Math.floor(Math.random() * premios.length)];
+            localStorage.setItem('ruleta_' + nombreStaff, hoy); document.getElementById('ruletaResultado').textContent = `¡Ganaste ${premio} XP! 🎉`;
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); darPuntos(nombreStaff, premio); girando = false;
+        }, 3500);
     };
 
-    // ================= RADAR DE TENDENCIAS =================
+    // ================= RADAR =================
     db.collection("radar").onSnapshot((snapshot) => { radarDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderRadar(); });
     window.renderRadar = function() {
         const grid = document.getElementById('gridRadar'); if (!grid) return; grid.innerHTML = '';
@@ -265,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarWiki = function(id) { if (confirm("¿Eliminar este artículo?")) { db.collection("wiki").doc(id).delete(); } };
 
-    // ================= DETRÁS DE CÁMARAS (BTS) =================
+    // ================= BTS =================
     const gridBTS = document.getElementById('gridBTS');
     db.collection("bts").orderBy("timestamp", "desc").onSnapshot((snapshot) => { btsDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderBTS(); });
     window.renderBTS = function() {
@@ -320,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarPlantilla = function(id) { if (confirm("¿Eliminar esta plantilla?")) { db.collection("plantillas").doc(id).delete(); } };
 
-    // ================= BÓVEDA DE ACCESOS =================
+    // ================= BÓVEDA =================
     db.collection("boveda").onSnapshot((snapshot) => { bovedaDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderBoveda(); });
     window.renderBoveda = function() {
         const tbody = document.getElementById('tablaBoveda'); if (!tbody) return; tbody.innerHTML = '';
@@ -343,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarAcceso = function(id) { if (confirm("¿Eliminar este acceso?")) { db.collection("boveda").doc(id).delete(); } };
 
-    // ================= TIENDA DE RECOMPENSAS =================
+    // ================= TIENDA =================
     const recompensasPorDefecto = [{ titulo: "Café Gratis", costo: 50, icono: "☕" }, { titulo: "Home Office (1 día)", costo: 150, icono: "🏠" }, { titulo: "Tarjeta de Regalo", costo: 300, icono: "💳" }, { titulo: "Día Libre", costo: 600, icono: "🏖️" }, { titulo: "Jefe por un Día", costo: 1200, icono: "👑" }];
     db.collection("tienda").onSnapshot((snapshot) => { if (snapshot.empty) { recompensasPorDefecto.forEach(r => db.collection("tienda").add(r)); } else { tiendaDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTienda(); } });
     db.collection("canjes").onSnapshot((snapshot) => { canjesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderAdminCanjes(); });
@@ -484,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const gridDirectorio = document.getElementById('gridDirectorio');
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); verificarCumpleanos();
+        renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); renderDashboard(nombreStaff); verificarCumpleanos();
     });
     function verificarCumpleanos() {
         const hoy = new Date(); const mesHoy = hoy.getMonth() + 1; const diaHoy = hoy.getDate();
@@ -535,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= ANUNCIOS =================
     const listaAnuncios = document.getElementById('listaAnuncios');
-    db.collection("anuncios").onSnapshot((snapshot) => { anunciosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAnuncios(); });
+    db.collection("anuncios").onSnapshot((snapshot) => { anunciosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAnuncios(); renderDashboard(nombreStaff); });
     window.renderAnuncios = function() {
         if(!listaAnuncios) return; listaAnuncios.innerHTML = '';
         if (anunciosDB.length === 0) { listaAnuncios.innerHTML = '<p style="color:#666;">No hay comunicados publicados aún.</p>'; return; }
@@ -659,8 +729,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm("¿Eliminar este gasto?")) { const proyecto = proyectosDB.find(p => p.id === proyectoActivoId); let gastosActuales = proyecto.gastos || []; gastosActuales.splice(index, 1); db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => { proyecto.gastos = gastosActuales; renderGastosProyecto(proyecto); }); }
     }
 
-    // ================= TAREAS (KANBAN, TIEMPO Y APROBACIÓN) =================
-    db.collection("tareas").onSnapshot((snapshot) => { tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTareas(); evaluarLogros(); renderEntregas(); renderGerencia(); });
+    // ================= TAREAS (KANBAN Y TIEMPO) =================
+    db.collection("tareas").onSnapshot((snapshot) => { tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTareas(); evaluarLogros(); renderEntregas(); renderGerencia(); renderDashboard(nombreStaff); });
     window.renderTareas = function() {
         const colPending = document.getElementById('kanban-pending'); const colProgress = document.getElementById('kanban-progress'); const colCompleted = document.getElementById('kanban-completed');
         if(!colPending) return; colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
@@ -672,9 +742,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const etiquetaXP = t.xp ? `<span class="xp-badge" style="padding: 2px 6px; font-size: 0.7rem;"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
             let etiquetaTiempo = '';
             if (t.estado === 'completed' && t.fechaCreacion && t.fechaFin) {
-                const diff = t.fechaFin - t.fechaCreacion;
-                const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-                const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const diff = t.fechaFin - t.fechaCreacion; const dias = Math.floor(diff / (1000 * 60 * 60 * 24)); const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
                 etiquetaTiempo = `<span class="badge-estado badge-aprobado" style="margin-left:0; margin-top:5px; display:inline-block;"><i class="fa-solid fa-clock"></i> ${dias}d ${horas}h</span>`;
             }
 
@@ -723,17 +791,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const tiempoEl = document.getElementById('mTareaTiempo');
         if (t.estado === 'completed' && t.fechaCreacion && t.fechaFin) {
-            const diff = t.fechaFin - t.fechaCreacion;
-            const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const diff = t.fechaFin - t.fechaCreacion; const dias = Math.floor(diff / (1000 * 60 * 60 * 24)); const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
             tiempoEl.innerHTML = `<i class="fa-solid fa-clock"></i> Tiempo total: ${dias} días y ${horas} horas.`;
         } else if (t.fechaCreacion) {
-            const diff = Date.now() - t.fechaCreacion;
-            const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const diff = Date.now() - t.fechaCreacion; const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
             tiempoEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Lleva abierta: ${dias} días.`;
-        } else {
-            tiempoEl.innerHTML = '';
-        }
+        } else { tiempoEl.innerHTML = ''; }
 
         const calificacionAdmin = document.getElementById('calificacionAdmin'); const calificacionStaff = document.getElementById('calificacionStaff'); const textoCalificacion = document.getElementById('textoCalificacion');
         if (esGerente) { calificacionAdmin.style.display = 'flex'; calificacionStaff.style.display = 'none'; document.getElementById('inputCalificacion').value = t.calificacion || ''; } 
@@ -804,7 +867,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); }
         });
     });
 
