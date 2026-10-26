@@ -97,7 +97,6 @@
 
             <!-- DASHBOARD -->
             <div class="dashboard-grid">
-                <!-- Mi Nivel -->
                 <div class="dash-card">
                     <div class="dash-card-header">
                         <i class="fa-solid fa-bolt" style="color: #3b82f6;"></i>
@@ -111,8 +110,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Mis Próximas Tareas -->
                 <div class="dash-card">
                     <div class="dash-card-header">
                         <i class="fa-solid fa-list-check" style="color: #f7c948;"></i>
@@ -124,8 +121,6 @@
                         </ul>
                     </div>
                 </div>
-
-                <!-- Último Anuncio -->
                 <div class="dash-card">
                     <div class="dash-card-header">
                         <i class="fa-solid fa-bullhorn" style="color: #ef4444;"></i>
@@ -145,6 +140,12 @@
                     <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaTarea')"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
                 </div>
             </div>
+            
+            <div class="info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>Aquí puedes ver el estado de tus tareas. Usa los botones <strong>"Empezar"</strong> y <strong>"Terminar"</strong> para moverlas y ganar Puntos XP.</div>
+            </div>
+
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputTarea" placeholder="Tarea..." style="flex: 2;"><select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><option value="Johan Sebastián">Johan Sebastián</option><option value="Brayan Alexander">Brayan Alexander</option><option value="Beatriz">Beatriz</option><option value="Jair">Jair</option><option value="Ximena">Ximena</option><option value="Maria Fernanda">Maria Fernanda</option></select></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="date" id="inputFecha" style="flex: 1;"><input type="text" id="inputProyecto" placeholder="Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><input type="number" id="inputXP" placeholder="XP" value="10" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></div>
@@ -199,6 +200,7 @@
         <!-- ===== VISTA: WIKI ===== -->
         <section id="view-wiki" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Wiki de SPOTLIGHT</h2><button id="btnMostrarFormWiki" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaWiki')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div class="info-banner"><i class="fa-solid fa-book-open"></i><div>El cerebro de la productora. Aquí encontrarás tutoriales, manuales y procesos internos.</div></div>
             <div id="formNuevaWiki" class="form-tarea" style="display: none; flex-direction: column;">
                 <input type="text" id="wikiTitulo" placeholder="Título" style="font-weight: bold;"><textarea id="wikiContenido" placeholder="Contenido..." rows="6" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarWiki" class="btn-primary" style="align-self: flex-end;">Guardar</button>
@@ -209,6 +211,7 @@
         <!-- ===== VISTA: DETRÁS DE CÁMARAS ===== -->
         <section id="view-bts" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Detrás de Cámaras</h2><button id="btnMostrarFormBTS" class="btn-nueva-tarea" onclick="toggleForm('formNuevoBTS')"><i class="fa-solid fa-plus"></i> Subir</button></div>
+            <div class="info-banner"><i class="fa-solid fa-camera-retro"></i><div>¡Los momentos épicos de SPOTLIGHT! Sube fotos de los rodajes o momentos divertidos.</div></div>
             <div id="formNuevoBTS" class="form-tarea" style="display: none; flex-direction: column;">
                 <input type="text" id="btsTitulo" placeholder="Descripción"><input type="file" id="btsFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
                 <button id="btnGuardarBTS" class="btn-primary" style="align-self: flex-end;">Subir</button>
@@ -219,6 +222,7 @@
         <!-- ===== VISTA: RADAR ===== -->
         <section id="view-radar" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Radar de Tendencias</h2><button id="btnMostrarFormRadar" class="btn-nueva-tarea" onclick="toggleForm('formNuevoRadar')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div class="info-banner"><i class="fa-solid fa-satellite-dish" style="color: #3b82f6;"></i><div>Tu arsenal creativo. Guarda enlaces de TikTok, Reels, música o artículos que te inspiren.</div></div>
             <div id="formNuevoRadar" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="radarTitulo" placeholder="Título" style="flex: 2;"><input type="text" id="radarCategoria" placeholder="Categoría" style="flex: 1;"></div>
                 <input type="url" id="radarLink" placeholder="Enlace (https://...)"><textarea id="radarDesc" placeholder="Descripción..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
@@ -230,6 +234,7 @@
         <!-- ===== VISTA: PLANTILLAS ===== -->
         <section id="view-plantillas" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Plantillas</h2><button id="btnMostrarFormPlantilla" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaPlantilla')"><i class="fa-solid fa-plus"></i> Crear</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Agiliza el trabajo. Usa estas plantillas predefinidas con instrucciones.</div></div>
             <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="plantillaTitulo" placeholder="Título" style="flex: 2;"><input type="number" id="plantillaXP" placeholder="XP" value="15" style="flex: 1;"></div>
                 <textarea id="plantillaDesc" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
@@ -242,6 +247,7 @@
         <!-- ===== VISTA: BÓVEDA ===== -->
         <section id="view-boveda" class="view-section" style="display: none;">
             <h2>Bóveda de Accesos</h2>
+            <div class="info-banner"><i class="fa-solid fa-lock" style="color: #ef4444;"></i><div><strong>Zona restringida.</strong> Guarda contraseñas de Wi-Fi, correos, Adobe, etc.</div></div>
             <div class="form-tarea" style="flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaServicio" placeholder="Servicio" style="flex: 1;"><input type="text" id="bovedaUsuario" placeholder="Usuario" style="flex: 1;"><input type="text" id="bovedaPassword" placeholder="Contraseña" style="flex: 1;"></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaNota" placeholder="Nota" style="flex: 2;"><button id="btnGuardarBoveda" class="btn-primary" style="flex: 1;">Guardar</button></div>
@@ -261,6 +267,7 @@
         <!-- ===== VISTA: TIENDA ===== -->
         <section id="view-tienda" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Tienda de Recompensas</h2><div class="saldo-xp-container"><span>Saldo:</span><strong id="saldoXP">0 XP</strong></div></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>¡Canjea los Puntos XP que has ganado completando tareas y exámenes! Al canjear, Gerencia recibirá una notificación.</div></div>
             <div id="gridTienda" class="tienda-grid"></div>
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
                 <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Historial de Canjes (Admin)</h3>
@@ -271,6 +278,7 @@
         <!-- ===== VISTA: PANEL DE GERENCIA ===== -->
         <section id="view-gerencia" class="view-section" style="display: none;">
             <h2>Panel de Gerencia</h2>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Bienvenido al centro de mando. Aquí tienes una vista rápida del estado de la productora.</div></div>
             <div class="kpi-grid">
                 <div class="kpi-card"><div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><span>Tareas</span><strong id="kpiTareasTotal">0</strong><span class="kpi-sub" id="kpiTareasSub">0 Completadas</span></div></div>
                 <div class="kpi-card"><div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div><div class="kpi-info"><span>Proyectos</span><strong id="kpiProyectos">0</strong><span class="kpi-sub" id="kpiProyectosSub">Activos</span></div></div>
@@ -288,18 +296,21 @@
         <!-- ===== VISTA: PANEL RRHH ===== -->
         <section id="view-rrhh" class="view-section" style="display: none;">
             <h2>Panel de RRHH</h2>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Vista exclusiva de RRHH. Monitorea el desempeño del equipo basado en medallas, XP y exámenes.</div></div>
             <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Puesto</th><th style="padding: 15px;">XP</th><th style="padding: 15px;">Medallas</th><th style="padding: 15px;">Promedio</th></tr></thead><tbody id="tablaRRHH"></tbody></table></div>
         </section>
 
         <!-- ===== VISTA: MIS ENTREGAS ===== -->
         <section id="view-entregas" class="view-section" style="display: none;">
             <h2>Mi Portafolio de Entregas</h2>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Tu portafolio personal. Revisa todos los archivos que has subido y su estado de aprobación.</div></div>
             <div id="gridEntregas" class="moodboard-grid"></div>
         </section>
 
         <!-- ===== VISTA: MOODBOARD ===== -->
         <section id="view-moodboard" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Muro de Inspiración</h2><button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir</button></div>
+            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;"><h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro</h4><p style="color: #ddd; font-size: 0.95rem; line-height: 1.5;">Aquí puedes subir imágenes que nos inspiren. <strong>⚠️ Prohibido subir contenido explícito o violento.</strong></p></div>
             <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="moodboardTitulo" placeholder="Título"><input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"><button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <div id="gridMoodboard" class="moodboard-grid"></div>
         </section>
@@ -307,6 +318,7 @@
         <!-- ===== VISTA: OBJETIVOS ===== -->
         <section id="view-objetivos" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Objetivos</h2><button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Metas del equipo. Si logras cumplir una tarea, haz clic en <strong>"¡Aportar Avance +1!"</strong>.</div></div>
             <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="objetivoTitulo" placeholder="Meta"><input type="number" id="objetivoMeta" placeholder="Cantidad" min="1"><button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar</button></div>
             <div id="listaObjetivos" class="objetivos-grid"></div>
         </section>
@@ -314,6 +326,7 @@
         <!-- ===== VISTA: DIRECTORIO ===== -->
         <section id="view-directorio" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Nuestro Equipo</h2><button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Conoce a tu equipo. Datos de contacto, puntos XP y medallas de desempeño.</div></div>
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="dirNombre" placeholder="Nombre" style="flex: 2;"><input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;"></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="email" id="dirCorreo" placeholder="Correo" style="flex: 1;"><input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;"></div>
@@ -326,6 +339,7 @@
         <!-- ===== VISTA: ANUNCIOS ===== -->
         <section id="view-anuncios" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Comunicados</h2><button id="btnMostrarFormAnuncio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoAnuncio')"><i class="fa-solid fa-plus"></i> Nuevo</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Comunicados oficiales. Revisa los anuncios marcados como <strong style="color: #ef4444;">URGENTE 🚨</strong>.</div></div>
             <div id="formNuevoAnuncio" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="anuncioTitulo" placeholder="Título"><textarea id="anuncioMensaje" placeholder="Mensaje..." rows="3"></textarea><select id="anuncioPrioridad" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><option value="Normal">Normal</option><option value="Urgente">URGENTE</option></select><button id="btnGuardarAnuncio" class="btn-primary" style="align-self: flex-end;">Publicar</button></div>
             <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </section>
@@ -333,6 +347,7 @@
         <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Proyectos</h2><button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Administra los proyectos. Haz clic en uno para ver sus tareas y presupuesto.</div></div>
             <div id="formNuevoProyecto" class="form-tarea" style="display: none; flex-direction: column;"><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputProyectoNom" placeholder="Nombre" style="flex: 2;"><input type="text" id="inputClienteProyecto" placeholder="Cliente" style="flex: 1;"></div><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto" style="flex: 1;"></div><button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
@@ -340,6 +355,7 @@
         <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda</h2>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Consulta la agenda. Los puntos <strong style="color:#ef4444;">rojos</strong> son eventos y los <strong style="color:#3b82f6;">azules</strong> son tareas pendientes.</div></div>
             <div class="form-tarea" id="formAgendar" style="margin-top: 20px; flex-direction: row; align-items: flex-end;"><div style="flex: 2;"><input type="text" id="inputEvento" placeholder="Evento" style="width:100%;"></div><div style="flex: 1;"><input type="date" id="inputFechaEvento" style="width:100%;"></div><button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button></div>
             <div class="calendar-container"><div class="calendar-header"><button id="prevMonth" class="btn-icon"><i class="fa-solid fa-chevron-left"></i></button><h3 id="monthYearDisplay">Mes Año</h3><button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button></div><div class="calendar-grid-header"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div><div class="calendar-grid" id="calendarDays"></div></div>
             <ul id="listaEventos" class="archivos-lista" style="margin-top: 30px;"></ul>
@@ -348,6 +364,7 @@
         <!-- ===== VISTA: EXÁMENES ===== -->
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Exámenes</h2><button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoExamen')"><i class="fa-solid fa-plus"></i> Crear</button></div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Necesitas al menos un 70% para aprobar. Si lo logras, ¡ganarás Puntos XP extra!</div></div>
             <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="examenTitulo" placeholder="Título" style="font-weight: bold;"><div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div><div style="display: flex; gap: 15px; margin-top: 15px;"><button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;">+ Pregunta</button><button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar</button></div></div>
             <ul id="listaExamenes" class="archivos-lista"></ul>
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;">Resultados</h3>
