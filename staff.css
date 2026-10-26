@@ -343,3 +343,22 @@ h1, h2, h3, h4 {
     .kanban-board { grid-template-columns: 1fr; }
     .objetivos-grid { grid-template-columns: 1fr; }
 }
+/* CUADRO DE INFORMACIÓN EN CADA SECCIÓN */
+.info-banner {
+    background: rgba(247, 201, 72, 0.05);
+    border-left: 4px solid #f7c948;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: #a0a0b8;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.info-banner i {
+    color: #f7c948;
+    font-size: 1.4rem;
+}
