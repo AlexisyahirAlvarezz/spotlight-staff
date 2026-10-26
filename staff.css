@@ -2,20 +2,21 @@
    VARIABLES Y RESET
    ============================================================ */
 :root {
-    --bg-main: #05050f;
-    --bg-glass: rgba(255, 255, 255, 0.03);
-    --bg-glass-hover: rgba(255, 255, 255, 0.06);
-    --border-glass: rgba(255, 255, 255, 0.08);
-    --border-glass-hover: rgba(247, 201, 72, 0.4);
+    /* Un fondo ligeramente más azul/marino para que el vidrio resalte */
+    --bg-main: #0a0a14; 
+    --bg-glass: rgba(255, 255, 255, 0.04);
+    --bg-glass-hover: rgba(255, 255, 255, 0.08);
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --border-glass-hover: rgba(247, 201, 72, 0.5);
     --primary: #f7c948;
     --primary-hover: #ffe08a;
     --text-main: #ffffff;
-    --text-muted: #a0a0b8;
-    --danger: #ff5e5e;
-    --success: #4CAF50;
+    --text-muted: #9ca3af; /* Gris un poco más suave */
+    --danger: #ef4444;
+    --success: #22c55e;
     
-    /* FUENTES */
-    --font-title: 'Syne', sans-serif;
+    /* FUENTES ELEGANTES */
+    --font-title: 'Outfit', sans-serif;
     --font-body: 'Inter', sans-serif;
 }
 
@@ -24,9 +25,10 @@
 body { 
     font-family: var(--font-body); 
     background-color: var(--bg-main); 
-    /* Fondo con un sutil brillo radial para que el vidrio resalte */
-    background-image: radial-gradient(circle at top right, rgba(247, 201, 72, 0.05), transparent 40%),
-                      radial-gradient(circle at bottom left, rgba(30, 30, 60, 0.5), transparent 40%);
+    /* Fondo con brillos sutiles para que el blur del vidrio tenga qué difuminar */
+    background-image: 
+        radial-gradient(circle at 15% 50%, rgba(247, 201, 72, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(60, 60, 150, 0.08), transparent 25%);
     color: var(--text-main); 
     display: flex; 
     min-height: 100vh; 
@@ -34,7 +36,7 @@ body {
 
 h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     font-family: var(--font-title);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em; /* Letras menos estiradas */
 }
 
 /* ============================================================
@@ -42,9 +44,9 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
    ============================================================ */
 .sidebar { 
     width: 260px; 
-    background: rgba(11, 11, 26, 0.7); 
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(10, 10, 20, 0.6); 
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-right: 1px solid var(--border-glass); 
     display: flex; 
     flex-direction: column; 
@@ -54,11 +56,12 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     z-index: 100; 
 }
 
-.sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
-.sidebar-logo img { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; background: #ffffff; padding: 4px; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
-.sidebar-logo span { font-family: var(--font-title); font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; color: #ffffff; }
+.sidebar-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+.sidebar-logo img { width: 38px; height: 38px; object-fit: contain; border-radius: 10px; background: #ffffff; padding: 4px; box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+/* Letra del logo un poco más pequeña y elegante */
+.sidebar-logo span { font-family: var(--font-title); font-weight: 700; font-size: 1.15rem; letter-spacing: 1px; color: #ffffff; }
 
-.sidebar-nav { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+.sidebar-nav { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; }
 .sidebar-nav a { 
     color: var(--text-muted); 
     text-decoration: none; 
@@ -86,19 +89,19 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     gap: 10px; 
     padding: 14px; 
     border-radius: 12px; 
-    background: rgba(255, 94, 94, 0.05); 
-    border: 1px solid rgba(255, 94, 94, 0.1); 
+    background: rgba(239, 68, 68, 0.05); 
+    border: 1px solid rgba(239, 68, 68, 0.1); 
     transition: 0.3s; 
     font-weight: 600; 
 }
-.logout-btn:hover { background: rgba(255, 94, 94, 0.15); }
+.logout-btn:hover { background: rgba(239, 68, 68, 0.15); }
 
 /* ============================================================
    MAIN CONTENT
    ============================================================ */
 .main-content { margin-left: 260px; flex-grow: 1; padding: 40px; width: calc(100% - 260px); }
 .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-.welcome-text h1 { font-size: 2.2rem; font-weight: 700; }
+.welcome-text h1 { font-size: 2.2rem; font-weight: 600; }
 .welcome-text p { color: var(--text-muted); margin-top: 5px; font-size: 0.95rem; }
 .header-actions { display: flex; align-items: center; gap: 20px; }
 
@@ -121,18 +124,18 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .badge { position: absolute; top: 0; right: 0; background: var(--danger); color: white; font-size: 0.7rem; font-weight: bold; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 .notification-dropdown { 
     display: none; position: absolute; top: 55px; right: 0; width: 300px; 
-    background: rgba(15, 15, 30, 0.9); 
-    backdrop-filter: blur(20px);
+    background: rgba(20, 20, 35, 0.95); 
+    backdrop-filter: blur(25px);
     border: 1px solid var(--border-glass); 
     border-radius: 16px; padding: 15px; z-index: 200; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6); 
 }
 .notification-dropdown h4 { color: var(--primary); margin-bottom: 10px; font-size: 1rem; }
 .notification-dropdown ul { list-style: none; max-height: 250px; overflow-y: auto; }
 .notification-dropdown li { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; color: #ccc; }
 
 /* AVATAR */
-.avatar { width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), #ff9a3c); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--bg-main); font-size: 1.2rem; font-family: var(--font-title); }
+.avatar { width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary), #ff9a3c); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: var(--bg-main); font-size: 1.2rem; font-family: var(--font-title); }
 
 /* ============================================================
    COMPONENTES CON GLASSMORPHISM
@@ -145,7 +148,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     border: none; 
     padding: 10px 20px; 
     border-radius: 30px; 
-    font-weight: 700; 
+    font-weight: 600; 
     cursor: pointer; 
     display: flex; align-items: center; gap: 8px; 
     transition: 0.3s; 
@@ -183,7 +186,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     border: none; 
     padding: 12px 28px; 
     border-radius: 30px; 
-    font-weight: 700; 
+    font-weight: 600; 
     cursor: pointer; 
     transition: 0.3s; 
     font-family: var(--font-title);
@@ -203,7 +206,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
     border: 1px solid var(--border-glass); 
     min-height: 250px; 
 }
-.kanban-column h3 { text-align: center; font-size: 1.1rem; color: var(--primary); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.kanban-column h3 { text-align: center; font-size: 1.15rem; color: var(--primary); margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.08); }
 .kanban-items { display: flex; flex-direction: column; gap: 15px; min-height: 100px; }
 
 .kanban-card { 
@@ -221,7 +224,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .kanban-card.progress { border-left-color: var(--primary); }
 .kanban-card.completed { border-left-color: var(--success); opacity: 0.7; }
 
-.kanban-card h4 { font-size: 1.05rem; color: white; margin-bottom: 8px; }
+.kanban-card h4 { font-size: 1.05rem; color: white; margin-bottom: 8px; font-weight: 600; }
 .kanban-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
 .kanban-card .nota-tag { font-size: 0.75rem; padding: 4px 10px; margin-bottom: 12px; display: inline-block; }
 
@@ -241,9 +244,9 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .kanban-actions button:hover { background: rgba(255,255,255,0.15); }
 .kanban-actions .btn-start { color: var(--primary); border-color: rgba(247, 201, 72, 0.3); }
 .kanban-actions .btn-start:hover { background: var(--primary); color: var(--bg-main); }
-.kanban-actions .btn-finish { color: var(--success); border-color: rgba(76, 175, 80, 0.3); }
+.kanban-actions .btn-finish { color: var(--success); border-color: rgba(34, 197, 94, 0.3); }
 .kanban-actions .btn-finish:hover { background: var(--success); color: white; }
-.kanban-actions .btn-back { color: var(--danger); border-color: rgba(255, 94, 94, 0.3); }
+.kanban-actions .btn-back { color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
 .kanban-actions .btn-back:hover { background: var(--danger); color: white; }
 
 /* ============================================================
@@ -262,13 +265,13 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 }
 .archivo-item:hover { background: var(--bg-glass-hover); border-color: var(--border-glass-hover); }
 
-.btn-eliminar { background: rgba(255, 94, 94, 0.1); color: var(--danger); border: 1px solid rgba(255, 94, 94, 0.2); padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.85rem; }
+.btn-eliminar { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: 600; font-size: 0.85rem; }
 .btn-eliminar:hover { background: var(--danger); color: white; }
 .btn-descargar { background: rgba(247, 201, 72, 0.1); color: var(--primary); border: 1px solid rgba(247, 201, 72, 0.3); padding: 6px 12px; border-radius: 6px; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
 .btn-descargar:hover { background: var(--primary); color: var(--bg-main); transform: scale(1.05); }
 
 /* NOTA Y MODALES (VIDRIO EXTREMO) */
-.nota-tag { background: rgba(76, 175, 80, 0.15); color: var(--success); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+.nota-tag { background: rgba(34, 197, 94, 0.15); color: var(--success); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
 .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(5, 5, 15, 0.7); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
 .modal-content { 
     background: rgba(20, 20, 35, 0.85); 
@@ -295,7 +298,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
    ============================================================ */
 .calendar-container { background: var(--bg-glass); backdrop-filter: blur(10px); border: 1px solid var(--border-glass); border-radius: 20px; padding: 25px; margin-top: 20px; }
 .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-.calendar-header h3 { font-size: 1.5rem; color: var(--primary); }
+.calendar-header h3 { font-size: 1.5rem; color: var(--primary); font-weight: 600; }
 .calendar-grid-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; color: var(--text-muted); margin-bottom: 10px; font-size: 0.9rem; }
 .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
 .calendar-day { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px; min-height: 65px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; transition: 0.3s; position: relative; }
@@ -311,7 +314,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .pregunta-bloque { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
 .examen-card { background: var(--bg-glass); backdrop-filter: blur(10px); border: 1px solid var(--border-glass); border-radius: 16px; padding: 25px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s;}
 .examen-card:hover { background: var(--bg-glass-hover); border-color: var(--border-glass-hover); }
-.examen-card h3 { color: var(--primary); margin-bottom: 0; }
+.examen-card h3 { color: var(--primary); margin-bottom: 0; font-weight: 600; }
 .opcion-examen { display: block; background: rgba(0,0,0,0.3); padding: 14px 20px; border-radius: 10px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s; }
 .opcion-examen:hover { border-color: var(--primary); background: rgba(247, 201, 72, 0.1); }
 .opcion-examen input { margin-right: 12px; accent-color: var(--primary); }
@@ -321,10 +324,10 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
    ============================================================ */
 .anuncio-card { background: var(--bg-glass); backdrop-filter: blur(10px); border: 1px solid var(--border-glass); border-radius: 16px; padding: 25px; position: relative; transition: 0.3s; }
 .anuncio-card:hover { background: var(--bg-glass-hover); }
-.anuncio-urgente { border-left: 4px solid var(--danger); background: rgba(255, 94, 94, 0.05); }
+.anuncio-urgente { border-left: 4px solid var(--danger); background: rgba(239, 68, 68, 0.05); }
 .anuncio-normal { border-left: 4px solid var(--primary); }
 .anuncio-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-.anuncio-header h3 { color: white; margin: 0; font-size: 1.3rem; }
+.anuncio-header h3 { color: white; margin: 0; font-size: 1.3rem; font-weight: 600; }
 .anuncio-fecha { color: var(--text-muted); font-size: 0.85rem; margin-top: 5px; display: block; }
 .anuncio-mensaje { color: #ccc; font-size: 1rem; line-height: 1.6; margin-top: 15px; white-space: pre-wrap; }
 .badge-urgente { background: var(--danger); color: white; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; }
@@ -337,7 +340,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .miembro-card:hover { border-color: var(--border-glass-hover); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.4); background: var(--bg-glass-hover); }
 .miembro-avatar { width: 85px; height: 85px; background: linear-gradient(135deg, var(--primary), #ff9a3c); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: bold; color: var(--bg-main); margin: 0 auto 15px; box-shadow: 0 5px 20px rgba(247, 201, 72, 0.4); font-family: var(--font-title); }
 .miembro-avatar-img { width: 85px; height: 85px; border-radius: 50%; object-fit: cover; margin: 0 auto 15px; box-shadow: 0 5px 20px rgba(247, 201, 72, 0.4); border: 2px solid var(--primary); }
-.miembro-nombre { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 5px; }
+.miembro-nombre { font-size: 1.4rem; font-weight: 600; color: white; margin-bottom: 5px; font-family: var(--font-title); }
 .miembro-rol { display: inline-block; background: rgba(247, 201, 72, 0.15); color: var(--primary); padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; }
 
 .logros-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 15px; }
@@ -353,13 +356,13 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .objetivos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-top: 20px; }
 .objetivo-card { background: var(--bg-glass); backdrop-filter: blur(10px); border: 1px solid var(--border-glass); border-radius: 20px; padding: 30px; position: relative; overflow: hidden; transition: 0.3s; }
 .objetivo-card:hover { border-color: var(--border-glass-hover); box-shadow: 0 15px 40px rgba(0,0,0,0.4); background: var(--bg-glass-hover); }
-.objetivo-card.completado { border-color: var(--success); background: rgba(76, 175, 80, 0.08); }
-.objetivo-titulo { font-size: 1.5rem; color: white; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+.objetivo-card.completado { border-color: var(--success); background: rgba(34, 197, 94, 0.08); }
+.objetivo-titulo { font-size: 1.5rem; color: white; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-family: var(--font-title);}
 .objetivo-info { display: flex; justify-content: space-between; font-size: 0.95rem; color: var(--text-muted); margin-bottom: 15px; }
 .objetivo-numero { font-size: 1.6rem; font-weight: bold; color: var(--primary); font-family: var(--font-title); }
 .barra-progreso-bg { width: 100%; height: 22px; background: rgba(0,0,0,0.4); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 20px; position: relative; }
 .barra-progreso-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #ff9a3c); border-radius: 20px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); width: 0%; box-shadow: 0 0 15px rgba(247, 201, 72, 0.5); }
-.barra-progreso-fill.completado { background: linear-gradient(90deg, var(--success), #2E7D32); box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+.barra-progreso-fill.completado { background: linear-gradient(90deg, var(--success), #2E7D32); box-shadow: 0 0 15px rgba(34, 197, 94, 0.5); }
 .btn-aportar { width: 100%; background: var(--primary); color: var(--bg-main); border: none; padding: 15px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-title); }
 .btn-aportar:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(247, 201, 72, 0.3); }
 .btn-aportar.completado { background: var(--success); color: white; cursor: default; transform: none; box-shadow: none; }
@@ -374,7 +377,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
 .moodboard-info { padding: 15px; position: relative; background: rgba(0,0,0,0.3); }
 .moodboard-titulo { font-size: 1rem; color: white; font-weight: 600; margin-bottom: 5px; }
 .moodboard-autor { font-size: 0.8rem; color: var(--text-muted); }
-.moodboard-delete { position: absolute; top: 10px; right: 10px; background: rgba(255,94,94,0.8); backdrop-filter: blur(5px); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; opacity: 0; }
+.moodboard-delete { position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.8); backdrop-filter: blur(5px); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; opacity: 0; }
 .moodboard-card:hover .moodboard-delete { opacity: 1; }
 .moodboard-delete:hover { background: var(--danger); transform: scale(1.1); }
 
@@ -396,7 +399,7 @@ h1, h2, h3, h4, .logo-text, .kanban-column h3, .section-title {
    ============================================================ */
 @media (max-width: 900px) { 
     body { flex-direction: column; } 
-    .sidebar { width: 100%; height: auto; position: relative; padding: 20px; backdrop-filter: none; background: rgba(11, 11, 26, 0.95); } 
+    .sidebar { width: 100%; height: auto; position: relative; padding: 20px; backdrop-filter: none; background: rgba(10, 10, 20, 0.95); } 
     .sidebar-nav { flex-direction: row; flex-wrap: wrap; } 
     .main-content { margin-left: 0; width: 100%; padding: 20px; } 
     .kanban-board { grid-template-columns: 1fr; }
