@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormObjetivo')) document.getElementById('btnMostrarFormObjetivo').style.display = 'flex';
+        if(document.getElementById('seccionAdminCanjes')) document.getElementById('seccionAdminCanjes').style.display = 'block';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -59,37 +60,42 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= NOTIFICACIONES =================
-    let notificaciones = JSON.parse(localStorage.getItem('notificacionesSpotlight')) || [];
+    // ================= NOTIFICACIONES EN TIEMPO REAL (FIREBASE) =================
+    let notificaciones = [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
     const listaNotificaciones = document.getElementById('listaNotificaciones');
     const badge = document.getElementById('badgeNotificaciones');
 
+    db.collection("notificaciones").where("para", "==", nombreStaff).onSnapshot((snapshot) => {
+        notificaciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp);
+        renderNotificaciones();
+    });
+
     function renderNotificaciones() {
         if(!listaNotificaciones) return;
-        const misNotificaciones = notificaciones.filter(n => n.para === nombreStaff);
-        const noLeidas = misNotificaciones.filter(n => !n.leida).length;
+        const noLeidas = notificaciones.filter(n => !n.leida).length;
         if (noLeidas > 0) { badge.textContent = noLeidas; badge.style.display = 'flex'; } else { badge.style.display = 'none'; }
         listaNotificaciones.innerHTML = '';
-        if (misNotificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
-        else { misNotificaciones.forEach(n => { listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; }); }
+        if (notificaciones.length === 0) { listaNotificaciones.innerHTML = '<li>No tienes notificaciones nuevas.</li>'; } 
+        else { 
+            notificaciones.forEach(n => { 
+                listaNotificaciones.innerHTML += `<li style="${!n.leida ? 'color: #fff; font-weight: bold;' : ''}">${n.mensaje}</li>`; 
+            }); 
+        }
     }
-    renderNotificaciones();
 
     if (btnNotificaciones) {
         btnNotificaciones.addEventListener('click', () => {
             panelNotificaciones.style.display = panelNotificaciones.style.display === 'block' ? 'none' : 'block';
-            notificaciones.forEach(n => { if(n.para === nombreStaff) n.leida = true; });
-            localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
-            renderNotificaciones();
+            notificaciones.forEach(n => { 
+                if(!n.leida) db.collection("notificaciones").doc(n.id).update({ leida: true }); 
+            });
         });
     }
 
     function crearNotificacion(para, mensaje) {
-        notificaciones.push({ id: Date.now(), para, mensaje, leida: false });
-        localStorage.setItem('notificacionesSpotlight', JSON.stringify(notificaciones));
-        if (para === nombreStaff) renderNotificaciones();
+        db.collection("notificaciones").add({ para, mensaje, leida: false, timestamp: Date.now() });
     }
 
     // ================= SISTEMA DE LOGROS Y XP =================
@@ -146,10 +152,121 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= VARIABLES GLOBALES =================
     let directorioDB = [], resultadosDB = [], tareas = [], proyectosDB = [], examenesDB = [], moodboardDB = [], anunciosDB = [], eventos = [];
+    let tiendaDB = [], canjesDB = [];
     let graficoTareasInstance = null, graficoPresupuestoInstance = null;
     let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null;
 
-    // ================= PANEL DE GERENCIA =================
+    // ================= TIENDA DE RECOMPENSAS =================
+    const recompensasPorDefecto = [
+        { titulo: "Café Gratis", costo: 50, icono: "☕" },
+        { titulo: "Home Office (1 día)", costo: 150, icono: "🏠" },
+        { titulo: "Tarjeta de Regalo", costo: 300, icono: "💳" },
+        { titulo: "Día Libre (Sin hacer nada)", costo: 600, icono: "🏖️" },
+        { titulo: "Jefe por un Día", costo: 1200, icono: "👑" }
+    ];
+
+    db.collection("tienda").onSnapshot((snapshot) => {
+        if (snapshot.empty) {
+            recompensasPorDefecto.forEach(r => db.collection("tienda").add(r));
+        } else {
+            tiendaDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTienda();
+        }
+    });
+
+    db.collection("canjes").onSnapshot((snapshot) => {
+        canjesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp);
+        renderAdminCanjes();
+    });
+
+    window.renderTienda = function() {
+        const grid = document.getElementById('gridTienda');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const miPerfil = directorioDB.find(p => p.nombre === nombreStaff);
+        const misPuntos = miPerfil ? (miPerfil.puntos || 0) : 0;
+        
+        const saldoEl = document.getElementById('saldoXP');
+        if (saldoEl) saldoEl.textContent = `${misPuntos} XP`;
+
+        tiendaDB.forEach(r => {
+            const puedePagar = misPuntos >= r.costo;
+            grid.innerHTML += `
+                <div class="recompensa-card">
+                    <div class="recompensa-icono">${r.icono}</div>
+                    <div class="recompensa-titulo">${r.titulo}</div>
+                    <div class="recompensa-costo">${r.costo} XP</div>
+                    <button class="btn-canjear" onclick="canjearRecompensa('${r.id}', '${r.titulo}', ${r.costo})" ${!puedePagar ? 'disabled' : ''}>
+                        ${puedePagar ? 'Canjear' : 'Faltan XP'}
+                    </button>
+                </div>
+            `;
+        });
+    };
+
+    window.canjearRecompensa = function(id, titulo, costo) {
+        const miPerfil = directorioDB.find(p => p.nombre === nombreStaff);
+        if (!miPerfil || (miPerfil.puntos || 0) < costo) { alert("No tienes suficientes XP."); return; }
+
+        if(confirm(`¿Canjear "${titulo}" por ${costo} XP?`)) {
+            db.collection("directorio").doc(miPerfil.id).update({ puntos: (miPerfil.puntos || 0) - costo }).then(() => {
+                db.collection("canjes").add({
+                    empleado: nombreStaff,
+                    recompensa: titulo,
+                    costo: costo,
+                    estado: 'pendiente',
+                    timestamp: Date.now()
+                }).then(() => {
+                    crearNotificacion(nombreStaff, `Has canjeado: ${titulo}. Gerencia ha sido notificada. ✅`);
+                    const gerentesNotificar = ["Johan Sebastián", "Brayan Alexander", "Ximena"];
+                    gerentesNotificar.forEach(g => {
+                        crearNotificacion(g, `🚨 ${nombreStaff} ha canjeado: ${titulo} (-${costo} XP).`);
+                    });
+                    confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
+                    alert("¡Canje exitoso! Gerencia ha sido notificada.");
+                });
+            });
+        }
+    };
+
+    window.renderAdminCanjes = function() {
+        const tbody = document.getElementById('tablaCanjes');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (canjesDB.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="padding: 15px; text-align: center; color: #666;">No hay canjes registrados aún.</td></tr>';
+            return;
+        }
+
+        canjesDB.forEach(c => {
+            const esPendiente = c.estado === 'pendiente';
+            const badge = esPendiente ? '<span class="badge-estado badge-pendiente">Pendiente ⏳</span>' : '<span class="badge-estado badge-aprobado">Entregado ✅</span>';
+            const botonAccion = esPendiente ? `<button class="btn-aprobar" onclick="marcarCanjeEntregado('${c.id}')"><i class="fa-solid fa-check"></i> Marcar Entregado</button>` : '';
+
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #2a2a3a;">
+                    <td style="padding: 15px; color: white; font-weight: bold;">${c.empleado}</td>
+                    <td style="padding: 15px; color: #9ca3af;">${c.recompensa}</td>
+                    <td style="padding: 15px; color: #3b82f6; font-weight: bold;">-${c.costo} XP</td>
+                    <td style="padding: 15px;">${badge}</td>
+                    <td style="padding: 15px;">${botonAccion}</td>
+                </tr>
+            `;
+        });
+    };
+
+    window.marcarCanjeEntregado = function(id) {
+        if (confirm("¿Marcar este premio como entregado?")) {
+            db.collection("canjes").doc(id).update({ estado: 'entregado' }).then(() => {
+                const canje = canjesDB.find(c => c.id === id);
+                if(canje) crearNotificacion(canje.empleado, `¡Tu premio "${canje.recompensa}" ha sido entregado! 🎉`);
+            });
+        }
+    };
+
+    // ================= PANEL DE GERENCIA (GRÁFICOS) =================
     window.renderGerencia = function() {
         if (!document.getElementById('kpiTareasTotal')) return;
 
@@ -208,12 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: 'bar',
                 data: {
                     labels: nombres,
-                    datasets: [{
-                        label: 'Tareas Completadas',
-                        data: tareasCompletadasPorPersona,
-                        backgroundColor: '#f7c948',
-                        borderRadius: 6
-                    }]
+                    datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }]
                 },
                 options: {
                     responsive: true, plugins: { legend: { display: false } },
@@ -226,11 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 type: 'doughnut',
                 data: {
                     labels: ['Gastado', 'Disponible'],
-                    datasets: [{
-                        data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)],
-                        backgroundColor: ['#ef4444', '#22c55e'],
-                        borderWidth: 0
-                    }]
+                    datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }]
                 },
                 options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } }
             });
@@ -419,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const gridDirectorio = document.getElementById('gridDirectorio');
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDirectorio(); renderRRHH(); renderGerencia(); verificarCumpleanos();
+        renderDirectorio(); renderRRHH(); renderGerencia(); renderTienda(); verificarCumpleanos();
     });
 
     function verificarCumpleanos() {
@@ -973,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (nuevoEstado === 'rechazado') {
             const motivo = prompt("¿Qué cambios debe hacer el diseñador?");
-            if (motivo === null) return; // Canceló
+            if (motivo === null) return;
             archivosActuales[indexArchivo].motivoRechazo = motivo;
         }
 
@@ -982,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
         db.collection("tareas").doc(tareaId).update({ archivos: archivosActuales }).then(() => {
             crearNotificacion(t.asignado, `Tu archivo en "${t.titulo}" ha sido marcado como: ${nuevoEstado.toUpperCase()}`);
             alert(`Archivo marcado como ${nuevoEstado}.`);
-            renderArchivosModal(t); // Recargar modal
+            renderArchivosModal(t);
         });
     };
 
@@ -1078,10 +1186,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'rrhh') renderRRHH();
             if (target === 'entregas') renderEntregas();
             if (target === 'gerencia') renderGerencia();
+            if (target === 'tienda') { renderTienda(); renderAdminCanjes(); }
         });
     });
 
-    // ================= MENÚ MÓVIL =================
+    // ================= LÓGICA DEL MENÚ MÓVIL =================
     const btnMobileMenu = document.getElementById('btnMobileMenu');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');

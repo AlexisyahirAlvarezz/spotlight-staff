@@ -5,10 +5,7 @@
 
 body { 
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background-color: #0d0d12; 
-    color: #d1d5db; 
-    display: flex; 
-    min-height: 100vh; 
+    background-color: #0d0d12; color: #d1d5db; display: flex; min-height: 100vh; 
 }
 
 h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
@@ -59,20 +56,11 @@ h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
 /* BANNER CUMPLEAÑOS */
 .banner-cumple {
     background: linear-gradient(135deg, rgba(247, 201, 72, 0.2), rgba(239, 68, 68, 0.2));
-    border: 2px dashed #f7c948;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 30px;
-    animation: pulse 2s infinite;
+    border: 2px dashed #f7c948; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px; animation: pulse 2s infinite;
 }
 .banner-cumple h2 { color: #f7c948; font-size: 1.8rem; margin-bottom: 5px; }
 .banner-cumple p { color: #fff; font-size: 1.1rem; }
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(247, 201, 72, 0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(247, 201, 72, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(247, 201, 72, 0); }
-}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(247, 201, 72, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(247, 201, 72, 0); } 100% { box-shadow: 0 0 0 0 rgba(247, 201, 72, 0); } }
 
 /* CAMPANITA */
 .notification-container { position: relative; }
@@ -166,7 +154,7 @@ h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
 .btn-descargar { background: rgba(247, 201, 72, 0.1); color: #f7c948; border: 1px solid rgba(247, 201, 72, 0.3); padding: 6px 12px; border-radius: 6px; transition: 0.3s; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
 .btn-descargar:hover { background: #f7c948; color: #0d0d12; transform: scale(1.05); }
 
-/* BADGES DE APROBACIÓN DE ARCHIVOS */
+/* BADGES DE APROBACIÓN Y ESTADOS */
 .badge-estado { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; margin-left: 10px; }
 .badge-pendiente { background: rgba(247, 201, 72, 0.2); color: #f7c948; border: 1px solid #f7c948; }
 .badge-aprobado { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
@@ -303,6 +291,32 @@ h1, h2, h3, h4 { color: #f3f4f6; font-weight: 600; }
 .chart-box { background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 20px; }
 .chart-box h3 { font-size: 1rem; color: #f7c948; margin-bottom: 15px; text-align: center; }
 .chart-box canvas { width: 100% !important; max-height: 250px; }
+
+/* ============================================================
+   TIENDA DE RECOMPENSAS
+   ============================================================ */
+.saldo-xp-container {
+    display: flex; align-items: center; gap: 10px; background: #13131a; border: 1px solid #3b82f6; padding: 10px 20px; border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+}
+.saldo-xp-container span { color: #9ca3af; font-size: 0.9rem; }
+.saldo-xp-container strong { color: #3b82f6; font-size: 1.3rem; }
+
+.tienda-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-top: 20px; }
+.recompensa-card { 
+    background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; padding: 25px 20px; text-align: center; 
+    position: relative; transition: 0.3s; display: flex; flex-direction: column; align-items: center; 
+}
+.recompensa-card:hover { border-color: #f7c948; transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+.recompensa-icono { font-size: 3rem; margin-bottom: 15px; }
+.recompensa-titulo { font-size: 1.1rem; color: white; font-weight: 600; margin-bottom: 10px; }
+.recompensa-costo { color: #3b82f6; font-weight: bold; font-size: 1.2rem; margin-bottom: 20px; }
+.btn-canjear { 
+    width: 100%; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid #3b82f6; 
+    padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: auto;
+}
+.btn-canjear:hover { background: #3b82f6; color: white; }
+.btn-canjear:disabled { background: #1a1a24; color: #555; border-color: #333; cursor: not-allowed; }
 
 /* RESPONSIVE (MÓVIL CON MENÚ HAMBURGUESA) */
 .mobile-header { display: none; }
