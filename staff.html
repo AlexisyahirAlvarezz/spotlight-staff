@@ -29,6 +29,10 @@
             <a href="#" class="nav-link" data-target="moodboard"><i class="fa-solid fa-images"></i> Muro de Inspiración</a>
             <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
+            
+            <!-- NUEVAS SECCIONES CON IDs PARA OCULTAR/MOSTRAR -->
+            <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
+            <a href="#" class="nav-link" id="link-entregas" data-target="entregas" style="display: none;"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
         </nav>
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
@@ -56,7 +60,33 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: MOODBOARD (MURO DE INSPIRACIÓN) ===== -->
+        <!-- ===== VISTA: PANEL RRHH (XIMENA) ===== -->
+        <section id="view-rrhh" class="view-section" style="display: none;">
+            <h2>Panel de Recursos Humanos</h2>
+            <p class="section-subtitle">Desempeño y capacitación del equipo</p>
+            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
+                        <tr>
+                            <th style="padding: 15px;">Empleado</th>
+                            <th style="padding: 15px;">Puesto</th>
+                            <th style="padding: 15px;">Medallas</th>
+                            <th style="padding: 15px;">Promedio Exámenes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRRHH"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: MIS ENTREGAS (MARIA FERNANDA) ===== -->
+        <section id="view-entregas" class="view-section" style="display: none;">
+            <h2>Mi Portafolio de Entregas</h2>
+            <p class="section-subtitle">Todos los archivos que has subido a las tareas</p>
+            <div id="gridEntregas" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: MOODBOARD ===== -->
         <section id="view-moodboard" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Muro de Inspiración</h2>
@@ -77,7 +107,7 @@
                 <p style="color: #ff5e5e; font-size: 0.85rem; margin-bottom: 10px; font-weight: bold;">
                     <i class="fa-solid fa-circle-info"></i> Al subir una imagen, confirmas que cumple con las reglas de la productora.
                 </p>
-                <input type="text" id="moodboardTitulo" placeholder="Título o descripción (Ej. Iluminación para el Búho)">
+                <input type="text" id="moodboardTitulo" placeholder="Título o descripción">
                 <input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
                 <button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar en el Muro</button>
             </div>
@@ -91,13 +121,11 @@
                 <h2>Objetivos del Equipo</h2>
                 <button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear Objetivo</button>
             </div>
-            
             <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="objetivoTitulo" placeholder="¿Cuál es la meta? (Ej. Conseguir 10 clientes nuevos)" style="font-weight: bold;">
-                <input type="number" id="objetivoMeta" placeholder="Meta numérica (Ej. 10)" min="1">
+                <input type="text" id="objetivoTitulo" placeholder="¿Cuál es la meta?" style="font-weight: bold;">
+                <input type="number" id="objetivoMeta" placeholder="Meta numérica" min="1">
                 <button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar Objetivo</button>
             </div>
-
             <div id="listaObjetivos" class="objetivos-grid"></div>
         </section>
 
@@ -110,7 +138,7 @@
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;">
-                    <input type="text" id="dirRol" placeholder="Puesto (Ej. Camarógrafo)" style="flex: 1;">
+                    <input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;">
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="email" id="dirCorreo" placeholder="Correo Electrónico" style="flex: 1;">
@@ -147,7 +175,14 @@
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
-                <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaTarea')"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
+                <!-- BOTÓN DE FILTRO PARA BEATRIZ -->
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <label id="filtroContainer" style="display: none; color: #d1d5db; font-size: 0.9rem; cursor: pointer;">
+                        <input type="checkbox" id="checkFiltroMisTareas" style="margin-right: 5px; accent-color: #f7c948;">
+                        Ver solo mis tareas
+                    </label>
+                    <button id="btnMostrarFormTarea" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaTarea')"><i class="fa-solid fa-plus"></i> Asignar Tarea</button>
+                </div>
             </div>
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -197,7 +232,7 @@
                     <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)" style="flex: 1;">
                 </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto (Ej. 5000)" style="flex: 1;">
+                    <input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto" style="flex: 1;">
                 </div>
                 <button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar Proyecto</button>
             </div>
@@ -242,7 +277,7 @@
             <h3 style="margin-top: 20px; color: white; margin-bottom: 15px;">Exámenes Disponibles</h3>
             <ul id="listaExamenes" class="archivos-lista"></ul>
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-chart-simple"></i> Resultados de los Exámenes</h3>
-            <div style="background: #11111a; border-radius: 16px; border: 1px solid #222; overflow: hidden;">
+            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
                         <tr><th style="padding: 15px;">Nombre</th><th style="padding: 15px;">Examen</th><th style="padding: 15px;">Calificación</th></tr>
@@ -298,17 +333,13 @@
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
             
-            <!-- TAREAS DEL PROYECTO -->
             <p style="color:#a0a0b8; margin-bottom: 10px; margin-top: 15px; font-weight: bold;">Tareas:</p>
             <ul id="mProyectoTareas" class="archivos-lista" style="margin-bottom: 25px;"></ul>
 
-            <!-- SECCIÓN DE GASTOS Y PRESUPUESTO (CANDADO) -->
             <div id="seccionGastos" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; display: none;">
                 <h4 style="color:#f7c948; margin-bottom: 10px;"><i class="fa-solid fa-wallet"></i> Control de Gastos</h4>
                 
-                <div id="resumenGastos" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; text-align: center;">
-                    <!-- Se llena con JS -->
-                </div>
+                <div id="resumenGastos" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; text-align: center;"></div>
 
                 <div class="barra-progreso-bg" style="height: 12px; margin-bottom: 20px;">
                     <div id="barraGastos" class="barra-progreso-fill" style="width: 0%;"></div>
@@ -317,7 +348,7 @@
                 <ul id="listaGastos" class="archivos-lista" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></ul>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <input type="text" id="gastoConcepto" placeholder="Concepto (Ej. Gasolina)" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                    <input type="text" id="gastoConcepto" placeholder="Concepto" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
                     <input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
                     <button onclick="agregarGasto()" class="btn-primary" style="padding: 10px 15px;">+</button>
                 </div>

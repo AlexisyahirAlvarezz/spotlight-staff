@@ -9,10 +9,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('rolStaff').textContent = rolStaff;
 
     const esGerente = (rolStaff === "Gerente General" || rolStaff === "Gerente de Marketing");
-    
-    // CANDADO: Jair (Finanzas) también tiene acceso a los gastos
     const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
     const puedeVerGastos = esGerente || esFinanzas;
+    
+    // CANDADOS DE VISIBILIDAD
+    const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
+    const esDisenadora = (nombreStaff === "Maria Fernanda" || rolStaff.includes("Diseñadora"));
+
+    // MOSTRAR U OCULTAR LINKS EN EL SIDEBAR
+    if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
+    if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
+
+    // MOSTRAR BOTÓN DE FILTRO PARA BEATRIZ
+    if (nombreStaff === "Beatriz" || esGerente) {
+        document.getElementById('filtroContainer').style.display = 'block';
+    }
 
     if (esGerente) {
         if(document.getElementById('btnMostrarFormTarea')) document.getElementById('btnMostrarFormTarea').style.display = 'flex';
@@ -120,6 +131,79 @@ document.addEventListener('DOMContentLoaded', function() {
         if (tareasConArchivos >= 5) otorgarLogro('El Creativo', nombreStaff);
         if (resultadosDB.some(r => r.alumno === nombreStaff && r.porcentaje === 100)) otorgarLogro('El Cerebrito', nombreStaff);
         if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
+    }
+
+    // ================= PANEL RRHH (XIMENA) =================
+    let directorioDB = [];
+    let resultadosDB = [];
+
+    window.renderRRHH = function() {
+        const tbody = document.getElementById('tablaRRHH');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        directorioDB.forEach(persona => {
+            // Contar medallas
+            const medallas = persona.logros ? persona.logros.length : 0;
+            
+            // Calcular promedio de exámenes
+            const examenesPersona = resultadosDB.filter(r => r.alumno === persona.nombre);
+            let promedio = 0;
+            if (examenesPersona.length > 0) {
+                const suma = examenesPersona.reduce((acc, curr) => acc + curr.porcentaje, 0);
+                promedio = Math.round(suma / examenesPersona.length);
+            }
+
+            const colorPromedio = promedio >= 70 ? '#22c55e' : (promedio > 0 ? '#ef4444' : '#9ca3af');
+
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid #2a2a3a;">
+                    <td style="padding: 15px; color: white; font-weight: bold;">${persona.nombre}</td>
+                    <td style="padding: 15px; color: #9ca3af;">${persona.rol}</td>
+                    <td style="padding: 15px; font-size: 1.2rem;">${medallas} 🏅</td>
+                    <td style="padding: 15px; font-weight: bold; color: ${colorPromedio};">${promedio}%</td>
+                </tr>
+            `;
+        });
+    }
+
+    // ================= MIS ENTREGAS (MARIA FERNANDA) =================
+    window.renderEntregas = function() {
+        const grid = document.getElementById('gridEntregas');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        let archivosSubidos = [];
+
+        // Buscar en todas las tareas los archivos que subió Maria Fernanda
+        tareas.forEach(t => {
+            if (t.asignado === "Maria Fernanda" && t.archivos && t.archivos.length > 0) {
+                t.archivos.forEach(a => {
+                    archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo });
+                });
+            }
+        });
+
+        if (archivosSubidos.length === 0) {
+            grid.innerHTML = '<p style="color:#666;">Aún no has subido archivos a tus tareas.</p>';
+            return;
+        }
+
+        archivosSubidos.forEach(a => {
+            const isImage = a.url.match(/\.(jpeg|jpg|gif|png)$/) != null;
+            const preview = isImage ? `<img src="${a.url}" class="moodboard-img" style="height: 150px;">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;background:#1a1a24;font-size:3rem;height:150px;">📄</div>`;
+            
+            grid.innerHTML += `
+                <div class="moodboard-card">
+                    ${preview}
+                    <div class="moodboard-info">
+                        <div class="moodboard-titulo" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${a.nombre}</div>
+                        <div class="moodboard-autor">De: ${a.tarea}</div>
+                        <a href="${a.url}" target="_blank" class="btn-descargar" style="margin-top: 10px; width: 100%;">Ver / Descargar</a>
+                    </div>
+                </div>
+            `;
+        });
     }
 
     // ================= MOODBOARD =================
@@ -242,11 +326,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= DIRECTORIO =================
     const gridDirectorio = document.getElementById('gridDirectorio');
-    let directorioDB = [];
 
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderDirectorio();
+        renderRRHH(); // Actualizar tabla de RRHH
     });
 
     window.renderDirectorio = function() {
@@ -367,7 +451,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= EXÁMENES =================
     let examenesDB = [];
-    let resultadosDB = [];
     let examenActivoId = null;
     const listaExamenes = document.getElementById('listaExamenes');
     const tablaResultados = document.getElementById('tablaResultados');
@@ -380,7 +463,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     db.collection("resultados").onSnapshot((snapshot) => {
         resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderExamenes(); evaluarLogros();
+        renderExamenes(); 
+        evaluarLogros();
+        renderRRHH(); // Actualizar promedio en RRHH
     });
 
     function crearBloquePregunta() {
@@ -439,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else {
                 const resOrdenados = [...resultadosDB].sort((a,b) => b.timestamp - a.timestamp);
                 resOrdenados.forEach(res => {
-                    const color = res.porcentaje >= 70 ? '#4CAF50' : '#ff5e5e';
+                    const color = res.porcentaje >= 70 ? '#22c55e' : '#ef4444';
                     tablaResultados.innerHTML += `<tr style="border-bottom: 1px solid rgba(255,255,255,0.05);"><td style="padding: 15px; color: white;">${res.alumno}</td><td style="padding: 15px; color: #a0a0b8;">${res.tituloExamen}</td><td style="padding: 15px; font-weight: bold; color: ${color};">${res.porcentaje}% (${res.aciertos}/${res.total})</td></tr>`;
                 });
             }
@@ -538,7 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         
-        // Renderizar Tareas
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
         const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
         if(tareasDelProyecto.length === 0) { lista.innerHTML = '<p style="color:#666; font-size: 0.9rem;">No hay tareas en este proyecto.</p>'; } 
@@ -548,13 +632,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // RENDERIZAR GASTOS (SOLO SI TIENE PERMISO)
         const seccionGastos = document.getElementById('seccionGastos');
         if (puedeVerGastos) {
             seccionGastos.style.display = 'block';
             renderGastosProyecto(p);
         } else {
-            seccionGastos.style.display = 'none'; // Ocultar para el resto del staff
+            seccionGastos.style.display = 'none';
         }
         
         document.getElementById('modalProyecto').style.display = 'flex';
@@ -566,21 +649,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalGastado = gastos.reduce((sum, g) => sum + g.monto, 0);
         const saldo = presupuesto - totalGastado;
         
-        // Llenar el resumen
         document.getElementById('resumenGastos').innerHTML = `
             <div class="resumen-box"><span>Presupuesto</span><strong>$${presupuesto.toFixed(2)}</strong></div>
-            <div class="resumen-box"><span>Gastado</span><strong style="color:#ff5e5e">-$${totalGastado.toFixed(2)}</strong></div>
+            <div class="resumen-box"><span>Gastado</span><strong style="color:#ef4444">-$${totalGastado.toFixed(2)}</strong></div>
             <div class="resumen-box"><span>Disponible</span><strong class="${saldo < 0 ? 'negativo' : 'positivo'}">$${saldo.toFixed(2)}</strong></div>
         `;
 
-        // Barra de progreso
         let porcentaje = 0;
         if (presupuesto > 0) porcentaje = Math.min((totalGastado / presupuesto) * 100, 100);
         const barra = document.getElementById('barraGastos');
         barra.style.width = `${porcentaje}%`;
-        barra.style.background = porcentaje > 90 ? '#ff5e5e' : '#f7c948';
+        barra.style.background = porcentaje > 90 ? '#ef4444' : '#f7c948';
 
-        // Lista de gastos
         const lista = document.getElementById('listaGastos');
         lista.innerHTML = '';
         if (gastos.length === 0) {
@@ -631,13 +711,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ================= TAREAS (TABLERO KANBAN) =================
+    // ================= TAREAS (TABLERO KANBAN CON FILTRO) =================
     let tareas = [];
     let tareaActivaId = null;
 
     db.collection("tareas").onSnapshot((snapshot) => {
         tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTareas(); evaluarLogros();
+        renderTareas(); 
+        evaluarLogros();
+        renderEntregas(); // Actualizar portafolio de Maria
     });
 
     window.renderTareas = function() {
@@ -649,7 +731,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
 
+        const filtroActivo = document.getElementById('checkFiltroMisTareas') && document.getElementById('checkFiltroMisTareas').checked;
+        const esBeatriz = (nombreStaff === "Beatriz");
+        const verSoloMisTareas = esBeatriz || filtroActivo;
+
         tareas.forEach((t) => {
+            if (verSoloMisTareas && t.asignado !== nombreStaff) return; // Saltar tareas de otros si el filtro está activo
+
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
             let botonesAccion = '';
@@ -680,6 +768,11 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (t.estado === 'progress') colProgress.innerHTML += cardHTML;
             else if (t.estado === 'completed') colCompleted.innerHTML += cardHTML;
         });
+    }
+
+    // ESCUCHAR EL CAMBIO DEL CHECKBOX DE FILTRO
+    if(document.getElementById('checkFiltroMisTareas')) {
+        document.getElementById('checkFiltroMisTareas').addEventListener('change', renderTareas);
     }
 
     window.cambiarEstadoTarea = function(id, nuevoEstado) {
@@ -729,8 +822,8 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('inputCalificacion').value = t.calificacion || '';
         } else {
             calificacionAdmin.style.display = 'none'; calificacionStaff.style.display = 'flex';
-            if (t.calificacion) { textoCalificacion.textContent = `${t.calificacion} / 10`; textoCalificacion.style.color = '#4CAF50'; } 
-            else { textoCalificacion.textContent = 'Sin calificar aún'; textoCalificacion.style.color = '#a0a0b8'; }
+            if (t.calificacion) { textoCalificacion.textContent = `${t.calificacion} / 10`; textoCalificacion.style.color = '#22c55e'; } 
+            else { textoCalificacion.textContent = 'Sin calificar aún'; textoCalificacion.style.color = '#9ca3af'; }
         }
 
         renderArchivosModal(t); 
@@ -782,7 +875,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         db.collection("tareas").doc(tareaActivaId).update({ archivos: nuevosArchivos }).then(() => {
             boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
-            t.archivos = nuevosArchivos; renderArchivosModal(t);
+            t.archivos = nuevosArchivos; 
+            renderArchivosModal(t);
+            renderEntregas(); // Si es Maria, actualizar su portafolio al instante
         });
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
@@ -823,7 +918,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const evOrdenados = [...eventos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         evOrdenados.forEach(ev => {
             const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#a0a0b8; text-transform: capitalize;">${fechaFormat}</span></div></li>`;
+            listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#9ca3af; text-transform: capitalize;">${fechaFormat}</span></div></li>`;
         });
     }
 
@@ -851,6 +946,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'directorio') renderDirectorio();
             if (target === 'objetivos') renderObjetivos();
             if (target === 'moodboard') renderMoodboard();
+            if (target === 'rrhh') renderRRHH();
+            if (target === 'entregas') renderEntregas();
         });
     });
 
