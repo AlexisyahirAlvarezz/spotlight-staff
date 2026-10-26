@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('rolStaff').textContent = rolStaff;
 
     const esGerente = (rolStaff === "Gerente General" || rolStaff === "Gerente de Marketing");
+    
+    // CANDADO: Jair (Finanzas) también tiene acceso a los gastos
+    const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
+    const puedeVerGastos = esGerente || esFinanzas;
+
     if (esGerente) {
         if(document.getElementById('btnMostrarFormTarea')) document.getElementById('btnMostrarFormTarea').style.display = 'flex';
         if(document.getElementById('btnMostrarFormProyecto')) document.getElementById('btnMostrarFormProyecto').style.display = 'flex';
@@ -524,14 +529,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.eliminarProyecto = function(id) { if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); } };
 
     let proyectoActivoId = null;
-    let proyectoActivoNombre = "";
 
     window.abrirModalProyecto = function(nombreProyecto) {
         const p = proyectosDB.find(proy => proy.nombre === nombreProyecto);
         if (!p) return;
         
         proyectoActivoId = p.id;
-        proyectoActivoNombre = p.nombre;
         
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         
@@ -545,8 +548,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Renderizar Gastos
-        renderGastosProyecto(p);
+        // RENDERIZAR GASTOS (SOLO SI TIENE PERMISO)
+        const seccionGastos = document.getElementById('seccionGastos');
+        if (puedeVerGastos) {
+            seccionGastos.style.display = 'block';
+            renderGastosProyecto(p);
+        } else {
+            seccionGastos.style.display = 'none'; // Ocultar para el resto del staff
+        }
         
         document.getElementById('modalProyecto').style.display = 'flex';
     }
@@ -603,7 +612,6 @@ document.addEventListener('DOMContentLoaded', function() {
             db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => {
                 document.getElementById('gastoConcepto').value = '';
                 document.getElementById('gastoMonto').value = '';
-                // Actualizamos la vista local temporalmente
                 proyecto.gastos = gastosActuales;
                 renderGastosProyecto(proyecto);
             });
@@ -690,7 +698,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (titulo) {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
-                    // Si el proyecto no existe, lo creamos con presupuesto 0 y gastos vacíos
                     await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente", presupuesto: 0, gastos: [] });
                 }
                 db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null }).then(() => {
