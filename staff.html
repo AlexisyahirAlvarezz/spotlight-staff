@@ -49,7 +49,6 @@
             <a href="#" class="nav-link" data-target="plantillas"><i class="fa-solid fa-layer-group"></i> Plantillas de Tareas</a>
             <a href="#" class="nav-link" data-target="wiki"><i class="fa-solid fa-book"></i> Wiki / Procesos</a>
             
-            <!-- SECCIONES NUEVAS Y EXCLUSIVAS -->
             <a href="#" class="nav-link" data-target="caja"><i class="fa-solid fa-gift"></i> Caja Misteriosa</a>
             <a href="#" class="nav-link" data-target="ruleta"><i class="fa-solid fa-dharmachakra"></i> Ruleta Diaria</a>
             <a href="#" class="nav-link" data-target="mockup"><i class="fa-solid fa-mobile-screen"></i> Simulador de Post</a>
@@ -86,243 +85,60 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: CAJA MISTERIOSA ===== -->
-        <section id="view-caja" class="view-section" style="display: none;">
-            <h2>Caja Misteriosa</h2>
-            <p class="section-subtitle">Recompensa diaria aleatoria</p>
-            <div class="info-banner"><i class="fa-solid fa-gift" style="color: #f7c948;"></i><div>Reclama tu recompensa diaria. Puedes ganar desde 10 hasta 100 Puntos XP. ¡Vuelve cada día!</div></div>
-            
-            <div style="text-align: center; padding: 50px 20px;">
-                <div id="lootBoxIcon" style="font-size: 8rem; cursor: pointer; filter: drop-shadow(0 0 20px rgba(247,201,72,0.5)); transition: 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="abrirLootBox()">🎁</div>
-                <h2 id="lootBoxStatus" style="color: #f7c948; margin-top: 20px;">¡Haz clic para abrir!</h2>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: RULETA DIARIA ===== -->
-        <section id="view-ruleta" class="view-section" style="display: none;">
-            <h2>Ruleta de la Suerte</h2>
-            <p class="section-subtitle">Gira una vez al día</p>
-            <div class="info-banner"><i class="fa-solid fa-dharmachakra" style="color: #3b82f6;"></i><div>¡Prueba tu suerte! Tienes 1 giro diario. Los premios incluyen XP extra, bonos o premios de la tienda.</div></div>
-            
-            <div class="wheel-container">
-                <div class="wheel" id="wheel">
-                    <div class="wheel-center" onclick="girarRuleta()"><i class="fa-solid fa-play"></i> GIRAR</div>
-                </div>
-            </div>
-            <div id="ruletaResultado" style="text-align: center; margin-top: 30px; font-size: 1.5rem; color: #f7c948; font-weight: bold;"></div>
-        </section>
-
-        <!-- ===== VISTA: SIMULADOR DE POST ===== -->
-        <section id="view-mockup" class="view-section" style="display: none;">
-            <h2>Simulador de Post</h2>
-            <p class="section-subtitle">Previsualiza cómo se verá el diseño en Instagram</p>
-            <div class="info-banner"><i class="fa-solid fa-mobile-screen" style="color: #3b82f6;"></i><div>Sube una imagen (Flyer, diseño) para ver cómo se vería en el celular de un cliente antes de aprobarlo.</div></div>
-            
-            <div class="mockup-container">
-                <div class="mockup-controls">
-                    <input type="file" id="mockupInput" accept="image/*" onchange="previewMockup(event)">
-                    <input type="text" id="mockupCaption" placeholder="Escribe el pie de foto (Caption)..." onkeyup="actualizarCaption()">
-                </div>
-                <div class="phone-frame">
-                    <div class="phone-header">
-                        <div class="phone-avatar"></div>
-                        <div class="phone-user">spotlight_casa_productora</div>
-                        <div class="phone-more">...</div>
-                    </div>
-                    <div class="phone-image-container">
-                        <img id="mockupImg" src="https://via.placeholder.com/400x400/13131a/f7c948?text=Sube+tu+Diseño" alt="Post">
-                    </div>
-                    <div class="phone-actions">
-                        <i class="fa-regular fa-heart"></i>
-                        <i class="fa-regular fa-comment"></i>
-                        <i class="fa-regular fa-paper-plane"></i>
-                        <i class="fa-regular fa-bookmark" style="margin-left: auto;"></i>
-                    </div>
-                    <div class="phone-caption">
-                        <strong>spotlight_casa_productora</strong> <span id="mockupCaptionText">Escribe algo aquí...</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: WIKI / PROCESOS ===== -->
-        <section id="view-wiki" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Wiki de SPOTLIGHT</h2><button id="btnMostrarFormWiki" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaWiki')"><i class="fa-solid fa-plus"></i> Añadir Artículo</button></div>
-            <div class="info-banner"><i class="fa-solid fa-book-open"></i><div>El cerebro de la productora. Aquí encontrarás tutoriales, manuales y procesos internos.</div></div>
-            <div id="formNuevaWiki" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="wikiTitulo" placeholder="Título del artículo" style="font-weight: bold;">
-                <textarea id="wikiContenido" placeholder="Contenido..." rows="6" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <button id="btnGuardarWiki" class="btn-primary" style="align-self: flex-end;">Guardar en la Wiki</button>
-            </div>
-            <div id="gridWiki" class="wiki-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: DETRÁS DE CÁMARAS (BTS) ===== -->
-        <section id="view-bts" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Detrás de Cámaras</h2><button id="btnMostrarFormBTS" class="btn-nueva-tarea" onclick="toggleForm('formNuevoBTS')"><i class="fa-solid fa-plus"></i> Subir Foto</button></div>
-            <div class="info-banner"><i class="fa-solid fa-camera-retro"></i><div>¡Los momentos épicos de SPOTLIGHT! Sube fotos de los rodajes o momentos divertidos.</div></div>
-            <div id="formNuevoBTS" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="btsTitulo" placeholder="Descripción breve">
-                <input type="file" id="btsFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
-                <button id="btnGuardarBTS" class="btn-primary" style="align-self: flex-end;">Subir al Muro</button>
-            </div>
-            <div id="gridBTS" class="moodboard-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: RADAR DE TENDENCIAS ===== -->
-        <section id="view-radar" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Radar de Tendencias</h2><button id="btnMostrarFormRadar" class="btn-nueva-tarea" onclick="toggleForm('formNuevoRadar')"><i class="fa-solid fa-plus"></i> Añadir Tendencia</button></div>
-            <div class="info-banner"><i class="fa-solid fa-satellite-dish" style="color: #3b82f6;"></i><div>Tu arsenal creativo. Guarda enlaces de TikTok, Reels, música o artículos que te inspiren.</div></div>
-            <div id="formNuevoRadar" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="radarTitulo" placeholder="Título" style="flex: 2;"><input type="text" id="radarCategoria" placeholder="Categoría (Video/Música)" style="flex: 1;"></div>
-                <input type="url" id="radarLink" placeholder="Enlace (https://...)">
-                <textarea id="radarDesc" placeholder="¿Por qué es buena?" rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <button id="btnGuardarRadar" class="btn-primary" style="align-self: flex-end;">Guardar en el Radar</button>
-            </div>
-            <div id="gridRadar" class="radar-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: PLANTILLAS ===== -->
-        <section id="view-plantillas" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Plantillas de Tareas</h2><button id="btnMostrarFormPlantilla" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaPlantilla')"><i class="fa-solid fa-plus"></i> Crear Plantilla</button></div>
-            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Agiliza el trabajo. Usa estas plantillas predefinidas con instrucciones.</div></div>
-            <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="plantillaTitulo" placeholder="Título" style="flex: 2;"><input type="number" id="plantillaXP" placeholder="XP" value="15" style="flex: 1;"></div>
-                <textarea id="plantillaDesc" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <div style="display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Foto (Opcional):</label><input type="file" id="plantillaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div>
-                <button id="btnGuardarPlantilla" class="btn-primary" style="align-self: flex-end;">Guardar Plantilla</button>
-            </div>
-            <div id="gridPlantillas" class="moodboard-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: BÓVEDA ===== -->
-        <section id="view-boveda" class="view-section" style="display: none;">
-            <h2>Bóveda de Accesos</h2>
-            <div class="info-banner"><i class="fa-solid fa-lock" style="color: #ef4444;"></i><div><strong>Zona restringida.</strong> Guarda contraseñas de Wi-Fi, correos, Adobe, etc.</div></div>
-            <div class="form-tarea" style="flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaServicio" placeholder="Servicio" style="flex: 1;"><input type="text" id="bovedaUsuario" placeholder="Usuario" style="flex: 1;"><input type="text" id="bovedaPassword" placeholder="Contraseña" style="flex: 1;"></div>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaNota" placeholder="Nota" style="flex: 2;"><button id="btnGuardarBoveda" class="btn-primary" style="flex: 1;">Guardar</button></div>
-            </div>
-            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Servicio</th><th style="padding: 15px;">Usuario</th><th style="padding: 15px;">Contraseña</th><th style="padding: 15px;">Notas</th><th style="padding: 15px;">Acción</th></tr></thead>
-                    <tbody id="tablaBoveda"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: HALL DE LA FAMA ===== -->
-        <section id="view-hall" class="view-section" style="display: none;">
-            <h2>Hall de la Fama</h2>
-            <div class="info-banner"><i class="fa-solid fa-crown" style="color: #f7c948;"></i><div>Aquí se coronan los líderes de SPOTLIGHT.</div></div>
-            <div id="hallDeLaFamaContent" class="podium-container"></div>
-        </section>
-
-        <!-- ===== VISTA: TIENDA ===== -->
-        <section id="view-tienda" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Tienda de Recompensas</h2><div class="saldo-xp-container"><span>Saldo:</span><strong id="saldoXP">0 XP</strong></div></div>
-            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>¡Canjea tus Puntos XP!</div></div>
-            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;"><button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button></div>
-            <div id="formNuevaRecompensa" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="tiendaTitulo" placeholder="Ej: Café gratis" style="flex: 2;"><input type="number" id="tiendaCosto" placeholder="Costo XP" style="flex: 1;"><input type="text" id="tiendaIcono" placeholder="Emoji" style="flex: 0.5;" maxlength="2"></div>
-                <button id="btnGuardarRecompensa" class="btn-primary" style="align-self: flex-end;">Añadir a la Tienda</button>
-            </div>
-            <div id="gridTienda" class="tienda-grid"></div>
-            <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
-                <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-clipboard-list"></i> Historial de Canjes (Admin)</h3>
-                <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Recompensa</th><th style="padding: 15px;">Costo</th><th style="padding: 15px;">Estado</th><th style="padding: 15px;">Acción</th></tr></thead>
-                        <tbody id="tablaCanjes"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: PANEL DE GERENCIA ===== -->
-        <section id="view-gerencia" class="view-section" style="display: none;">
-            <h2>Panel de Gerencia</h2>
-            <div class="kpi-grid">
-                <div class="kpi-card"><div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><span>Tareas</span><strong id="kpiTareasTotal">0</strong><span class="kpi-sub" id="kpiTareasSub">0 Completadas</span></div></div>
-                <div class="kpi-card"><div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div><div class="kpi-info"><span>Proyectos</span><strong id="kpiProyectos">0</strong><span class="kpi-sub" id="kpiProyectosSub">Activos</span></div></div>
-                <div class="kpi-card"><div class="kpi-icon azul"><i class="fa-solid fa-wallet"></i></div><div class="kpi-info"><span>Presupuesto</span><strong id="kpiPresupuesto">$0</strong><span class="kpi-sub" id="kpiGastadoSub">$0 Gastados</span></div></div>
-                <div class="kpi-card"><div class="kpi-icon rojo"><i class="fa-solid fa-users"></i></div><div class="kpi-info"><span>Equipo</span><strong id="kpiEquipo">0</strong><span class="kpi-sub" id="kpiEquipoSub">Integrantes</span></div></div>
-            </div>
-            <div class="charts-grid">
-                <div class="chart-box"><h3>Rendimiento</h3><canvas id="graficoTareas"></canvas></div>
-                <div class="chart-box"><h3>Finanzas</h3><canvas id="graficoPresupuesto"></canvas></div>
-            </div>
-            <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Alertas: Tareas Pendientes</h3>
-            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Tarea</th><th style="padding: 15px;">Asignado</th><th style="padding: 15px;">Proyecto</th><th style="padding: 15px;">Estado</th></tr></thead>
-                    <tbody id="tablaAlertasGerencia"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: PANEL RRHH ===== -->
-        <section id="view-rrhh" class="view-section" style="display: none;">
-            <h2>Panel de Recursos Humanos</h2>
-            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Puesto</th><th style="padding: 15px;">XP</th><th style="padding: 15px;">Medallas</th><th style="padding: 15px;">Promedio</th></tr></thead>
-                    <tbody id="tablaRRHH"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ===== VISTA: MIS ENTREGAS ===== -->
-        <section id="view-entregas" class="view-section" style="display: none;">
-            <h2>Mi Portafolio de Entregas</h2>
-            <div id="gridEntregas" class="moodboard-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: MOODBOARD ===== -->
-        <section id="view-moodboard" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Muro de Inspiración</h2><button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir Referencia</button></div>
-            <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="moodboardTitulo" placeholder="Título"><input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
-                <button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
-            <div id="gridMoodboard" class="moodboard-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: OBJETIVOS ===== -->
-        <section id="view-objetivos" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Objetivos</h2><button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear Objetivo</button></div>
-            <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="objetivoTitulo" placeholder="Meta"><input type="number" id="objetivoMeta" placeholder="Cantidad" min="1"><button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar</button>
-            </div>
-            <div id="listaObjetivos" class="objetivos-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: DIRECTORIO ===== -->
-        <section id="view-directorio" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Nuestro Equipo</h2><button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
-            <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="dirNombre" placeholder="Nombre" style="flex: 2;"><input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;"></div>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="email" id="dirCorreo" placeholder="Correo" style="flex: 1;"><input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;"></div>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label>Cumpleaños:</label><input type="date" id="dirCumpleanos" style="width: 100%;"></div><div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label>Foto:</label><input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div></div>
-                <button id="btnGuardarDirectorio" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
-            <div id="gridDirectorio" class="directorio-grid"></div>
-        </section>
-
-        <!-- ===== VISTA: TABLÓN DE ANUNCIOS ===== -->
-        <section id="view-anuncios" class="view-section" style="display: none;">
-            <div class="recent-tasks-header"><h2>Comunicados</h2><button id="btnMostrarFormAnuncio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoAnuncio')"><i class="fa-solid fa-plus"></i> Nuevo Anuncio</button></div>
-            <div id="formNuevoAnuncio" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="anuncioTitulo" placeholder="Título"><textarea id="anuncioMensaje" placeholder="Mensaje..." rows="3"></textarea>
-                <select id="anuncioPrioridad" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><option value="Normal">Normal</option><option value="Urgente">URGENTE</option></select>
-                <button id="btnGuardarAnuncio" class="btn-primary" style="align-self: flex-end;">Publicar</button>
-            </div>
-            <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
-        </section>
-
-        <!-- ===== VISTA: INICIO (KANBAN) ===== -->
+        <!-- ===== VISTA: INICIO (DASHBOARD + KANBAN) ===== -->
         <section id="view-inicio" class="view-section active">
-            <div class="recent-tasks-header">
+            
+            <!-- FRASE DEL DÍA -->
+            <div id="dailyQuote" class="daily-quote">
+                <i class="fa-solid fa-quote-left"></i>
+                <span id="quoteText">La creatividad es la inteligencia divirtiéndose.</span>
+                <i class="fa-solid fa-quote-right"></i>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div class="dashboard-grid">
+                <!-- Mi Nivel -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <i class="fa-solid fa-bolt" style="color: #3b82f6;"></i>
+                        <h3>Mi Nivel</h3>
+                    </div>
+                    <div class="dash-card-body" style="text-align: center;">
+                        <h2 id="dashNivel" style="color: #3b82f6; font-size: 2.5rem; margin-bottom: 5px;">Nivel 1</h2>
+                        <p id="dashXPText" style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 15px;">0 / 100 XP</p>
+                        <div class="barra-progreso-bg" style="height: 10px;">
+                            <div id="dashXPBar" class="barra-progreso-fill" style="width: 0%; background: #3b82f6;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mis Próximas Tareas -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <i class="fa-solid fa-list-check" style="color: #f7c948;"></i>
+                        <h3>Mis Próximas Tareas</h3>
+                    </div>
+                    <div class="dash-card-body">
+                        <ul id="dashTareasList" style="list-style: none; padding: 0; margin: 0;">
+                            <li style="color: #666; font-size: 0.9rem;">No tienes tareas pendientes.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Último Anuncio -->
+                <div class="dash-card">
+                    <div class="dash-card-header">
+                        <i class="fa-solid fa-bullhorn" style="color: #ef4444;"></i>
+                        <h3>Último Anuncio</h3>
+                    </div>
+                    <div class="dash-card-body" id="dashAnuncio">
+                        <p style="color: #666; font-size: 0.9rem;">No hay anuncios recientes.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KANBAN -->
+            <div class="recent-tasks-header" style="margin-top: 40px;">
                 <h2>Tareas del Equipo</h2>
                 <div style="display: flex; align-items: center; gap: 15px;">
                     <label id="filtroContainer" style="display: none; color: #d1d5db; font-size: 0.9rem; cursor: pointer;"><input type="checkbox" id="checkFiltroMisTareas" style="margin-right: 5px; accent-color: #f7c948;"> Ver solo mis tareas</label>
@@ -342,41 +158,197 @@
             </div>
         </section>
 
+        <!-- ===== VISTA: CAJA MISTERIOSA ===== -->
+        <section id="view-caja" class="view-section" style="display: none;">
+            <h2>Caja Misteriosa</h2>
+            <div class="info-banner"><i class="fa-solid fa-gift" style="color: #f7c948;"></i><div>Reclama tu recompensa diaria. ¡Vuelve cada día!</div></div>
+            <div style="text-align: center; padding: 50px 20px;">
+                <div id="lootBoxIcon" style="font-size: 8rem; cursor: pointer; filter: drop-shadow(0 0 20px rgba(247,201,72,0.5)); transition: 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" onclick="abrirLootBox()">🎁</div>
+                <h2 id="lootBoxStatus" style="color: #f7c948; margin-top: 20px;">¡Haz clic para abrir!</h2>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: RULETA DIARIA ===== -->
+        <section id="view-ruleta" class="view-section" style="display: none;">
+            <h2>Ruleta de la Suerte</h2>
+            <div class="info-banner"><i class="fa-solid fa-dharmachakra" style="color: #3b82f6;"></i><div>¡Prueba tu suerte! Tienes 1 giro diario.</div></div>
+            <div class="wheel-container">
+                <div class="wheel" id="wheel"><div class="wheel-center" onclick="girarRuleta()"><i class="fa-solid fa-play"></i> GIRAR</div></div>
+            </div>
+            <div id="ruletaResultado" style="text-align: center; margin-top: 30px; font-size: 1.5rem; color: #f7c948; font-weight: bold;"></div>
+        </section>
+
+        <!-- ===== VISTA: SIMULADOR DE POST ===== -->
+        <section id="view-mockup" class="view-section" style="display: none;">
+            <h2>Simulador de Post</h2>
+            <div class="info-banner"><i class="fa-solid fa-mobile-screen" style="color: #3b82f6;"></i><div>Sube una imagen para ver cómo se vería en Instagram.</div></div>
+            <div class="mockup-container">
+                <div class="mockup-controls">
+                    <input type="file" id="mockupInput" accept="image/*" onchange="previewMockup(event)">
+                    <input type="text" id="mockupCaption" placeholder="Escribe el pie de foto..." onkeyup="actualizarCaption()">
+                </div>
+                <div class="phone-frame">
+                    <div class="phone-header"><div class="phone-avatar"></div><div class="phone-user">spotlight_casa_productora</div><div class="phone-more">...</div></div>
+                    <div class="phone-image-container"><img id="mockupImg" src="https://via.placeholder.com/400x400/13131a/f7c948?text=Sube+tu+Diseño" alt="Post"></div>
+                    <div class="phone-actions"><i class="fa-regular fa-heart"></i><i class="fa-regular fa-comment"></i><i class="fa-regular fa-paper-plane"></i><i class="fa-regular fa-bookmark" style="margin-left: auto;"></i></div>
+                    <div class="phone-caption"><strong>spotlight_casa_productora</strong> <span id="mockupCaptionText">Escribe algo aquí...</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: WIKI ===== -->
+        <section id="view-wiki" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Wiki de SPOTLIGHT</h2><button id="btnMostrarFormWiki" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaWiki')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div id="formNuevaWiki" class="form-tarea" style="display: none; flex-direction: column;">
+                <input type="text" id="wikiTitulo" placeholder="Título" style="font-weight: bold;"><textarea id="wikiContenido" placeholder="Contenido..." rows="6" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
+                <button id="btnGuardarWiki" class="btn-primary" style="align-self: flex-end;">Guardar</button>
+            </div>
+            <div id="gridWiki" class="wiki-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: DETRÁS DE CÁMARAS ===== -->
+        <section id="view-bts" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Detrás de Cámaras</h2><button id="btnMostrarFormBTS" class="btn-nueva-tarea" onclick="toggleForm('formNuevoBTS')"><i class="fa-solid fa-plus"></i> Subir</button></div>
+            <div id="formNuevoBTS" class="form-tarea" style="display: none; flex-direction: column;">
+                <input type="text" id="btsTitulo" placeholder="Descripción"><input type="file" id="btsFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                <button id="btnGuardarBTS" class="btn-primary" style="align-self: flex-end;">Subir</button>
+            </div>
+            <div id="gridBTS" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: RADAR ===== -->
+        <section id="view-radar" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Radar de Tendencias</h2><button id="btnMostrarFormRadar" class="btn-nueva-tarea" onclick="toggleForm('formNuevoRadar')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div id="formNuevoRadar" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="radarTitulo" placeholder="Título" style="flex: 2;"><input type="text" id="radarCategoria" placeholder="Categoría" style="flex: 1;"></div>
+                <input type="url" id="radarLink" placeholder="Enlace (https://...)"><textarea id="radarDesc" placeholder="Descripción..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
+                <button id="btnGuardarRadar" class="btn-primary" style="align-self: flex-end;">Guardar</button>
+            </div>
+            <div id="gridRadar" class="radar-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: PLANTILLAS ===== -->
+        <section id="view-plantillas" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Plantillas</h2><button id="btnMostrarFormPlantilla" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaPlantilla')"><i class="fa-solid fa-plus"></i> Crear</button></div>
+            <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="plantillaTitulo" placeholder="Título" style="flex: 2;"><input type="number" id="plantillaXP" placeholder="XP" value="15" style="flex: 1;"></div>
+                <textarea id="plantillaDesc" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
+                <div style="display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Foto (Opcional):</label><input type="file" id="plantillaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div>
+                <button id="btnGuardarPlantilla" class="btn-primary" style="align-self: flex-end;">Guardar</button>
+            </div>
+            <div id="gridPlantillas" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: BÓVEDA ===== -->
+        <section id="view-boveda" class="view-section" style="display: none;">
+            <h2>Bóveda de Accesos</h2>
+            <div class="form-tarea" style="flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaServicio" placeholder="Servicio" style="flex: 1;"><input type="text" id="bovedaUsuario" placeholder="Usuario" style="flex: 1;"><input type="text" id="bovedaPassword" placeholder="Contraseña" style="flex: 1;"></div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaNota" placeholder="Nota" style="flex: 2;"><button id="btnGuardarBoveda" class="btn-primary" style="flex: 1;">Guardar</button></div>
+            </div>
+            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Servicio</th><th style="padding: 15px;">Usuario</th><th style="padding: 15px;">Contraseña</th><th style="padding: 15px;">Notas</th><th style="padding: 15px;">Acción</th></tr></thead><tbody id="tablaBoveda"></tbody></table>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: HALL DE LA FAMA ===== -->
+        <section id="view-hall" class="view-section" style="display: none;">
+            <h2>Hall de la Fama</h2>
+            <div class="info-banner"><i class="fa-solid fa-crown" style="color: #f7c948;"></i><div>Los líderes de SPOTLIGHT.</div></div>
+            <div id="hallDeLaFamaContent" class="podium-container"></div>
+        </section>
+
+        <!-- ===== VISTA: TIENDA ===== -->
+        <section id="view-tienda" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Tienda de Recompensas</h2><div class="saldo-xp-container"><span>Saldo:</span><strong id="saldoXP">0 XP</strong></div></div>
+            <div id="gridTienda" class="tienda-grid"></div>
+            <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
+                <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Historial de Canjes (Admin)</h3>
+                <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Recompensa</th><th style="padding: 15px;">Costo</th><th style="padding: 15px;">Estado</th><th style="padding: 15px;">Acción</th></tr></thead><tbody id="tablaCanjes"></tbody></table></div>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: PANEL DE GERENCIA ===== -->
+        <section id="view-gerencia" class="view-section" style="display: none;">
+            <h2>Panel de Gerencia</h2>
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><span>Tareas</span><strong id="kpiTareasTotal">0</strong><span class="kpi-sub" id="kpiTareasSub">0 Completadas</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div><div class="kpi-info"><span>Proyectos</span><strong id="kpiProyectos">0</strong><span class="kpi-sub" id="kpiProyectosSub">Activos</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon azul"><i class="fa-solid fa-wallet"></i></div><div class="kpi-info"><span>Presupuesto</span><strong id="kpiPresupuesto">$0</strong><span class="kpi-sub" id="kpiGastadoSub">$0 Gastados</span></div></div>
+                <div class="kpi-card"><div class="kpi-icon rojo"><i class="fa-solid fa-users"></i></div><div class="kpi-info"><span>Equipo</span><strong id="kpiEquipo">0</strong><span class="kpi-sub" id="kpiEquipoSub">Integrantes</span></div></div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-box"><h3>Rendimiento</h3><canvas id="graficoTareas"></canvas></div>
+                <div class="chart-box"><h3>Finanzas</h3><canvas id="graficoPresupuesto"></canvas></div>
+            </div>
+            <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Tareas Pendientes</h3>
+            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Tarea</th><th style="padding: 15px;">Asignado</th><th style="padding: 15px;">Proyecto</th><th style="padding: 15px;">Estado</th></tr></thead><tbody id="tablaAlertasGerencia"></tbody></table></div>
+        </section>
+
+        <!-- ===== VISTA: PANEL RRHH ===== -->
+        <section id="view-rrhh" class="view-section" style="display: none;">
+            <h2>Panel de RRHH</h2>
+            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Puesto</th><th style="padding: 15px;">XP</th><th style="padding: 15px;">Medallas</th><th style="padding: 15px;">Promedio</th></tr></thead><tbody id="tablaRRHH"></tbody></table></div>
+        </section>
+
+        <!-- ===== VISTA: MIS ENTREGAS ===== -->
+        <section id="view-entregas" class="view-section" style="display: none;">
+            <h2>Mi Portafolio de Entregas</h2>
+            <div id="gridEntregas" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: MOODBOARD ===== -->
+        <section id="view-moodboard" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Muro de Inspiración</h2><button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir</button></div>
+            <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="moodboardTitulo" placeholder="Título"><input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"><button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
+            <div id="gridMoodboard" class="moodboard-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: OBJETIVOS ===== -->
+        <section id="view-objetivos" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Objetivos</h2><button id="btnMostrarFormObjetivo" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoObjetivo')"><i class="fa-solid fa-plus"></i> Crear</button></div>
+            <div id="formNuevoObjetivo" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="objetivoTitulo" placeholder="Meta"><input type="number" id="objetivoMeta" placeholder="Cantidad" min="1"><button id="btnGuardarObjetivo" class="btn-primary" style="align-self: flex-end;">Lanzar</button></div>
+            <div id="listaObjetivos" class="objetivos-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: DIRECTORIO ===== -->
+        <section id="view-directorio" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Nuestro Equipo</h2><button id="btnMostrarFormDirectorio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoDirectorio')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
+            <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="dirNombre" placeholder="Nombre" style="flex: 2;"><input type="text" id="dirRol" placeholder="Puesto" style="flex: 1;"></div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="email" id="dirCorreo" placeholder="Correo" style="flex: 1;"><input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;"></div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label>Cumpleaños:</label><input type="date" id="dirCumpleanos" style="width: 100%;"></div><div style="flex: 1; display: flex; flex-direction: column; gap: 5px;"><label>Foto:</label><input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div></div>
+                <button id="btnGuardarDirectorio" class="btn-primary" style="align-self: flex-end;">Guardar</button>
+            </div>
+            <div id="gridDirectorio" class="directorio-grid"></div>
+        </section>
+
+        <!-- ===== VISTA: ANUNCIOS ===== -->
+        <section id="view-anuncios" class="view-section" style="display: none;">
+            <div class="recent-tasks-header"><h2>Comunicados</h2><button id="btnMostrarFormAnuncio" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoAnuncio')"><i class="fa-solid fa-plus"></i> Nuevo</button></div>
+            <div id="formNuevoAnuncio" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="anuncioTitulo" placeholder="Título"><textarea id="anuncioMensaje" placeholder="Mensaje..." rows="3"></textarea><select id="anuncioPrioridad" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><option value="Normal">Normal</option><option value="Urgente">URGENTE</option></select><button id="btnGuardarAnuncio" class="btn-primary" style="align-self: flex-end;">Publicar</button></div>
+            <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </section>
+
         <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Proyectos</h2><button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo</button></div>
-            <div id="formNuevoProyecto" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputProyectoNom" placeholder="Nombre" style="flex: 2;"><input type="text" id="inputClienteProyecto" placeholder="Cliente" style="flex: 1;"></div>
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto" style="flex: 1;"></div>
-                <button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
+            <div id="formNuevoProyecto" class="form-tarea" style="display: none; flex-direction: column;"><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputProyectoNom" placeholder="Nombre" style="flex: 2;"><input type="text" id="inputClienteProyecto" placeholder="Cliente" style="flex: 1;"></div><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto" style="flex: 1;"></div><button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
         <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda</h2>
-            <div class="form-tarea" id="formAgendar" style="margin-top: 20px; flex-direction: row; align-items: flex-end;">
-                <div style="flex: 2;"><input type="text" id="inputEvento" placeholder="Evento" style="width:100%;"></div>
-                <div style="flex: 1;"><input type="date" id="inputFechaEvento" style="width:100%;"></div>
-                <button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button>
-            </div>
-            <div class="calendar-container">
-                <div class="calendar-header"><button id="prevMonth" class="btn-icon"><i class="fa-solid fa-chevron-left"></i></button><h3 id="monthYearDisplay">Mes Año</h3><button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button></div>
-                <div class="calendar-grid-header"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div>
-                <div class="calendar-grid" id="calendarDays"></div>
-            </div>
+            <div class="form-tarea" id="formAgendar" style="margin-top: 20px; flex-direction: row; align-items: flex-end;"><div style="flex: 2;"><input type="text" id="inputEvento" placeholder="Evento" style="width:100%;"></div><div style="flex: 1;"><input type="date" id="inputFechaEvento" style="width:100%;"></div><button id="btnAgendarEvento" class="btn-primary" style="height: 45px;">Agendar</button></div>
+            <div class="calendar-container"><div class="calendar-header"><button id="prevMonth" class="btn-icon"><i class="fa-solid fa-chevron-left"></i></button><h3 id="monthYearDisplay">Mes Año</h3><button id="nextMonth" class="btn-icon"><i class="fa-solid fa-chevron-right"></i></button></div><div class="calendar-grid-header"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div><div class="calendar-grid" id="calendarDays"></div></div>
             <ul id="listaEventos" class="archivos-lista" style="margin-top: 30px;"></ul>
         </section>
 
         <!-- ===== VISTA: EXÁMENES ===== -->
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Exámenes</h2><button id="btnMostrarFormExamen" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoExamen')"><i class="fa-solid fa-plus"></i> Crear</button></div>
-            <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="examenTitulo" placeholder="Título" style="font-weight: bold;">
-                <div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div>
-                <div style="display: flex; gap: 15px; margin-top: 15px;"><button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;">+ Pregunta</button><button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar</button></div>
-            </div>
+            <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="examenTitulo" placeholder="Título" style="font-weight: bold;"><div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div><div style="display: flex; gap: 15px; margin-top: 15px;"><button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;">+ Pregunta</button><button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar</button></div></div>
             <ul id="listaExamenes" class="archivos-lista"></ul>
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;">Resultados</h3>
             <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Nombre</th><th style="padding: 15px;">Examen</th><th style="padding: 15px;">Nota</th></tr></thead><tbody id="tablaResultados"></tbody></table></div>
@@ -384,47 +356,11 @@
     </main>
 
     <!-- MODALES -->
-    <div id="modalExamen" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <span class="close" onclick="cerrarModalExamen()">&times;</span>
-            <h2 id="mExamenTitulo" style="color:#f7c948; margin-bottom: 20px;">Título</h2>
-            <div id="mExamenPreguntas" style="display: flex; flex-direction: column; gap: 20px;"></div>
-            <button id="btnCalificarExamen" class="btn-primary" style="margin-top: 25px; width: 100%;">Enviar</button>
-        </div>
-    </div>
+    <div id="modalExamen" class="modal"><div class="modal-content" style="max-width: 700px;"><span class="close" onclick="cerrarModalExamen()">&times;</span><h2 id="mExamenTitulo" style="color:#f7c948; margin-bottom: 20px;">Título</h2><div id="mExamenPreguntas" style="display: flex; flex-direction: column; gap: 20px;"></div><button id="btnCalificarExamen" class="btn-primary" style="margin-top: 25px; width: 100%;">Enviar</button></div></div>
 
-    <div id="modalTarea" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2>
-            <p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p>
-            <p id="mTareaTiempo" style="color: #3b82f6; font-weight: bold; margin-bottom: 15px;"></p>
-            <div class="instrucciones-box"><h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4><p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p></div>
-            <h4 style="color:white; margin-top: 20px;">Archivos:</h4>
-            <ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px; margin-bottom: 15px;"></ul>
-            <div class="upload-area"><input type="file" id="inputArchivoTarea" multiple><button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button></div>
-            <div id="seccionCalificacion" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <h4 style="color:#f7c948; margin-bottom: 10px;">Calificación</h4>
-                <div id="calificacionAdmin" style="display: none; align-items: center; gap: 10px;"><input type="number" id="inputCalificacion" min="1" max="10" placeholder="1-10" style="width: 80px; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #f7c948;"><button onclick="guardarCalificacion()" class="btn-primary" style="padding: 10px 20px;">Guardar</button></div>
-                <div id="calificacionStaff" style="display: none; align-items: center; gap: 10px; background: rgba(247, 201, 72, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed #f7c948;"><span style="color: #f7c948; font-size: 1.5rem;"><i class="fa-solid fa-medal"></i></span><span id="textoCalificacion" style="color: white; font-weight: bold;">Sin calificar</span></div>
-            </div>
-        </div>
-    </div>
+    <div id="modalTarea" class="modal"><div class="modal-content"><span class="close" onclick="cerrarModal()">&times;</span><h2 id="mTareaTitulo" style="color:#f7c948;">Título</h2><p style="color:#a0a0b8; margin-bottom: 15px;" id="mTareaAsignado"></p><p id="mTareaTiempo" style="color: #3b82f6; font-weight: bold; margin-bottom: 15px;"></p><div class="instrucciones-box"><h4 style="color:white; margin-bottom:5px;">Instrucciones:</h4><p id="mTareaDesc" style="color:#ccc; font-size:0.95rem;"></p></div><h4 style="color:white; margin-top: 20px;">Archivos:</h4><ul id="mTareaArchivos" class="archivos-lista" style="min-height: 50px; margin-bottom: 15px;"></ul><div class="upload-area"><input type="file" id="inputArchivoTarea" multiple><button onclick="subirArchivosTarea(event)" class="btn-primary" style="margin-left: 10px; padding: 8px 15px;">Subir</button></div><div id="seccionCalificacion" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;"><h4 style="color:#f7c948; margin-bottom: 10px;">Calificación</h4><div id="calificacionAdmin" style="display: none; align-items: center; gap: 10px;"><input type="number" id="inputCalificacion" min="1" max="10" placeholder="1-10" style="width: 80px; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #f7c948;"><button onclick="guardarCalificacion()" class="btn-primary" style="padding: 10px 20px;">Guardar</button></div><div id="calificacionStaff" style="display: none; align-items: center; gap: 10px; background: rgba(247, 201, 72, 0.1); padding: 15px; border-radius: 12px; border: 1px dashed #f7c948;"><span style="color: #f7c948; font-size: 1.5rem;"><i class="fa-solid fa-medal"></i></span><span id="textoCalificacion" style="color: white; font-weight: bold;">Sin calificar</span></div></div></div></div>
 
-    <div id="modalProyecto" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <span class="close" onclick="cerrarModal()">&times;</span>
-            <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
-            <ul id="mProyectoTareas" class="archivos-lista" style="margin-bottom: 25px;"></ul>
-            <div id="seccionGastos" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; display: none;">
-                <h4 style="color:#f7c948; margin-bottom: 10px;">Gastos</h4>
-                <div id="resumenGastos" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; text-align: center;"></div>
-                <div class="barra-progreso-bg" style="height: 12px; margin-bottom: 20px;"><div id="barraGastos" class="barra-progreso-fill" style="width: 0%;"></div></div>
-                <ul id="listaGastos" class="archivos-lista" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></ul>
-                <div style="display: flex; gap: 10px; margin-top: 15px;"><input type="text" id="gastoConcepto" placeholder="Concepto" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;"><input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;"><button onclick="agregarGasto()" class="btn-primary" style="padding: 10px 15px;">+</button></div>
-            </div>
-        </div>
-    </div>
+    <div id="modalProyecto" class="modal"><div class="modal-content" style="max-width: 600px;"><span class="close" onclick="cerrarModal()">&times;</span><h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2><ul id="mProyectoTareas" class="archivos-lista" style="margin-bottom: 25px;"></ul><div id="seccionGastos" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; display: none;"><h4 style="color:#f7c948; margin-bottom: 10px;">Gastos</h4><div id="resumenGastos" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; text-align: center;"></div><div class="barra-progreso-bg" style="height: 12px; margin-bottom: 20px;"><div id="barraGastos" class="barra-progreso-fill" style="width: 0%;"></div></div><ul id="listaGastos" class="archivos-lista" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></ul><div style="display: flex; gap: 10px; margin-top: 15px;"><input type="text" id="gastoConcepto" placeholder="Concepto" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;"><input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;"><button onclick="agregarGasto()" class="btn-primary" style="padding: 10px 15px;">+</button></div></div></div></div>
 
     <script src="staff.js"></script>
 </body>
