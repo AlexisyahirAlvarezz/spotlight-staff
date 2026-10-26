@@ -33,6 +33,7 @@
             <!-- NUEVAS SECCIONES CON IDs PARA OCULTAR/MOSTRAR -->
             <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
             <a href="#" class="nav-link" id="link-entregas" data-target="entregas" style="display: none;"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
+            <a href="#" class="nav-link" id="link-gerencia" data-target="gerencia" style="display: none;"><i class="fa-solid fa-chart-pie"></i> Panel de Gerencia</a>
         </nav>
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
@@ -59,6 +60,74 @@
                 <div class="user-profile"><div class="avatar" id="avatarLetra">S</div></div>
             </div>
         </header>
+
+        <!-- ===== VISTA: PANEL DE GERENCIA (JOHAN Y BRAYAN) ===== -->
+        <section id="view-gerencia" class="view-section" style="display: none;">
+            <h2>Panel de Gerencia</h2>
+            <p class="section-subtitle">Resumen ejecutivo de SPOTLIGHT</p>
+            
+            <div class="info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <div>
+                    Bienvenido al centro de mando. Aquí tienes una vista rápida del estado de la productora: rendimiento del equipo, estado de los proyectos y salud financiera.
+                </div>
+            </div>
+
+            <!-- TARJETAS DE ESTADÍSTICAS (KPIs) -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon amarillo"><i class="fa-solid fa-list-check"></i></div>
+                    <div class="kpi-info">
+                        <span>Tareas Totales</span>
+                        <strong id="kpiTareasTotal">0</strong>
+                        <span class="kpi-sub" id="kpiTareasSub">0 Completadas</span>
+                    </div>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-icon verde"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="kpi-info">
+                        <span>Proyectos</span>
+                        <strong id="kpiProyectos">0</strong>
+                        <span class="kpi-sub" id="kpiProyectosSub">Activos</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon azul"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="kpi-info">
+                        <span>Presupuesto</span>
+                        <strong id="kpiPresupuesto">$0</strong>
+                        <span class="kpi-sub" id="kpiGastadoSub">$0 Gastados</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-icon rojo"><i class="fa-solid fa-users"></i></div>
+                    <div class="kpi-info">
+                        <span>Equipo</span>
+                        <strong id="kpiEquipo">0</strong>
+                        <span class="kpi-sub" id="kpiEquipoSub">Integrantes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALERTAS DE TAREAS (Cuellos de botella) -->
+            <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-triangle-exclamation"></i> Alertas: Tareas Pendientes</h3>
+            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
+                        <tr>
+                            <th style="padding: 15px;">Tarea</th>
+                            <th style="padding: 15px;">Asignado a</th>
+                            <th style="padding: 15px;">Proyecto</th>
+                            <th style="padding: 15px;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAlertasGerencia"></tbody>
+                </table>
+            </div>
+        </section>
 
         <!-- ===== VISTA: PANEL RRHH (XIMENA) ===== -->
         <section id="view-rrhh" class="view-section" style="display: none;">

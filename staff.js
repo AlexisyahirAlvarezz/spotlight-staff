@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // MOSTRAR U OCULTAR LINKS EN EL SIDEBAR
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
     if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
+    if (esGerente) document.getElementById('link-gerencia').style.display = 'flex'; // <--- NUEVA PESTAÑA
 
     // MOSTRAR BOTÓN DE FILTRO PARA BEATRIZ
     if (nombreStaff === "Beatriz" || esGerente) {
@@ -133,20 +134,82 @@ document.addEventListener('DOMContentLoaded', function() {
         if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
     }
 
-    // ================= PANEL RRHH (XIMENA) =================
+    // ================= VARIABLES GLOBALES DE DATOS =================
     let directorioDB = [];
     let resultadosDB = [];
+    let tareas = [];
+    let proyectosDB = [];
+    let examenesDB = [];
+    let moodboardDB = [];
+    let anunciosDB = [];
+    let eventos = [];
 
+    // ================= PANEL DE GERENCIA =================
+    window.renderGerencia = function() {
+        if (!document.getElementById('kpiTareasTotal')) return;
+
+        // 1. Tareas
+        const totalTareas = tareas.length;
+        const completadas = tareas.filter(t => t.estado === 'completed').length;
+        const pendientes = tareas.filter(t => t.estado !== 'completed');
+        
+        document.getElementById('kpiTareasTotal').textContent = totalTareas;
+        document.getElementById('kpiTareasSub').textContent = `${completadas} Completadas`;
+
+        // 2. Proyectos
+        document.getElementById('kpiProyectos').textContent = proyectosDB.length;
+        
+        // 3. Finanzas
+        let presupuestoTotal = 0;
+        let gastadoTotal = 0;
+        proyectosDB.forEach(p => {
+            presupuestoTotal += (p.presupuesto || 0);
+            const gastosProyecto = p.gastos || [];
+            gastadoTotal += gastosProyecto.reduce((sum, g) => sum + g.monto, 0);
+        });
+        document.getElementById('kpiPresupuesto').textContent = `$${presupuestoTotal.toLocaleString('es-CO')}`;
+        document.getElementById('kpiGastadoSub').textContent = `$${gastadoTotal.toLocaleString('es-CO')} Gastados`;
+
+        // 4. Equipo
+        document.getElementById('kpiEquipo').textContent = directorioDB.length;
+        let totalMedallas = 0;
+        directorioDB.forEach(p => { totalMedallas += (p.logros ? p.logros.length : 0); });
+        document.getElementById('kpiEquipoSub').textContent = `${totalMedallas} Medallas entregadas`;
+
+        // 5. Tabla de Alertas (Tareas pendientes o en proceso)
+        const tbodyAlertas = document.getElementById('tablaAlertasGerencia');
+        tbodyAlertas.innerHTML = '';
+        
+        if (pendientes.length === 0) {
+            tbodyAlertas.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #22c55e;"><i class="fa-solid fa-check-circle"></i> ¡Todo al día! No hay tareas pendientes.</td></tr>';
+        } else {
+            const pendientesOrdenadas = [...pendientes].sort((a, b) => a.estado === 'pending' ? -1 : 1);
+            
+            pendientesOrdenadas.forEach(t => {
+                const colorEstado = t.estado === 'pending' ? '#ef4444' : '#f7c948';
+                const textoEstado = t.estado === 'pending' ? 'Por Hacer' : 'En Proceso';
+                
+                tbodyAlertas.innerHTML += `
+                    <tr style="border-bottom: 1px solid #2a2a3a;">
+                        <td style="padding: 15px; color: white; font-weight: bold;">${t.titulo}</td>
+                        <td style="padding: 15px; color: #9ca3af;">${t.asignado}</td>
+                        <td style="padding: 15px; color: #9ca3af;">${t.proyecto}</td>
+                        <td style="padding: 15px; font-weight: bold; color: ${colorEstado};">${textoEstado}</td>
+                    </tr>
+                `;
+            });
+        }
+    };
+
+    // ================= PANEL RRHH (XIMENA) =================
     window.renderRRHH = function() {
         const tbody = document.getElementById('tablaRRHH');
         if (!tbody) return;
         tbody.innerHTML = '';
 
         directorioDB.forEach(persona => {
-            // Contar medallas
             const medallas = persona.logros ? persona.logros.length : 0;
             
-            // Calcular promedio de exámenes
             const examenesPersona = resultadosDB.filter(r => r.alumno === persona.nombre);
             let promedio = 0;
             if (examenesPersona.length > 0) {
@@ -175,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let archivosSubidos = [];
 
-        // Buscar en todas las tareas los archivos que subió Maria Fernanda
         tareas.forEach(t => {
             if (t.asignado === "Maria Fernanda" && t.archivos && t.archivos.length > 0) {
                 t.archivos.forEach(a => {
@@ -208,7 +270,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= MOODBOARD =================
     const gridMoodboard = document.getElementById('gridMoodboard');
-    let moodboardDB = [];
 
     db.collection("moodboard").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         moodboardDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -330,7 +391,8 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderDirectorio();
-        renderRRHH(); // Actualizar tabla de RRHH
+        renderRRHH();
+        renderGerencia(); // Actualizar KPIs
     });
 
     window.renderDirectorio = function() {
@@ -399,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= ANUNCIOS =================
     const listaAnuncios = document.getElementById('listaAnuncios');
-    let anunciosDB = [];
 
     db.collection("anuncios").onSnapshot((snapshot) => {
         anunciosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -450,7 +511,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.eliminarAnuncio = function(id) { if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); } };
 
     // ================= EXÁMENES =================
-    let examenesDB = [];
     let examenActivoId = null;
     const listaExamenes = document.getElementById('listaExamenes');
     const tablaResultados = document.getElementById('tablaResultados');
@@ -465,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderExamenes(); 
         evaluarLogros();
-        renderRRHH(); // Actualizar promedio en RRHH
+        renderRRHH(); 
     });
 
     function crearBloquePregunta() {
@@ -579,11 +639,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= PROYECTOS Y GASTOS =================
     const listaProyectos = document.getElementById('listaProyectos'); 
-    let proyectosDB = [];
 
     db.collection("proyectos").onSnapshot((snapshot) => {
         proyectosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderProyectosLista();
+        renderGerencia(); // Actualizar KPIs
     });
 
     window.renderProyectosLista = function() {
@@ -712,14 +772,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ================= TAREAS (TABLERO KANBAN CON FILTRO) =================
-    let tareas = [];
     let tareaActivaId = null;
 
     db.collection("tareas").onSnapshot((snapshot) => {
         tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderTareas(); 
         evaluarLogros();
-        renderEntregas(); // Actualizar portafolio de Maria
+        renderEntregas();
+        renderGerencia(); // Actualizar KPIs
     });
 
     window.renderTareas = function() {
@@ -736,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const verSoloMisTareas = esBeatriz || filtroActivo;
 
         tareas.forEach((t) => {
-            if (verSoloMisTareas && t.asignado !== nombreStaff) return; // Saltar tareas de otros si el filtro está activo
+            if (verSoloMisTareas && t.asignado !== nombreStaff) return;
 
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
@@ -770,7 +830,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ESCUCHAR EL CAMBIO DEL CHECKBOX DE FILTRO
     if(document.getElementById('checkFiltroMisTareas')) {
         document.getElementById('checkFiltroMisTareas').addEventListener('change', renderTareas);
     }
@@ -877,13 +936,12 @@ document.addEventListener('DOMContentLoaded', function() {
             boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
             t.archivos = nuevosArchivos; 
             renderArchivosModal(t);
-            renderEntregas(); // Si es Maria, actualizar su portafolio al instante
+            renderEntregas(); 
         });
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
     // ================= CALENDARIO =================
-    let eventos = [];
     let fechaCalendario = new Date();
 
     db.collection("eventos").onSnapshot((snapshot) => {
@@ -948,6 +1006,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'moodboard') renderMoodboard();
             if (target === 'rrhh') renderRRHH();
             if (target === 'entregas') renderEntregas();
+            if (target === 'gerencia') renderGerencia(); // <--- CONECTADO
         });
     });
 
