@@ -7,11 +7,6 @@
     <link rel="stylesheet" href="staff.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- NUEVAS FUENTES: Outfit (Títulos) e Inter (Textos) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     
     <!-- SCRIPTS DE FIREBASE -->
@@ -68,7 +63,7 @@
                 <button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir Referencia</button>
             </div>
 
-            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px; backdrop-filter: blur(10px);">
+            <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
                 <h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro
                 </h4>
@@ -247,7 +242,7 @@
             <h3 style="margin-top: 20px; color: white; margin-bottom: 15px;">Exámenes Disponibles</h3>
             <ul id="listaExamenes" class="archivos-lista"></ul>
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-chart-simple"></i> Resultados de los Exámenes</h3>
-            <div style="background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; backdrop-filter: blur(10px);">
+            <div style="background: #11111a; border-radius: 16px; border: 1px solid #222; overflow: hidden;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;">
                         <tr><th style="padding: 15px;">Nombre</th><th style="padding: 15px;">Examen</th><th style="padding: 15px;">Calificación</th></tr>
@@ -322,8 +317,8 @@
                 <ul id="listaGastos" class="archivos-lista" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></ul>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <input type="text" id="gastoConcepto" placeholder="Concepto (Ej. Gasolina)" style="flex: 2; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid #333;">
-                    <input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.5); color: white; border: 1px solid #333;">
+                    <input type="text" id="gastoConcepto" placeholder="Concepto (Ej. Gasolina)" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                    <input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
                     <button onclick="agregarGasto()" class="btn-primary" style="padding: 10px 15px;">+</button>
                 </div>
             </div>
