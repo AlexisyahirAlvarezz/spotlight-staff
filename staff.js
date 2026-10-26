@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // MOSTRAR U OCULTAR LINKS EN EL SIDEBAR
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
     if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
-    if (esGerente) document.getElementById('link-gerencia').style.display = 'flex'; // <--- NUEVA PESTAÑA
+    if (esGerente) document.getElementById('link-gerencia').style.display = 'flex';
 
     // MOSTRAR BOTÓN DE FILTRO PARA BEATRIZ
     if (nombreStaff === "Beatriz" || esGerente) {
@@ -1006,9 +1006,38 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'moodboard') renderMoodboard();
             if (target === 'rrhh') renderRRHH();
             if (target === 'entregas') renderEntregas();
-            if (target === 'gerencia') renderGerencia(); // <--- CONECTADO
+            if (target === 'gerencia') renderGerencia();
         });
     });
+
+    // ================= LÓGICA DEL MENÚ MÓVIL =================
+    const btnMobileMenu = document.getElementById('btnMobileMenu');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+    if (btnMobileMenu && sidebar && sidebarOverlay) {
+        // Abrir/Cerrar al tocar el botón de las 3 rayitas
+        btnMobileMenu.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        // Cerrar al tocar el fondo oscuro
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Cerrar automáticamente al tocar cualquier sección
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 900) {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('active');
+                }
+            });
+        });
+    }
 
     document.getElementById('btnLogout').addEventListener('click', function(e) { e.preventDefault(); localStorage.removeItem('staffLogueado'); window.location.href = "login"; });
 });
