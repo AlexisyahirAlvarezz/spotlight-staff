@@ -62,7 +62,6 @@
                 <button id="btnMostrarFormMoodboard" class="btn-nueva-tarea" onclick="toggleForm('formNuevoMoodboard')"><i class="fa-solid fa-plus"></i> Subir Referencia</button>
             </div>
 
-            <!-- AVISO DE REGLAS Y ADVERTENCIA -->
             <div style="background: rgba(255, 94, 94, 0.1); border-left: 4px solid #ff5e5e; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
                 <h4 style="color: #ff5e5e; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                     <i class="fa-solid fa-triangle-exclamation"></i> Reglas del Muro
@@ -191,10 +190,15 @@
                 <h2>Gestión de Proyectos</h2>
                 <button id="btnMostrarFormProyecto" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevoProyecto')"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
             </div>
-            <div id="formNuevoProyecto" class="form-tarea" style="display: none;">
-                <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto">
-                <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)">
-                <button id="btnGuardarProyecto" class="btn-primary">Guardar</button>
+            <div id="formNuevoProyecto" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="inputProyectoNom" placeholder="Nombre del Proyecto" style="flex: 2;">
+                    <input type="text" id="inputClienteProyecto" placeholder="Cliente (Opcional)" style="flex: 1;">
+                </div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="number" id="inputPresupuestoProyecto" placeholder="Presupuesto (Ej. 5000)" style="flex: 1;">
+                </div>
+                <button id="btnGuardarProyecto" class="btn-primary" style="align-self: flex-end;">Guardar Proyecto</button>
             </div>
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
@@ -292,8 +296,31 @@
         <div class="modal-content" style="max-width: 600px;">
             <span class="close" onclick="cerrarModal()">&times;</span>
             <h2 id="mProyectoTitulo" style="color:#f7c948;">Proyecto</h2>
-            <p style="color:#a0a0b8; margin-bottom: 20px;">Tareas y archivos:</p>
-            <ul id="mProyectoTareas" class="archivos-lista"></ul>
+            
+            <!-- TAREAS DEL PROYECTO -->
+            <p style="color:#a0a0b8; margin-bottom: 10px; margin-top: 15px; font-weight: bold;">Tareas:</p>
+            <ul id="mProyectoTareas" class="archivos-lista" style="margin-bottom: 25px;"></ul>
+
+            <!-- SECCIÓN DE GASTOS Y PRESUPUESTO -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <h4 style="color:#f7c948; margin-bottom: 10px;"><i class="fa-solid fa-wallet"></i> Control de Gastos</h4>
+                
+                <div id="resumenGastos" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; text-align: center;">
+                    <!-- Se llena con JS -->
+                </div>
+
+                <div class="barra-progreso-bg" style="height: 12px; margin-bottom: 20px;">
+                    <div id="barraGastos" class="barra-progreso-fill" style="width: 0%;"></div>
+                </div>
+
+                <ul id="listaGastos" class="archivos-lista" style="margin-bottom: 15px; max-height: 150px; overflow-y: auto;"></ul>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <input type="text" id="gastoConcepto" placeholder="Concepto (Ej. Gasolina)" style="flex: 2; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                    <input type="number" id="gastoMonto" placeholder="Monto $" style="flex: 1; padding: 10px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                    <button onclick="agregarGasto()" class="btn-primary" style="padding: 10px 15px;">+</button>
+                </div>
+            </div>
         </div>
     </div>
 

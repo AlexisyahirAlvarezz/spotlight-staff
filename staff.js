@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormAnuncio')) document.getElementById('btnMostrarFormAnuncio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormObjetivo')) document.getElementById('btnMostrarFormObjetivo').style.display = 'flex';
-        if(document.getElementById('btnMostrarFormMoodboard')) document.getElementById('btnMostrarFormMoodboard').style.display = 'flex';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -80,7 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ================= SISTEMA DE LOGROS =================
-    // Este objeto guarda el diccionario de medallas con su emoji y descripción
     const DICCIONARIO_LOGROS = {
         'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' },
         'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
@@ -99,10 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     logrosActuales.push(logro);
                     db.collection("directorio").doc(docId).update({ logros: logrosActuales }).then(() => {
                         crearNotificacion(usuario, `¡Has desbloqueado la medalla: ${logro}! ${DICCIONARIO_LOGROS[logro].icono}`);
-                        // Si el que recibe la medalla es el que está en pantalla, lanzamos confeti
-                        if (usuario === nombreStaff) {
-                            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } });
-                        }
+                        if (usuario === nombreStaff) { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
                     });
                 }
             }
@@ -110,10 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function evaluarLogros() {
-        // 1. Evaluar El Incansable y El Creativo
-        let tareasCompletadas = 0;
-        let tareasConArchivos = 0;
-        
+        let tareasCompletadas = 0; let tareasConArchivos = 0;
         tareas.forEach(t => {
             if (t.asignado === nombreStaff && t.estado === 'completed') tareasCompletadas++;
             if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) tareasConArchivos++;
@@ -121,16 +113,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (tareasCompletadas >= 10) otorgarLogro('El Incansable', nombreStaff);
         if (tareasConArchivos >= 5) otorgarLogro('El Creativo', nombreStaff);
-
-        // 2. Evaluar El Cerebrito
-        if (resultadosDB.some(r => r.alumno === nombreStaff && r.porcentaje === 100)) {
-            otorgarLogro('El Cerebrito', nombreStaff);
-        }
-
-        // 3. Evaluar El Inspirador
-        if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) {
-            otorgarLogro('El Inspirador', nombreStaff);
-        }
+        if (resultadosDB.some(r => r.alumno === nombreStaff && r.porcentaje === 100)) otorgarLogro('El Cerebrito', nombreStaff);
+        if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
     }
 
     // ================= MOODBOARD =================
@@ -139,19 +123,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     db.collection("moodboard").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         moodboardDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderMoodboard();
-        evaluarLogros(); // Evaluamos si ya merece la medalla
+        renderMoodboard(); evaluarLogros();
     });
 
     window.renderMoodboard = function() {
         if(!gridMoodboard) return;
         gridMoodboard.innerHTML = '';
-        
         if (moodboardDB.length === 0) {
             gridMoodboard.innerHTML = '<p style="color:#666;">El muro está vacío. ¡Sube la primera imagen de inspiración!</p>';
             return;
         }
-
         moodboardDB.forEach(img => {
             const botonEliminar = esGerente || img.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarMoodboard('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             gridMoodboard.innerHTML += `
@@ -174,19 +155,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const boton = document.getElementById('btnGuardarMoodboard');
 
             if (titulo && fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const formData = new FormData();
+                const file = fileInput.files[0]; const formData = new FormData();
                 formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
                 
                 boton.innerHTML = "Subiendo..."; boton.disabled = true;
                 try {
                     const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
                     const data = await response.json();
-                    
                     if (data.secure_url) {
-                        db.collection("moodboard").add({
-                            titulo, url: data.secure_url, autor: nombreStaff, timestamp: Date.now()
-                        }).then(() => {
+                        db.collection("moodboard").add({ titulo, url: data.secure_url, autor: nombreStaff, timestamp: Date.now() }).then(() => {
                             document.getElementById('formNuevoMoodboard').style.display = 'none';
                             document.getElementById('moodboardTitulo').value = ''; fileInput.value = '';
                         });
@@ -197,9 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    window.eliminarMoodboard = function(id) {
-        if (confirm("¿Eliminar esta referencia?")) { db.collection("moodboard").doc(id).delete(); }
-    };
+    window.eliminarMoodboard = function(id) { if (confirm("¿Eliminar esta referencia?")) { db.collection("moodboard").doc(id).delete(); } };
 
     // ================= OBJETIVOS EN EQUIPO =================
     const listaObjetivos = document.getElementById('listaObjetivos');
@@ -213,34 +188,18 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderObjetivos = function() {
         if(!listaObjetivos) return;
         listaObjetivos.innerHTML = '';
-        
-        if (objetivosDB.length === 0) {
-            listaObjetivos.innerHTML = '<p style="color:#666;">No hay objetivos activos. ¡Crea uno para motivar al equipo!</p>';
-            return;
-        }
-
+        if (objetivosDB.length === 0) { listaObjetivos.innerHTML = '<p style="color:#666;">No hay objetivos activos. ¡Crea uno para motivar al equipo!</p>'; return; }
         objetivosDB.forEach(meta => {
             const porcentaje = Math.min(Math.round((meta.progreso / meta.metaTotal) * 100), 100);
             const estaCompleto = porcentaje >= 100;
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarObjetivo('${meta.id}')" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
-            
-            let botonAccion = '';
-            if (estaCompleto) {
-                botonAccion = `<button class="btn-aportar completado" disabled><i class="fa-solid fa-trophy"></i> ¡Meta Cumplida!</button>`;
-            } else {
-                botonAccion = `<button class="btn-aportar" onclick="aportarProgreso('${meta.id}', ${meta.progreso}, ${meta.metaTotal})"><i class="fa-solid fa-hand-holding-heart"></i> ¡Aportar Avance +1!</button>`;
-            }
+            let botonAccion = estaCompleto ? `<button class="btn-aportar completado" disabled><i class="fa-solid fa-trophy"></i> ¡Meta Cumplida!</button>` : `<button class="btn-aportar" onclick="aportarProgreso('${meta.id}', ${meta.progreso}, ${meta.metaTotal})"><i class="fa-solid fa-hand-holding-heart"></i> ¡Aportar Avance +1!</button>`;
 
             listaObjetivos.innerHTML += `
                 <div class="objetivo-card ${estaCompleto ? 'completado' : ''}">
                     <div class="objetivo-titulo">${meta.titulo}${botonEliminar}</div>
-                    <div class="objetivo-info">
-                        <span>Progreso del equipo</span>
-                        <span class="objetivo-numero">${meta.progreso} / ${meta.metaTotal}</span>
-                    </div>
-                    <div class="barra-progreso-bg">
-                        <div class="barra-progreso-fill ${estaCompleto ? 'completado' : ''}" style="width: ${porcentaje}%;"></div>
-                    </div>
+                    <div class="objetivo-info"><span>Progreso del equipo</span><span class="objetivo-numero">${meta.progreso} / ${meta.metaTotal}</span></div>
+                    <div class="barra-progreso-bg"><div class="barra-progreso-fill ${estaCompleto ? 'completado' : ''}" style="width: ${porcentaje}%;"></div></div>
                     ${botonAccion}
                 </div>
             `;
@@ -292,24 +251,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro('${persona.id}')" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
             let avatarHTML = persona.foto ? `<img src="${persona.foto}" class="miembro-avatar-img">` : `<div class="miembro-avatar">${inicial}</div>`;
-            
-            // RENDERIZAR MEDALLAS
             let medallasHTML = '';
             if (persona.logros && persona.logros.length > 0) {
                 medallasHTML = `<div class="logros-container">`;
                 persona.logros.forEach(logroKey => {
                     const info = DICCIONARIO_LOGROS[logroKey];
-                    if (info) {
-                        medallasHTML += `<span class="medalla" title="${info.desc}">${info.icono}</span>`;
-                    }
+                    if (info) medallasHTML += `<span class="medalla" title="${info.desc}">${info.icono}</span>`;
                 });
                 medallasHTML += `</div>`;
             }
 
             gridDirectorio.innerHTML += `
                 <div class="miembro-card">
-                    ${botonEliminar}
-                    ${avatarHTML}
+                    ${botonEliminar}${avatarHTML}
                     <h3 class="miembro-nombre">${persona.nombre}</h3>
                     <span class="miembro-rol">${persona.rol}</span>
                     ${medallasHTML}
@@ -344,9 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) { console.log(error); }
                     boton.innerHTML = "Guardar Integrante"; boton.disabled = false;
                 }
-                db.collection("directorio").add({ 
-                    nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl, logros: [] 
-                }).then(() => {
+                db.collection("directorio").add({ nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl, logros: [] }).then(() => {
                     document.getElementById('formNuevoDirectorio').style.display = 'none';
                     document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
                 });
@@ -423,8 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     db.collection("resultados").onSnapshot((snapshot) => {
         resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderExamenes();
-        evaluarLogros(); // Evaluamos si ya merece la medalla "El Cerebrito"
+        renderExamenes(); evaluarLogros();
     });
 
     function crearBloquePregunta() {
@@ -536,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= PROYECTOS =================
+    // ================= PROYECTOS Y GASTOS =================
     const listaProyectos = document.getElementById('listaProyectos'); 
     let proyectosDB = [];
 
@@ -558,10 +509,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('btnGuardarProyecto').addEventListener('click', () => {
             const nombre = document.getElementById('inputProyectoNom').value;
             const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
+            const presupuesto = parseFloat(document.getElementById('inputPresupuestoProyecto').value) || 0;
+            
             if (nombre && !proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
-                db.collection("proyectos").add({ nombre, cliente }).then(() => {
+                db.collection("proyectos").add({ nombre, cliente, presupuesto, gastos: [] }).then(() => {
                     document.getElementById('formNuevoProyecto').style.display = 'none';
                     document.getElementById('inputProyectoNom').value = '';
+                    document.getElementById('inputPresupuestoProyecto').value = '';
                 });
             } else { alert("El proyecto ya existe o el nombre está vacío."); }
         });
@@ -569,14 +523,113 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.eliminarProyecto = function(id) { if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); } };
 
+    let proyectoActivoId = null;
+    let proyectoActivoNombre = "";
+
+    window.abrirModalProyecto = function(nombreProyecto) {
+        const p = proyectosDB.find(proy => proy.nombre === nombreProyecto);
+        if (!p) return;
+        
+        proyectoActivoId = p.id;
+        proyectoActivoNombre = p.nombre;
+        
+        document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
+        
+        // Renderizar Tareas
+        const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
+        const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
+        if(tareasDelProyecto.length === 0) { lista.innerHTML = '<p style="color:#666; font-size: 0.9rem;">No hay tareas en este proyecto.</p>'; } 
+        else {
+            tareasDelProyecto.forEach(t => {
+                lista.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea('${t.id}')"><div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div><div style="display:flex; gap:10px; align-items: center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div></li>`;
+            });
+        }
+
+        // Renderizar Gastos
+        renderGastosProyecto(p);
+        
+        document.getElementById('modalProyecto').style.display = 'flex';
+    }
+
+    function renderGastosProyecto(proyecto) {
+        const presupuesto = proyecto.presupuesto || 0;
+        const gastos = proyecto.gastos || [];
+        const totalGastado = gastos.reduce((sum, g) => sum + g.monto, 0);
+        const saldo = presupuesto - totalGastado;
+        
+        // Llenar el resumen
+        document.getElementById('resumenGastos').innerHTML = `
+            <div class="resumen-box"><span>Presupuesto</span><strong>$${presupuesto.toFixed(2)}</strong></div>
+            <div class="resumen-box"><span>Gastado</span><strong style="color:#ff5e5e">-$${totalGastado.toFixed(2)}</strong></div>
+            <div class="resumen-box"><span>Disponible</span><strong class="${saldo < 0 ? 'negativo' : 'positivo'}">$${saldo.toFixed(2)}</strong></div>
+        `;
+
+        // Barra de progreso
+        let porcentaje = 0;
+        if (presupuesto > 0) porcentaje = Math.min((totalGastado / presupuesto) * 100, 100);
+        const barra = document.getElementById('barraGastos');
+        barra.style.width = `${porcentaje}%`;
+        barra.style.background = porcentaje > 90 ? '#ff5e5e' : '#f7c948';
+
+        // Lista de gastos
+        const lista = document.getElementById('listaGastos');
+        lista.innerHTML = '';
+        if (gastos.length === 0) {
+            lista.innerHTML = '<p style="color:#666; font-size: 0.9rem;">No hay gastos registrados.</p>';
+        } else {
+            gastos.forEach((g, index) => {
+                lista.innerHTML += `
+                    <li class="gasto-item">
+                        <span>${g.concepto}</span>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span class="gasto-monto">-$${g.monto.toFixed(2)}</span>
+                            <button class="gasto-eliminar" onclick="eliminarGasto(${index})"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
+    }
+
+    window.agregarGasto = function() {
+        const concepto = document.getElementById('gastoConcepto').value;
+        const monto = parseFloat(document.getElementById('gastoMonto').value);
+
+        if (concepto && monto > 0) {
+            const proyecto = proyectosDB.find(p => p.id === proyectoActivoId);
+            let gastosActuales = proyecto.gastos || [];
+            gastosActuales.push({ concepto, monto });
+
+            db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => {
+                document.getElementById('gastoConcepto').value = '';
+                document.getElementById('gastoMonto').value = '';
+                // Actualizamos la vista local temporalmente
+                proyecto.gastos = gastosActuales;
+                renderGastosProyecto(proyecto);
+            });
+        } else { alert("Escribe un concepto y un monto válido."); }
+    }
+
+    window.eliminarGasto = function(index) {
+        if (confirm("¿Eliminar este gasto?")) {
+            const proyecto = proyectosDB.find(p => p.id === proyectoActivoId);
+            let gastosActuales = proyecto.gastos || [];
+            gastosActuales.splice(index, 1);
+
+            db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => {
+                proyecto.gastos = gastosActuales;
+                renderGastosProyecto(proyecto);
+            });
+        }
+    }
+
     // ================= TAREAS (TABLERO KANBAN) =================
     let tareas = [];
     let tareaActivaId = null;
 
     db.collection("tareas").onSnapshot((snapshot) => {
         tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTareas();
-        evaluarLogros(); // Evaluamos los logros "El Incansable" y "El Creativo"
+        renderTareas(); evaluarLogros();
     });
 
     window.renderTareas = function() {
@@ -637,7 +690,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (titulo) {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
-                    await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente" });
+                    // Si el proyecto no existe, lo creamos con presupuesto 0 y gastos vacíos
+                    await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente", presupuesto: 0, gastos: [] });
                 }
                 db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null }).then(() => {
                     crearNotificacion(asignado, `Nueva tarea asignada: ${titulo}`);
@@ -723,26 +777,6 @@ document.addEventListener('DOMContentLoaded', function() {
             boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
             t.archivos = nuevosArchivos; renderArchivosModal(t);
         });
-    }
-
-    window.abrirModalProyecto = function(nombreProyecto) {
-        document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
-        const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
-        const tareasDelProyecto = tareas.filter(t => t.proyecto === nombreProyecto);
-        
-        if(tareasDelProyecto.length === 0) { lista.innerHTML = '<p style="color:#666;">No hay tareas en este proyecto.</p>'; } 
-        else {
-            tareasDelProyecto.forEach(t => {
-                lista.innerHTML += `<li class="archivo-item" style="justify-content: space-between; cursor: pointer; background: rgba(247, 201, 72, 0.1); border-color: #f7c948;" onclick="cerrarModal(); abrirModalTarea('${t.id}')"><div><i class="fa-solid fa-folder-open" style="color:#f7c948;"></i><strong style="margin-left:10px; color:white;">${t.titulo}</strong></div><div style="display:flex; gap:10px; align-items: center;"><span>Para: ${t.asignado}</span><i class="fa-solid fa-chevron-right"></i></div></li>`;
-                if (t.archivos) {
-                    t.archivos.forEach(a => {
-                        const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
-                        lista.innerHTML += `<li class="archivo-item" style="margin-left: 20px; border-left: 2px solid #f7c948; background: transparent; display: flex; justify-content: space-between;"><a href="${a.url}" target="_blank" style="color: #a0a0b8; text-decoration: none;"><i class="fa-solid fa-file"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
-                    });
-                }
-            });
-        }
-        document.getElementById('modalProyecto').style.display = 'flex';
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
