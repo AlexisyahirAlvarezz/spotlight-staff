@@ -353,23 +353,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             graficoTareasInstance = new Chart(canvasTareas, {
                 type: 'bar',
-                data: {
-                    labels: nombres,
-                    datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }]
-                },
-                options: {
-                    responsive: true, plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }
-                }
+                data: { labels: nombres, datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } }
             });
 
             if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
             graficoPresupuestoInstance = new Chart(canvasPresupuesto, {
                 type: 'doughnut',
-                data: {
-                    labels: ['Gastado', 'Disponible'],
-                    datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }]
-                },
+                data: { labels: ['Gastado', 'Disponible'], datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }] },
                 options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } }
             });
         }
@@ -553,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.eliminarObjetivo = function(id) { if (confirm("¿Eliminar este objetivo?")) { db.collection("metas").doc(id).delete(); } };
 
-    // ================= DIRECTORIO Y CUMPLEAÑOS =================
+    // ================= DIRECTORIO Y HALL DE LA FAMA =================
     const gridDirectorio = document.getElementById('gridDirectorio');
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -586,6 +577,32 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderDirectorio = function() {
         if(!gridDirectorio) return;
         gridDirectorio.innerHTML = '';
+
+        const podiumDiv = document.getElementById('hallDeLaFama');
+        if (podiumDiv) {
+            podiumDiv.innerHTML = '';
+            const top3 = [...directorioDB].sort((a, b) => (b.puntos || 0) - (a.puntos || 0)).slice(0, 3);
+            const p1 = top3[0] || { nombre: '---', puntos: 0 };
+            const p2 = top3[1] || { nombre: '---', puntos: 0 };
+            const p3 = top3[2] || { nombre: '---', puntos: 0 };
+
+            podiumDiv.innerHTML += `
+                <div class="podium-card podium-2">
+                    <div class="podium-name">🥈 ${p2.nombre.split(' ')[0]}</div>
+                    <div class="podium-xp">${p2.puntos} XP</div>
+                </div>
+                <div class="podium-card podium-1">
+                    <div class="podium-crown">👑</div>
+                    <div class="podium-name">🥇 ${p1.nombre.split(' ')[0]}</div>
+                    <div class="podium-xp">${p1.puntos} XP</div>
+                </div>
+                <div class="podium-card podium-3">
+                    <div class="podium-name">🥉 ${p3.nombre.split(' ')[0]}</div>
+                    <div class="podium-xp">${p3.puntos} XP</div>
+                </div>
+            `;
+        }
+
         directorioDB.forEach(persona => {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro('${persona.id}')" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
@@ -1151,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
-    // ================= CALENDARIO =================
+    // ================= CALENDARIO (CON TAREAS) =================
     let fechaCalendario = new Date();
     db.collection("eventos").onSnapshot((snapshot) => {
         eventos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1170,7 +1187,13 @@ document.addEventListener('DOMContentLoaded', function() {
         for (let dia = 1; dia <= diasEnMes; dia++) {
             const fechaStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             const tieneEvento = eventos.some(e => e.fecha === fechaStr);
-            grid.innerHTML += `<div class="calendar-day"><span class="day-number">${dia}</span>${tieneEvento ? '<div class="event-dot"></div>' : ''}</div>`;
+            const tieneTarea = tareas.some(t => t.fecha === fechaStr);
+            
+            let dotsHTML = '';
+            if (tieneEvento) dotsHTML += '<div class="event-dot" title="Evento"></div>';
+            if (tieneTarea) dotsHTML += '<div class="task-dot" title="Tarea Pendiente"></div>';
+
+            grid.innerHTML += `<div class="calendar-day"><span class="day-number">${dia}</span>${dotsHTML}</div>`;
         }
     }
     
@@ -1182,10 +1205,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderListaEventos() {
         const listaEventos = document.getElementById('listaEventos'); if(!listaEventos) return;
         listaEventos.innerHTML = '';
-        const evOrdenados = [...eventos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-        evOrdenados.forEach(ev => {
-            const fechaFormat = new Date(ev.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#f7c948;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${ev.nombre}</strong><span style="font-size:0.85rem; color:#9ca3af; text-transform: capitalize;">${fechaFormat}</span></div></li>`;
+        
+        let combinado = [];
+        eventos.forEach(e => combinado.push({ tipo: 'evento', nombre: e.nombre, fecha: e.fecha }));
+        tareas.forEach(t => { if(t.fecha) combinado.push({ tipo: 'tarea', nombre: t.titulo, fecha: t.fecha, estado: t.estado }); });
+        
+        combinado.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+        if(combinado.length === 0) { listaEventos.innerHTML = '<p style="color:#666;">No hay eventos ni tareas programadas.</p>'; return; }
+
+        combinado.forEach(c => {
+            const fechaFormat = new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            if (c.tipo === 'evento') {
+                listaEventos.innerHTML += `<li class="archivo-item"><i class="fa-solid fa-calendar-check" style="color:#ef4444;"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">${c.nombre}</strong><span style="font-size:0.85rem; color:#9ca3af; text-transform: capitalize;">${fechaFormat} (Evento)</span></div></li>`;
+            } else {
+                const colorIcon = c.estado === 'completed' ? '#22c55e' : '#3b82f6';
+                listaEventos.innerHTML += `<li class="archivo-item" style="border-left: 3px solid ${colorIcon};"><i class="fa-solid fa-list-check" style="color:${colorIcon};"></i><div style="margin-left:10px;"><strong style="color:white; display:block;">Tarea: ${c.nombre}</strong><span style="font-size:0.85rem; color:#9ca3af; text-transform: capitalize;">${fechaFormat} (Entrega)</span></div></li>`;
+            }
         });
     }
 

@@ -10,13 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- SCRIPTS DE FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR PARA CELULAR -->
     <header class="mobile-header">
         <div class="mobile-logo">
             <img src="logo-blanco.jpg" alt="SPOTLIGHT">
@@ -45,7 +43,6 @@
             <a href="#" class="nav-link" data-target="directorio"><i class="fa-solid fa-address-book"></i> Directorio</a>
             <a href="#" class="nav-link" data-target="tienda"><i class="fa-solid fa-store"></i> Tienda de Recompensas</a>
             
-            <!-- SECCIONES CONDICIONALES -->
             <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
             <a href="#" class="nav-link" id="link-entregas" data-target="entregas" style="display: none;"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
             <a href="#" class="nav-link" id="link-gerencia" data-target="gerencia" style="display: none;"><i class="fa-solid fa-chart-pie"></i> Panel de Gerencia</a>
@@ -57,7 +54,6 @@
 
     <main class="main-content">
         
-        <!-- BANNER DE CUMPLEAÑOS -->
         <div id="bannerCumpleanos" class="banner-cumple" style="display: none;">
             <h2>🎉 ¡FELIZ CUMPLEAÑOS, <span id="nombreCumple">Nombre</span>! 🎂</h2>
             <p>Todo el equipo de SPOTLIGHT te desea un día increíble. ¡Disfruta tu día!</p>
@@ -83,7 +79,6 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: TIENDA DE RECOMPENSAS ===== -->
         <section id="view-tienda" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Tienda de Recompensas</h2>
@@ -100,7 +95,6 @@
                 </div>
             </div>
 
-            <!-- BOTÓN Y FORMULARIO PARA CREAR RECOMPENSAS (Solo Gerencia) -->
             <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
                 <button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button>
             </div>
@@ -116,7 +110,6 @@
 
             <div id="gridTienda" class="tienda-grid"></div>
 
-            <!-- SECCIÓN EXCLUSIVA PARA GERENTES: HISTORIAL DE CANJES -->
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
                 <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-clipboard-list"></i> Historial de Canjes (Admin)</h3>
                 <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
@@ -136,7 +129,6 @@
             </div>
         </section>
 
-        <!-- ===== VISTA: PANEL DE GERENCIA (JOHAN Y BRAYAN) ===== -->
         <section id="view-gerencia" class="view-section" style="display: none;">
             <h2>Panel de Gerencia</h2>
             <p class="section-subtitle">Resumen ejecutivo de SPOTLIGHT</p>
@@ -205,7 +197,6 @@
             </div>
         </section>
 
-        <!-- ===== VISTA: PANEL RRHH (XIMENA) ===== -->
         <section id="view-rrhh" class="view-section" style="display: none;">
             <h2>Panel de Recursos Humanos</h2>
             <p class="section-subtitle">Desempeño y capacitación del equipo</p>
@@ -223,7 +214,6 @@
             </div>
         </section>
 
-        <!-- ===== VISTA: MIS ENTREGAS ===== -->
         <section id="view-entregas" class="view-section" style="display: none;">
             <h2>Mi Portafolio de Entregas</h2>
             <p class="section-subtitle">Todos los archivos que has subido a las tareas</p>
@@ -234,7 +224,6 @@
             <div id="gridEntregas" class="moodboard-grid"></div>
         </section>
 
-        <!-- ===== VISTA: MOODBOARD ===== -->
         <section id="view-moodboard" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Muro de Inspiración</h2>
@@ -252,7 +241,6 @@
             <div id="gridMoodboard" class="moodboard-grid"></div>
         </section>
 
-        <!-- ===== VISTA: OBJETIVOS ===== -->
         <section id="view-objetivos" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Objetivos del Equipo</h2>
@@ -270,7 +258,6 @@
             <div id="listaObjetivos" class="objetivos-grid"></div>
         </section>
 
-        <!-- ===== VISTA: DIRECTORIO ===== -->
         <section id="view-directorio" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Nuestro Equipo</h2>
@@ -280,6 +267,11 @@
                 <i class="fa-solid fa-circle-info"></i>
                 <div>Conoce a tu equipo. Datos de contacto, puntos XP y medallas de desempeño.</div>
             </div>
+
+            <!-- HALL DE LA FAMA -->
+            <h3 style="color: #f7c948; text-align: center; margin-bottom: 20px;"><i class="fa-solid fa-crown"></i> Hall de la Fama (Top XP)</h3>
+            <div id="hallDeLaFama" class="podium-container"></div>
+
             <div id="formNuevoDirectorio" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="dirNombre" placeholder="Nombre Completo" style="flex: 2;">
@@ -304,7 +296,6 @@
             <div id="gridDirectorio" class="directorio-grid"></div>
         </section>
 
-        <!-- ===== VISTA: TABLÓN DE ANUNCIOS ===== -->
         <section id="view-anuncios" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Comunicados Oficiales</h2>
@@ -326,7 +317,6 @@
             <div id="listaAnuncios" style="display: flex; flex-direction: column; gap: 15px;"></div>
         </section>
 
-        <!-- ===== VISTA: INICIO (TAREAS KANBAN) ===== -->
         <section id="view-inicio" class="view-section active">
             <div class="recent-tasks-header">
                 <h2>Tareas del Equipo</h2>
@@ -377,7 +367,6 @@
             </div>
         </section>
 
-        <!-- ===== VISTA: PROYECTOS ===== -->
         <section id="view-proyectos" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Gestión de Proyectos</h2>
@@ -400,12 +389,11 @@
             <ul id="listaProyectos" class="archivos-lista"></ul>
         </section>
 
-        <!-- ===== VISTA: CALENDARIO ===== -->
         <section id="view-calendario" class="view-section" style="display: none;">
             <h2>Agenda de Rodajes y Eventos</h2>
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
-                <div>Consulta la agenda de rodajes. Usa el formulario para agendar un evento.</div>
+                <div>Consulta la agenda. Los puntos <strong style="color:#ef4444;">rojos</strong> son eventos y los <strong style="color:#3b82f6;">azules</strong> son tareas pendientes.</div>
             </div>
             <div class="form-tarea" style="margin-top: 20px; flex-direction: row; align-items: flex-end;">
                 <div style="flex: 2;"><input type="text" id="inputEvento" placeholder="Nombre del evento" style="width:100%;"></div>
@@ -421,11 +409,10 @@
                 <div class="calendar-grid-header"><div>Dom</div><div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div></div>
                 <div class="calendar-grid" id="calendarDays"></div>
             </div>
-            <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos:</h3>
+            <h3 style="margin-top: 30px; color:#f7c948;">Próximos Eventos y Entregas:</h3>
             <ul id="listaEventos" class="archivos-lista"></ul>
         </section>
 
-        <!-- ===== VISTA: EXÁMENES ===== -->
         <section id="view-examenes" class="view-section" style="display: none;">
             <div class="recent-tasks-header">
                 <h2>Exámenes de Capacitación</h2>
@@ -457,7 +444,6 @@
         </section>
     </main>
 
-    <!-- MODALES -->
     <div id="modalExamen" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <span class="close" onclick="cerrarModalExamen()">&times;</span>
