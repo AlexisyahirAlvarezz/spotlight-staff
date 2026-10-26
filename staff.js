@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
     if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
-    if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex'; // SOLO MARKETING Y GERENTE GENERAL
+    if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
     
     if (esGerente) {
         document.getElementById('link-gerencia').style.display = 'flex';
@@ -154,51 +154,99 @@ document.addEventListener('DOMContentLoaded', function() {
     let graficoTareasInstance = null, graficoPresupuestoInstance = null;
     let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null, imgPlantillaActiva = "";
 
-    // ================= LOOT BOX =================
-    window.verificarLootBox = function() {
-        const hoy = new Date().toDateString(); const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff); const container = document.getElementById('lootBoxContainer');
-        if (container) { if (hoy !== ultimaApertura) { container.style.display = 'block'; } else { container.style.display = 'none'; } }
+    // ================= SIMULADOR DE POST (MOCKUP) =================
+    window.previewMockup = function(event) {
+        const input = event.target;
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('mockupImg').src = e.target.result; }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    window.actualizarCaption = function() {
+        const text = document.getElementById('mockupCaption').value;
+        document.getElementById('mockupCaptionText').textContent = text || "Escribe algo aquí...";
+    }
+
+    // ================= CAJA MISTERIOSA =================
+    window.verificarCaja = function() {
+        const hoy = new Date().toDateString();
+        const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff);
+        const status = document.getElementById('lootBoxStatus');
+        const icon = document.getElementById('lootBoxIcon');
+
+        if (hoy === ultimaApertura) {
+            if(status) status.textContent = "Vuelve mañana por otra recompensa.";
+            if(icon) { icon.style.opacity = '0.5'; icon.style.cursor = 'not-allowed'; icon.onclick = null; }
+        } else {
+            if(status) status.textContent = "¡Haz clic para abrir!";
+            if(icon) { icon.style.opacity = '1'; icon.style.cursor = 'pointer'; icon.onclick = window.abrirLootBox; }
+        }
     }
     window.abrirLootBox = function() {
-        const hoy = new Date().toDateString(); const recompensasPosibles = [10, 20, 30, 50, 100]; const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
-        localStorage.setItem('lootBox_' + nombreStaff, hoy); document.getElementById('lootBoxContainer').style.display = 'none';
+        const hoy = new Date().toDateString();
+        const recompensasPosibles = [10, 20, 30, 50, 100];
+        const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
+        
+        localStorage.setItem('lootBox_' + nombreStaff, hoy);
+        verificarCaja();
+        
         confetti({ particleCount: 300, spread: 100, origin: { y: 0.5 }, colors: ['#f7c948', '#3b82f6', '#ef4444', '#22c55e'] });
-        darPuntos(nombreStaff, puntosGanados); mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP.`);
+        darPuntos(nombreStaff, puntosGanados);
+        mostrarToast(`🎁 ¡Felicidades! Has ganado ${puntosGanados} XP.`);
     };
-    verificarLootBox();
+    verificarCaja();
 
-    // ================= RADAR DE TENDENCIAS (MARKETING) =================
+    // ================= RULETA DIARIA =================
+    let girando = false;
+    window.girarRuleta = function() {
+        if (girando) return;
+        const hoy = new Date().toDateString();
+        const ultimaTirada = localStorage.getItem('ruleta_' + nombreStaff);
+
+        if (hoy === ultimaTirada) {
+            mostrarToast("Ya giraste la ruleta hoy. Vuelve mañana.");
+            return;
+        }
+
+        girando = true;
+        const wheel = document.getElementById('wheel');
+        const grados = 1800 + Math.floor(Math.random() * 360); // 5 vueltas + ángulo aleatorio
+        wheel.style.transform = `rotate(${grados}deg)`;
+
+        setTimeout(() => {
+            const premios = [10, 20, 50, 100, 5, 15, 30, 200];
+            const premio = premios[Math.floor(Math.random() * premios.length)];
+            
+            localStorage.setItem('ruleta_' + nombreStaff, hoy);
+            document.getElementById('ruletaResultado').textContent = `¡Ganaste ${premio} XP! 🎉`;
+            
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            darPuntos(nombreStaff, premio);
+            girando = false;
+        }, 3500); // Espera a que termine la animación CSS
+    };
+
+    // ================= RADAR DE TENDENCIAS =================
     db.collection("radar").onSnapshot((snapshot) => { radarDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderRadar(); });
     window.renderRadar = function() {
         const grid = document.getElementById('gridRadar'); if (!grid) return; grid.innerHTML = '';
-        if (radarDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay tendencias guardadas. ¡Añade la primera!</p>'; return; }
+        if (radarDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay tendencias guardadas.</p>'; return; }
         radarDB.forEach(r => {
             const botonEliminar = (esGerente || esMarketing) ? `<button class="moodboard-delete" onclick="eliminarRadar('${r.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
-            grid.innerHTML += `
-                <div class="radar-card">
-                    ${botonEliminar}
-                    <span class="radar-badge">${r.categoria || 'General'}</span>
-                    <div class="radar-titulo">${r.titulo}</div>
-                    <div class="radar-desc">${r.descripcion}</div>
-                    <a href="${r.link}" target="_blank" class="btn-radar-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Tendencia</a>
-                </div>
-            `;
+            grid.innerHTML += `<div class="radar-card">${botonEliminar}<span class="radar-badge">${r.categoria || 'General'}</span><div class="radar-titulo">${r.titulo}</div><div class="radar-desc">${r.descripcion}</div><a href="${r.link}" target="_blank" class="btn-radar-link"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ver Tendencia</a></div>`;
         });
     };
     if(document.getElementById('btnGuardarRadar')) {
         document.getElementById('btnGuardarRadar').addEventListener('click', () => {
             const titulo = document.getElementById('radarTitulo').value; const categoria = document.getElementById('radarCategoria').value || 'General'; const link = document.getElementById('radarLink').value; const descripcion = document.getElementById('radarDesc').value;
-            if (titulo && link) {
-                db.collection("radar").add({ titulo, categoria, link, descripcion, autor: nombreStaff, timestamp: Date.now() }).then(() => {
-                    document.getElementById('formNuevoRadar').style.display = 'none'; document.getElementById('radarTitulo').value = ''; document.getElementById('radarCategoria').value = ''; document.getElementById('radarLink').value = ''; document.getElementById('radarDesc').value = '';
-                    mostrarToast("¡Tendencia guardada en el Radar!");
-                });
-            } else { alert("El título y el link son obligatorios."); }
+            if (titulo && link) { db.collection("radar").add({ titulo, categoria, link, descripcion, autor: nombreStaff, timestamp: Date.now() }).then(() => { document.getElementById('formNuevoRadar').style.display = 'none'; document.getElementById('radarTitulo').value = ''; document.getElementById('radarCategoria').value = ''; document.getElementById('radarLink').value = ''; document.getElementById('radarDesc').value = ''; mostrarToast("¡Tendencia guardada!"); }); } 
+            else { alert("El título y el link son obligatorios."); }
         });
     }
     window.eliminarRadar = function(id) { if (confirm("¿Eliminar esta tendencia?")) { db.collection("radar").doc(id).delete(); } };
 
-    // ================= WIKI / PROCESOS =================
+    // ================= WIKI =================
     db.collection("wiki").onSnapshot((snapshot) => { wikiDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderWiki(); });
     window.renderWiki = function() {
         const grid = document.getElementById('gridWiki'); if (!grid) return; grid.innerHTML = '';
@@ -265,12 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const titulo = document.getElementById('plantillaTitulo').value; const descripcion = document.getElementById('plantillaDesc').value; const xp = document.getElementById('plantillaXP').value || 10; const fileInput = document.getElementById('plantillaFoto'); const boton = document.getElementById('btnGuardarPlantilla');
             if (titulo && descripcion) {
                 let imagenUrl = "";
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0]; const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                    boton.innerHTML = "Subiendo..."; boton.disabled = true;
-                    try { const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData }); const data = await response.json(); if (data.secure_url) { imagenUrl = data.secure_url; } } catch (error) { console.log(error); }
-                    boton.innerHTML = "Guardar Plantilla"; boton.disabled = false;
-                }
+                if (fileInput.files.length > 0) { const file = fileInput.files[0]; const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET); boton.innerHTML = "Subiendo..."; boton.disabled = true; try { const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData }); const data = await response.json(); if (data.secure_url) { imagenUrl = data.secure_url; } } catch (error) { console.log(error); } boton.innerHTML = "Guardar Plantilla"; boton.disabled = false; }
                 db.collection("plantillas").add({ titulo, descripcion, xp, imagen: imagenUrl }).then(() => { document.getElementById('formNuevaPlantilla').style.display = 'none'; document.getElementById('plantillaTitulo').value = ''; document.getElementById('plantillaDesc').value = ''; fileInput.value = ''; alert("¡Plantilla creada!"); });
             } else { alert("El título y las instrucciones son obligatorios."); }
         });
@@ -616,7 +659,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm("¿Eliminar este gasto?")) { const proyecto = proyectosDB.find(p => p.id === proyectoActivoId); let gastosActuales = proyecto.gastos || []; gastosActuales.splice(index, 1); db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => { proyecto.gastos = gastosActuales; renderGastosProyecto(proyecto); }); }
     }
 
-    // ================= TAREAS (KANBAN Y APROBACIÓN) =================
+    // ================= TAREAS (KANBAN, TIEMPO Y APROBACIÓN) =================
     db.collection("tareas").onSnapshot((snapshot) => { tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderTareas(); evaluarLogros(); renderEntregas(); renderGerencia(); });
     window.renderTareas = function() {
         const colPending = document.getElementById('kanban-pending'); const colProgress = document.getElementById('kanban-progress'); const colCompleted = document.getElementById('kanban-completed');
@@ -627,19 +670,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
             const etiquetaXP = t.xp ? `<span class="xp-badge" style="padding: 2px 6px; font-size: 0.7rem;"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
+            let etiquetaTiempo = '';
+            if (t.estado === 'completed' && t.fechaCreacion && t.fechaFin) {
+                const diff = t.fechaFin - t.fechaCreacion;
+                const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                etiquetaTiempo = `<span class="badge-estado badge-aprobado" style="margin-left:0; margin-top:5px; display:inline-block;"><i class="fa-solid fa-clock"></i> ${dias}d ${horas}h</span>`;
+            }
+
             let botonesAccion = '';
             if (t.estado === 'pending') { botonesAccion = `<button class="btn-start" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-play"></i> Empezar</button>`; } 
             else if (t.estado === 'progress') { const btnReabrir = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> Pausar</button>`; const btnTerminar = (esAsignado || esGerente) ? `<button class="btn-finish" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'completed')"><i class="fa-solid fa-check"></i> Terminar</button>` : ''; botonesAccion = btnReabrir + btnTerminar; } 
             else if (t.estado === 'completed') { botonesAccion = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-rotate-left"></i> Reabrir</button>`; if (esGerente) { botonesAccion += `<button class="btn-back" onclick="event.stopPropagation(); eliminarTarea('${t.id}')" style="flex: 0.5;"><i class="fa-solid fa-trash"></i></button>`; } }
-            const cardHTML = `<div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')"><h4>${t.titulo}</h4><p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p><div style="display:flex; gap: 10px;">${etiquetaNota}${etiquetaXP}</div><div class="kanban-actions">${botonesAccion}</div></div>`;
+            
+            const cardHTML = `<div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')"><h4>${t.titulo}</h4><p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p><div style="display:flex; gap: 10px; flex-wrap:wrap;">${etiquetaNota}${etiquetaXP}${etiquetaTiempo}</div><div class="kanban-actions">${botonesAccion}</div></div>`;
             if (t.estado === 'pending') colPending.innerHTML += cardHTML; else if (t.estado === 'progress') colProgress.innerHTML += cardHTML; else if (t.estado === 'completed') colCompleted.innerHTML += cardHTML;
         });
     }
     if(document.getElementById('checkFiltroMisTareas')) { document.getElementById('checkFiltroMisTareas').addEventListener('change', renderTareas); }
+    
     window.cambiarEstadoTarea = function(id, nuevoEstado) {
         const t = tareas.find(tarea => tarea.id === id);
-        db.collection("tareas").doc(id).update({ estado: nuevoEstado }).then(() => { if (nuevoEstado === 'completed') { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); if (t && t.xp) darPuntos(t.asignado, parseInt(t.xp)); } });
+        const updateData = { estado: nuevoEstado };
+        if (nuevoEstado === 'completed') { updateData.fechaFin = Date.now(); }
+
+        db.collection("tareas").doc(id).update(updateData).then(() => { 
+            if (nuevoEstado === 'completed') { 
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); 
+                if (t && t.xp) darPuntos(t.asignado, parseInt(t.xp)); 
+            } 
+        });
     };
+
     if(document.getElementById('btnGuardarTarea')) {
         document.getElementById('btnGuardarTarea').addEventListener('click', async () => {
             const titulo = document.getElementById('inputTarea').value; const asignado = document.getElementById('inputAsignado').value; const fecha = document.getElementById('inputFecha').value; const proyecto = document.getElementById('inputProyecto').value.trim() || "General"; const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones."; const xp = document.getElementById('inputXP').value || 10;
@@ -647,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) { await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente", presupuesto: 0, gastos: [] }); }
                 let archivosAdjuntos = [];
                 if (imgPlantillaActiva) { archivosAdjuntos.push({ nombre: "Referencia_Flyer.jpg", url: imgPlantillaActiva, estado: 'aprobado' }); imgPlantillaActiva = ""; }
-                db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, xp, archivos: archivosAdjuntos, calificacion: null }).then(() => {
+                db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, xp, archivos: archivosAdjuntos, calificacion: null, fechaCreacion: Date.now() }).then(() => {
                     crearNotificacion(asignado, `Nueva tarea asignada: ${titulo}`);
                     document.getElementById('formNuevaTarea').style.display = 'none'; document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
                 });
@@ -657,7 +719,22 @@ document.addEventListener('DOMContentLoaded', function() {
     window.eliminarTarea = function(id) { if (confirm("¿Eliminar tarea?")) { db.collection("tareas").doc(id).delete(); } };
     window.abrirModalTarea = function(id) {
         const t = tareas.find(tarea => tarea.id === id); if(!t) return; tareaActivaId = id;
-        document.getElementById('mTareaTitulo').textContent = t.titulo; document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`; document.getElementById('mTareaDesc').textContent = t.desc;
+        document.getElementById('mTareaTitulo').textContent = t.titulo; document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha límite: ${t.fecha}`; document.getElementById('mTareaDesc').textContent = t.desc;
+        
+        const tiempoEl = document.getElementById('mTareaTiempo');
+        if (t.estado === 'completed' && t.fechaCreacion && t.fechaFin) {
+            const diff = t.fechaFin - t.fechaCreacion;
+            const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            tiempoEl.innerHTML = `<i class="fa-solid fa-clock"></i> Tiempo total: ${dias} días y ${horas} horas.`;
+        } else if (t.fechaCreacion) {
+            const diff = Date.now() - t.fechaCreacion;
+            const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
+            tiempoEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Lleva abierta: ${dias} días.`;
+        } else {
+            tiempoEl.innerHTML = '';
+        }
+
         const calificacionAdmin = document.getElementById('calificacionAdmin'); const calificacionStaff = document.getElementById('calificacionStaff'); const textoCalificacion = document.getElementById('textoCalificacion');
         if (esGerente) { calificacionAdmin.style.display = 'flex'; calificacionStaff.style.display = 'none'; document.getElementById('inputCalificacion').value = t.calificacion || ''; } 
         else { calificacionAdmin.style.display = 'none'; calificacionStaff.style.display = 'flex'; if (t.calificacion) { textoCalificacion.textContent = `${t.calificacion} / 10`; textoCalificacion.style.color = '#22c55e'; } else { textoCalificacion.textContent = 'Sin calificar aún'; textoCalificacion.style.color = '#9ca3af'; } }
@@ -727,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; }
         });
     });
 
