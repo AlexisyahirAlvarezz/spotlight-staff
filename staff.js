@@ -61,7 +61,35 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= NOTIFICACIONES EN TIEMPO REAL =================
+    // ================= SISTEMA DE AUDIO Y TOASTS (NUEVO) =================
+    function playNotificationSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nota A5
+            oscillator.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1); // Cae a A4
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } catch(e) { console.log("Audio no soportado"); }
+    }
+
+    function mostrarToast(mensaje) {
+        const container = document.getElementById('toastContainer');
+        if(!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `<i class="fa-solid fa-bell"></i> <div>${mensaje}</div>`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 5000);
+    }
+
+    // ================= NOTIFICACIONES =================
     let notificaciones = [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -69,8 +97,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const badge = document.getElementById('badgeNotificaciones');
 
     db.collection("notificaciones").where("para", "==", nombreStaff).onSnapshot((snapshot) => {
+        const cambios = snapshot.docChanges();
         notificaciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp);
         renderNotificaciones();
+
+        cambios.forEach((cambio) => {
+            if (cambio.type === "added") {
+                const nuevaNoti = cambio.doc.data();
+                // Verificamos que sea reciente (menos de 10 segs) para no sonar al recargar la página
+                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) {
+                    mostrarToast(nuevaNoti.mensaje);
+                    playNotificationSound();
+                }
+            }
+        });
     });
 
     function renderNotificaciones() {
@@ -548,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const gridDirectorio = document.getElementById('gridDirectorio');
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDirectorio(); renderRRHH(); renderGerencia(); renderTienda(); verificarCumpleanos();
+        renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); verificarCumpleanos();
     });
 
     function verificarCumpleanos() {
@@ -577,31 +617,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderDirectorio = function() {
         if(!gridDirectorio) return;
         gridDirectorio.innerHTML = '';
-
-        const podiumDiv = document.getElementById('hallDeLaFama');
-        if (podiumDiv) {
-            podiumDiv.innerHTML = '';
-            const top3 = [...directorioDB].sort((a, b) => (b.puntos || 0) - (a.puntos || 0)).slice(0, 3);
-            const p1 = top3[0] || { nombre: '---', puntos: 0 };
-            const p2 = top3[1] || { nombre: '---', puntos: 0 };
-            const p3 = top3[2] || { nombre: '---', puntos: 0 };
-
-            podiumDiv.innerHTML += `
-                <div class="podium-card podium-2">
-                    <div class="podium-name">🥈 ${p2.nombre.split(' ')[0]}</div>
-                    <div class="podium-xp">${p2.puntos} XP</div>
-                </div>
-                <div class="podium-card podium-1">
-                    <div class="podium-crown">👑</div>
-                    <div class="podium-name">🥇 ${p1.nombre.split(' ')[0]}</div>
-                    <div class="podium-xp">${p1.puntos} XP</div>
-                </div>
-                <div class="podium-card podium-3">
-                    <div class="podium-name">🥉 ${p3.nombre.split(' ')[0]}</div>
-                    <div class="podium-xp">${p3.puntos} XP</div>
-                </div>
-            `;
-        }
 
         directorioDB.forEach(persona => {
             const inicial = persona.nombre.charAt(0).toUpperCase();
@@ -633,6 +648,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
+    }
+
+    window.renderHallDeLaFama = function() {
+        const podiumDiv = document.getElementById('hallDeLaFamaContent');
+        if (!podiumDiv) return;
+        
+        podiumDiv.innerHTML = '';
+        const top3 = [...directorioDB].sort((a, b) => (b.puntos || 0) - (a.puntos || 0)).slice(0, 3);
+        
+        if (top3.length === 0) {
+            podiumDiv.innerHTML = '<p style="color:#666;">Aún no hay datos para mostrar el podio.</p>';
+            return;
+        }
+
+        // Función auxiliar para dibujar una tarjeta del podio
+        const crearTarjeta = (persona, posicion) => {
+            if (!persona) return `<div class="podium-card podium-${posicion}" style="opacity: 0.3; justify-content: center;"><p style="color:#666;">Sin datos</p></div>`;
+            
+            const clases = ['podium-1', 'podium-2', 'podium-3'];
+            const corona = posicion === 1 ? '<div class="podium-crown">👑</div>' : '';
+            const inicial = persona.nombre.charAt(0).toUpperCase();
+
+            return `
+                <div class="podium-card ${clases[posicion-1]}">
+                    ${corona}
+                    <div class="podium-avatar">${inicial}</div>
+                    <div class="podium-name">${persona.nombre.split(' ')[0]}</div>
+                    <div class="podium-rol">${persona.rol}</div>
+                    <div class="podium-xp">${persona.puntos || 0} XP</div>
+                </div>
+            `;
+        };
+
+        // Orden visual para el Flexbox: 2do lugar, 1er lugar, 3er lugar
+        podiumDiv.innerHTML = crearTarjeta(top3[1], 2) + crearTarjeta(top3[0], 1) + crearTarjeta(top3[2], 3);
     }
 
     if(document.getElementById('btnGuardarDirectorio')) {
@@ -1247,6 +1297,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target === 'examenes') renderExamenes();
             if (target === 'anuncios') renderAnuncios();
             if (target === 'directorio') renderDirectorio();
+            if (target === 'hall') renderHallDeLaFama();
             if (target === 'objetivos') renderObjetivos();
             if (target === 'moodboard') renderMoodboard();
             if (target === 'rrhh') renderRRHH();
