@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(document.getElementById('btnMostrarFormDirectorio')) document.getElementById('btnMostrarFormDirectorio').style.display = 'flex';
         if(document.getElementById('btnMostrarFormObjetivo')) document.getElementById('btnMostrarFormObjetivo').style.display = 'flex';
         if(document.getElementById('seccionAdminCanjes')) document.getElementById('seccionAdminCanjes').style.display = 'block';
+        if(document.getElementById('btnMostrarFormRecompensa')) document.getElementById('btnMostrarFormRecompensa').style.display = 'flex';
     }
 
     window.toggleForm = function(idFormulario) {
@@ -60,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
 
-    // ================= NOTIFICACIONES EN TIEMPO REAL (FIREBASE) =================
+    // ================= NOTIFICACIONES EN TIEMPO REAL =================
     let notificaciones = [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -192,8 +193,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tiendaDB.forEach(r => {
             const puedePagar = misPuntos >= r.costo;
+            const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarRecompensa('${r.id}')" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
+
             grid.innerHTML += `
                 <div class="recompensa-card">
+                    ${botonEliminar}
                     <div class="recompensa-icono">${r.icono}</div>
                     <div class="recompensa-titulo">${r.titulo}</div>
                     <div class="recompensa-costo">${r.costo} XP</div>
@@ -203,6 +207,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
         });
+    };
+
+    if(document.getElementById('btnGuardarRecompensa')) {
+        document.getElementById('btnGuardarRecompensa').addEventListener('click', () => {
+            const titulo = document.getElementById('tiendaTitulo').value;
+            const costo = parseInt(document.getElementById('tiendaCosto').value);
+            const icono = document.getElementById('tiendaIcono').value || '🎁';
+
+            if (titulo && costo > 0) {
+                db.collection("tienda").add({ titulo, costo, icono }).then(() => {
+                    document.getElementById('formNuevaRecompensa').style.display = 'none';
+                    document.getElementById('tiendaTitulo').value = '';
+                    document.getElementById('tiendaCosto').value = '';
+                    document.getElementById('tiendaIcono').value = '';
+                    alert("¡Recompensa añadida a la tienda!");
+                });
+            } else {
+                alert("Escribe un título y un costo mayor a 0.");
+            }
+        });
+    }
+
+    window.eliminarRecompensa = function(id) {
+        if (confirm("¿Eliminar esta recompensa de la tienda?")) {
+            db.collection("tienda").doc(id).delete();
+        }
     };
 
     window.canjearRecompensa = function(id, titulo, costo) {

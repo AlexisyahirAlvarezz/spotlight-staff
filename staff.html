@@ -100,7 +100,20 @@
                 </div>
             </div>
 
-            <!-- CUADRÍCULA DE RECOMPENSAS -->
+            <!-- BOTÓN Y FORMULARIO PARA CREAR RECOMPENSAS (Solo Gerencia) -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button>
+            </div>
+
+            <div id="formNuevaRecompensa" class="form-tarea" style="display: none; flex-direction: column;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="tiendaTitulo" placeholder="Ej: Café gratis" style="flex: 2;">
+                    <input type="number" id="tiendaCosto" placeholder="Costo en XP (Ej: 50)" style="flex: 1;">
+                    <input type="text" id="tiendaIcono" placeholder="Emoji (Ej: ☕)" style="flex: 0.5;" maxlength="2">
+                </div>
+                <button id="btnGuardarRecompensa" class="btn-primary" style="align-self: flex-end;">Añadir a la Tienda</button>
+            </div>
+
             <div id="gridTienda" class="tienda-grid"></div>
 
             <!-- SECCIÓN EXCLUSIVA PARA GERENTES: HISTORIAL DE CANJES -->
