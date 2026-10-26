@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- NUEVO: Librería de Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- SCRIPTS DE FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -55,6 +57,13 @@
     </aside>
 
     <main class="main-content">
+        
+        <!-- BANNER DE CUMPLEAÑOS -->
+        <div id="bannerCumpleanos" class="banner-cumple" style="display: none;">
+            <h2>🎉 ¡FELIZ CUMPLEAÑOS, <span id="nombreCumple">Nombre</span>! 🎂</h2>
+            <p>Todo el equipo de SPOTLIGHT te desea un día increíble. ¡Disfruta tu día!</p>
+        </div>
+
         <header class="top-header">
             <div class="welcome-text">
                 <h1>¡Hola, <span id="nombreStaff">Staff</span>! 👋</h1>
@@ -126,6 +135,18 @@
                 </div>
             </div>
 
+            <!-- GRÁFICOS VISUALES -->
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3>Rendimiento del Equipo (Tareas Completadas)</h3>
+                    <canvas id="graficoTareas"></canvas>
+                </div>
+                <div class="chart-box">
+                    <h3>Salud Financiera (Presupuesto vs Gastos)</h3>
+                    <canvas id="graficoPresupuesto"></canvas>
+                </div>
+            </div>
+
             <!-- ALERTAS DE TAREAS (Cuellos de botella) -->
             <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-triangle-exclamation"></i> Alertas: Tareas Pendientes</h3>
             <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;">
@@ -151,7 +172,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Vista exclusiva de Recursos Humanos. Monitorea el desempeño del equipo basado en las medallas obtenidas y el promedio de calificaciones en los exámenes.
+                    Vista exclusiva de Recursos Humanos. Monitorea el desempeño del equipo basado en las medallas, puntos XP y promedio de calificaciones.
                 </div>
             </div>
 
@@ -161,6 +182,7 @@
                         <tr>
                             <th style="padding: 15px;">Empleado</th>
                             <th style="padding: 15px;">Puesto</th>
+                            <th style="padding: 15px;">Puntos XP</th>
                             <th style="padding: 15px;">Medallas</th>
                             <th style="padding: 15px;">Promedio Exámenes</th>
                         </tr>
@@ -178,7 +200,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Tu portafolio personal. Revisa todos los archivos que has subido a las diferentes tareas en un solo lugar. Puedes verlos o descargarlos directamente.
+                    Tu portafolio personal. Revisa todos los archivos que has subido y su estado de aprobación por parte de los gerentes.
                 </div>
             </div>
 
@@ -198,14 +220,11 @@
                 </h4>
                 <p style="color: #ddd; font-size: 0.95rem; line-height: 1.5;">
                     Aquí puedes subir imágenes que nos inspiren a seguir adelante (iluminación, encuadres, arte, etc.). <br>
-                    <strong>⚠️ Queda estrictamente prohibido subir contenido explícito, desnudos, violencia o material ofensivo.</strong> Cualquier imagen que viole estas reglas será eliminada inmediatamente y el usuario será sancionado.
+                    <strong>⚠️ Queda estrictamente prohibido subir contenido explícito, desnudos, violencia o material ofensivo.</strong>
                 </p>
             </div>
             
             <div id="formNuevoMoodboard" class="form-tarea" style="display: none; flex-direction: column;">
-                <p style="color: #ff5e5e; font-size: 0.85rem; margin-bottom: 10px; font-weight: bold;">
-                    <i class="fa-solid fa-circle-info"></i> Al subir una imagen, confirmas que cumple con las reglas de la productora.
-                </p>
                 <input type="text" id="moodboardTitulo" placeholder="Título o descripción">
                 <input type="file" id="moodboardFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
                 <button id="btnGuardarMoodboard" class="btn-primary" style="align-self: flex-end;">Guardar en el Muro</button>
@@ -246,7 +265,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Conoce a tu equipo. Aquí encontrarás los datos de contacto y las medallas de desempeño de cada integrante de SPOTLIGHT.
+                    Conoce a tu equipo. Aquí encontrarás los datos de contacto, los puntos XP acumulados y las medallas de desempeño.
                 </div>
             </div>
 
@@ -259,9 +278,15 @@
                     <input type="email" id="dirCorreo" placeholder="Correo Electrónico" style="flex: 1;">
                     <input type="tel" id="dirTelefono" placeholder="Teléfono" style="flex: 1;">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <label style="color: #a0a0b8; font-size: 0.85rem;">Foto de Perfil (Opcional):</label>
-                    <input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                        <label style="color: #a0a0b8; font-size: 0.85rem;">Fecha de Cumpleaños:</label>
+                        <input type="date" id="dirCumpleanos" style="width: 100%;">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                        <label style="color: #a0a0b8; font-size: 0.85rem;">Foto de Perfil (Opcional):</label>
+                        <input type="file" id="dirFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                    </div>
                 </div>
                 <button id="btnGuardarDirectorio" class="btn-primary" style="align-self: flex-end;">Guardar Integrante</button>
             </div>
@@ -311,13 +336,13 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Aquí puedes ver el estado de tus tareas y las del equipo. Usa los botones <strong>"Empezar"</strong> y <strong>"Terminar"</strong> para moverlas. Haz clic en una tarjeta para ver detalles, subir archivos o revisar tu calificación.
+                    Aquí puedes ver el estado de tus tareas y las del equipo. Usa los botones <strong>"Empezar"</strong> y <strong>"Terminar"</strong> para moverlas y ganar Puntos XP.
                 </div>
             </div>
 
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 1;">
+                    <input type="text" id="inputTarea" placeholder="¿Qué hay que hacer?" style="flex: 2;">
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                         <option value="Johan Sebastián">Johan Sebastián</option>
                         <option value="Brayan Alexander">Brayan Alexander</option>
@@ -330,6 +355,7 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="date" id="inputFecha" style="flex: 1;">
                     <input type="text" id="inputProyecto" placeholder="Nombre del Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <input type="number" id="inputXP" placeholder="Puntos XP (Ej: 10)" value="10" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
                 </div>
                 <textarea id="inputDescripcionTarea" placeholder="Descripción o instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar Tarea</button>
@@ -361,7 +387,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Administra los proyectos de la productora. Haz clic en un proyecto para ver las tareas asociadas y, si tienes permisos de gerente o finanzas, revisar su presupuesto y control de gastos.
+                    Administra los proyectos de la productora. Haz clic en un proyecto para ver las tareas asociadas y, si tienes permisos, revisar su presupuesto.
                 </div>
             </div>
 
@@ -385,7 +411,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Consulta la agenda de rodajes y eventos importantes. Usa el formulario de arriba para agendar un nuevo evento y se marcará con un punto rojo en el calendario.
+                    Consulta la agenda de rodajes y eventos importantes. Usa el formulario de arriba para agendar un nuevo evento.
                 </div>
             </div>
 
@@ -417,7 +443,7 @@
             <div class="info-banner">
                 <i class="fa-solid fa-circle-info"></i>
                 <div>
-                    Pon a prueba tus conocimientos. Haz clic en <strong>"Responder"</strong> en cualquier examen disponible. Necesitas al menos un 70% para aprobar y desbloquear la medalla "El Cerebrito".
+                    Pon a prueba tus conocimientos. Necesitas al menos un 70% para aprobar. Si lo logras, ¡ganarás Puntos XP extra!
                 </div>
             </div>
 

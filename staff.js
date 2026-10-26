@@ -12,16 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
     const puedeVerGastos = esGerente || esFinanzas;
     
-    // CANDADOS DE VISIBILIDAD
     const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     const esDisenadora = (nombreStaff === "Maria Fernanda" || rolStaff.includes("Diseñadora"));
 
-    // MOSTRAR U OCULTAR LINKS EN EL SIDEBAR
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
     if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
     if (esGerente) document.getElementById('link-gerencia').style.display = 'flex';
 
-    // MOSTRAR BOTÓN DE FILTRO PARA BEATRIZ
     if (nombreStaff === "Beatriz" || esGerente) {
         document.getElementById('filtroContainer').style.display = 'block';
     }
@@ -95,13 +92,26 @@ document.addEventListener('DOMContentLoaded', function() {
         if (para === nombreStaff) renderNotificaciones();
     }
 
-    // ================= SISTEMA DE LOGROS =================
+    // ================= SISTEMA DE LOGROS Y XP =================
     const DICCIONARIO_LOGROS = {
         'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' },
         'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
         'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' },
         'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
     };
+
+    function darPuntos(usuario, cantidad) {
+        db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                const docId = querySnapshot.docs[0].id;
+                const data = querySnapshot.docs[0].data();
+                let puntosActuales = data.puntos || 0;
+                db.collection("directorio").doc(docId).update({ puntos: puntosActuales + cantidad }).then(() => {
+                    crearNotificacion(usuario, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`);
+                });
+            }
+        });
+    }
 
     function otorgarLogro(logro, usuario) {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
@@ -134,34 +144,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
     }
 
-    // ================= VARIABLES GLOBALES DE DATOS =================
-    let directorioDB = [];
-    let resultadosDB = [];
-    let tareas = [];
-    let proyectosDB = [];
-    let examenesDB = [];
-    let moodboardDB = [];
-    let anunciosDB = [];
-    let eventos = [];
+    // ================= VARIABLES GLOBALES =================
+    let directorioDB = [], resultadosDB = [], tareas = [], proyectosDB = [], examenesDB = [], moodboardDB = [], anunciosDB = [], eventos = [];
+    let graficoTareasInstance = null, graficoPresupuestoInstance = null;
+    let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null;
 
     // ================= PANEL DE GERENCIA =================
     window.renderGerencia = function() {
         if (!document.getElementById('kpiTareasTotal')) return;
 
-        // 1. Tareas
         const totalTareas = tareas.length;
         const completadas = tareas.filter(t => t.estado === 'completed').length;
         const pendientes = tareas.filter(t => t.estado !== 'completed');
         
         document.getElementById('kpiTareasTotal').textContent = totalTareas;
         document.getElementById('kpiTareasSub').textContent = `${completadas} Completadas`;
-
-        // 2. Proyectos
         document.getElementById('kpiProyectos').textContent = proyectosDB.length;
         
-        // 3. Finanzas
-        let presupuestoTotal = 0;
-        let gastadoTotal = 0;
+        let presupuestoTotal = 0, gastadoTotal = 0;
         proyectosDB.forEach(p => {
             presupuestoTotal += (p.presupuesto || 0);
             const gastosProyecto = p.gastos || [];
@@ -170,13 +170,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('kpiPresupuesto').textContent = `$${presupuestoTotal.toLocaleString('es-CO')}`;
         document.getElementById('kpiGastadoSub').textContent = `$${gastadoTotal.toLocaleString('es-CO')} Gastados`;
 
-        // 4. Equipo
         document.getElementById('kpiEquipo').textContent = directorioDB.length;
         let totalMedallas = 0;
         directorioDB.forEach(p => { totalMedallas += (p.logros ? p.logros.length : 0); });
         document.getElementById('kpiEquipoSub').textContent = `${totalMedallas} Medallas entregadas`;
 
-        // 5. Tabla de Alertas (Tareas pendientes o en proceso)
         const tbodyAlertas = document.getElementById('tablaAlertasGerencia');
         tbodyAlertas.innerHTML = '';
         
@@ -184,11 +182,9 @@ document.addEventListener('DOMContentLoaded', function() {
             tbodyAlertas.innerHTML = '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #22c55e;"><i class="fa-solid fa-check-circle"></i> ¡Todo al día! No hay tareas pendientes.</td></tr>';
         } else {
             const pendientesOrdenadas = [...pendientes].sort((a, b) => a.estado === 'pending' ? -1 : 1);
-            
             pendientesOrdenadas.forEach(t => {
                 const colorEstado = t.estado === 'pending' ? '#ef4444' : '#f7c948';
                 const textoEstado = t.estado === 'pending' ? 'Por Hacer' : 'En Proceso';
-                
                 tbodyAlertas.innerHTML += `
                     <tr style="border-bottom: 1px solid #2a2a3a;">
                         <td style="padding: 15px; color: white; font-weight: bold;">${t.titulo}</td>
@@ -199,9 +195,49 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             });
         }
+
+        const canvasTareas = document.getElementById('graficoTareas');
+        const canvasPresupuesto = document.getElementById('graficoPresupuesto');
+        
+        if (canvasTareas && canvasPresupuesto) {
+            if (graficoTareasInstance) graficoTareasInstance.destroy();
+            const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); 
+            const tareasCompletadasPorPersona = directorioDB.map(p => tareas.filter(t => t.asignado === p.nombre && t.estado === 'completed').length);
+
+            graficoTareasInstance = new Chart(canvasTareas, {
+                type: 'bar',
+                data: {
+                    labels: nombres,
+                    datasets: [{
+                        label: 'Tareas Completadas',
+                        data: tareasCompletadasPorPersona,
+                        backgroundColor: '#f7c948',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } }
+                }
+            });
+
+            if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
+            graficoPresupuestoInstance = new Chart(canvasPresupuesto, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Gastado', 'Disponible'],
+                    datasets: [{
+                        data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)],
+                        backgroundColor: ['#ef4444', '#22c55e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } }
+            });
+        }
     };
 
-    // ================= PANEL RRHH (XIMENA) =================
+    // ================= PANEL RRHH =================
     window.renderRRHH = function() {
         const tbody = document.getElementById('tablaRRHH');
         if (!tbody) return;
@@ -209,20 +245,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         directorioDB.forEach(persona => {
             const medallas = persona.logros ? persona.logros.length : 0;
-            
+            const puntos = persona.puntos || 0;
             const examenesPersona = resultadosDB.filter(r => r.alumno === persona.nombre);
             let promedio = 0;
             if (examenesPersona.length > 0) {
                 const suma = examenesPersona.reduce((acc, curr) => acc + curr.porcentaje, 0);
                 promedio = Math.round(suma / examenesPersona.length);
             }
-
             const colorPromedio = promedio >= 70 ? '#22c55e' : (promedio > 0 ? '#ef4444' : '#9ca3af');
 
             tbody.innerHTML += `
                 <tr style="border-bottom: 1px solid #2a2a3a;">
                     <td style="padding: 15px; color: white; font-weight: bold;">${persona.nombre}</td>
                     <td style="padding: 15px; color: #9ca3af;">${persona.rol}</td>
+                    <td style="padding: 15px; font-weight: bold; color: #3b82f6;">${puntos} XP</td>
                     <td style="padding: 15px; font-size: 1.2rem;">${medallas} 🏅</td>
                     <td style="padding: 15px; font-weight: bold; color: ${colorPromedio};">${promedio}%</td>
                 </tr>
@@ -230,18 +266,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= MIS ENTREGAS (MARIA FERNANDA) =================
+    // ================= MIS ENTREGAS =================
     window.renderEntregas = function() {
         const grid = document.getElementById('gridEntregas');
         if (!grid) return;
         grid.innerHTML = '';
 
         let archivosSubidos = [];
-
         tareas.forEach(t => {
             if (t.asignado === "Maria Fernanda" && t.archivos && t.archivos.length > 0) {
                 t.archivos.forEach(a => {
-                    archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo });
+                    archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo, estado: a.estado || 'pendiente' });
                 });
             }
         });
@@ -255,12 +290,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const isImage = a.url.match(/\.(jpeg|jpg|gif|png)$/) != null;
             const preview = isImage ? `<img src="${a.url}" class="moodboard-img" style="height: 150px;">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;background:#1a1a24;font-size:3rem;height:150px;">📄</div>`;
             
+            let badgeEstado = '';
+            if (a.estado === 'aprobado') badgeEstado = '<span class="badge-estado badge-aprobado">Aprobado ✅</span>';
+            else if (a.estado === 'rechazado') badgeEstado = '<span class="badge-estado badge-rechazado">Cambios ❌</span>';
+            else badgeEstado = '<span class="badge-estado badge-pendiente">Pendiente ⏳</span>';
+
             grid.innerHTML += `
                 <div class="moodboard-card">
                     ${preview}
                     <div class="moodboard-info">
                         <div class="moodboard-titulo" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${a.nombre}</div>
                         <div class="moodboard-autor">De: ${a.tarea}</div>
+                        <div style="margin-top: 8px;">${badgeEstado}</div>
                         <a href="${a.url}" target="_blank" class="btn-descargar" style="margin-top: 10px; width: 100%;">Ver / Descargar</a>
                     </div>
                 </div>
@@ -270,7 +311,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= MOODBOARD =================
     const gridMoodboard = document.getElementById('gridMoodboard');
-
     db.collection("moodboard").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
         moodboardDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderMoodboard(); evaluarLogros();
@@ -279,10 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderMoodboard = function() {
         if(!gridMoodboard) return;
         gridMoodboard.innerHTML = '';
-        if (moodboardDB.length === 0) {
-            gridMoodboard.innerHTML = '<p style="color:#666;">El muro está vacío. ¡Sube la primera imagen de inspiración!</p>';
-            return;
-        }
+        if (moodboardDB.length === 0) { gridMoodboard.innerHTML = '<p style="color:#666;">El muro está vacío.</p>'; return; }
         moodboardDB.forEach(img => {
             const botonEliminar = esGerente || img.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarMoodboard('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             gridMoodboard.innerHTML += `
@@ -303,11 +340,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const titulo = document.getElementById('moodboardTitulo').value;
             const fileInput = document.getElementById('moodboardFoto');
             const boton = document.getElementById('btnGuardarMoodboard');
-
             if (titulo && fileInput.files.length > 0) {
                 const file = fileInput.files[0]; const formData = new FormData();
                 formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                
                 boton.innerHTML = "Subiendo..."; boton.disabled = true;
                 try {
                     const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
@@ -323,13 +358,11 @@ document.addEventListener('DOMContentLoaded', function() {
             } else { alert("Escribe un título y selecciona una imagen."); }
         });
     }
-
     window.eliminarMoodboard = function(id) { if (confirm("¿Eliminar esta referencia?")) { db.collection("moodboard").doc(id).delete(); } };
 
-    // ================= OBJETIVOS EN EQUIPO =================
+    // ================= OBJETIVOS =================
     const listaObjetivos = document.getElementById('listaObjetivos');
     let objetivosDB = [];
-
     db.collection("metas").onSnapshot((snapshot) => {
         objetivosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderObjetivos();
@@ -338,13 +371,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderObjetivos = function() {
         if(!listaObjetivos) return;
         listaObjetivos.innerHTML = '';
-        if (objetivosDB.length === 0) { listaObjetivos.innerHTML = '<p style="color:#666;">No hay objetivos activos. ¡Crea uno para motivar al equipo!</p>'; return; }
+        if (objetivosDB.length === 0) { listaObjetivos.innerHTML = '<p style="color:#666;">No hay objetivos activos.</p>'; return; }
         objetivosDB.forEach(meta => {
             const porcentaje = Math.min(Math.round((meta.progreso / meta.metaTotal) * 100), 100);
             const estaCompleto = porcentaje >= 100;
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarObjetivo('${meta.id}')" style="margin-left: 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
             let botonAccion = estaCompleto ? `<button class="btn-aportar completado" disabled><i class="fa-solid fa-trophy"></i> ¡Meta Cumplida!</button>` : `<button class="btn-aportar" onclick="aportarProgreso('${meta.id}', ${meta.progreso}, ${meta.metaTotal})"><i class="fa-solid fa-hand-holding-heart"></i> ¡Aportar Avance +1!</button>`;
-
             listaObjetivos.innerHTML += `
                 <div class="objetivo-card ${estaCompleto ? 'completado' : ''}">
                     <div class="objetivo-titulo">${meta.titulo}${botonEliminar}</div>
@@ -368,7 +400,6 @@ document.addEventListener('DOMContentLoaded', function() {
             } else { alert("Escribe un título y una meta mayor a 0."); }
         });
     }
-
     window.aportarProgreso = function(id, progresoActual, metaTotal) {
         const nuevoProgreso = progresoActual + 1;
         db.collection("metas").doc(id).update({ progreso: nuevoProgreso }).then(() => {
@@ -382,18 +413,37 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     };
-
     window.eliminarObjetivo = function(id) { if (confirm("¿Eliminar este objetivo?")) { db.collection("metas").doc(id).delete(); } };
 
-    // ================= DIRECTORIO =================
+    // ================= DIRECTORIO Y CUMPLEAÑOS =================
     const gridDirectorio = document.getElementById('gridDirectorio');
-
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderDirectorio();
-        renderRRHH();
-        renderGerencia(); // Actualizar KPIs
+        renderDirectorio(); renderRRHH(); renderGerencia(); verificarCumpleanos();
     });
+
+    function verificarCumpleanos() {
+        const hoy = new Date();
+        const mesHoy = hoy.getMonth() + 1;
+        const diaHoy = hoy.getDate();
+
+        directorioDB.forEach(persona => {
+            if (persona.cumpleanos) {
+                const [year, month, day] = persona.cumpleanos.split('-');
+                if (parseInt(month) === mesHoy && parseInt(day) === diaHoy) {
+                    const banner = document.getElementById('bannerCumpleanos');
+                    if (banner) {
+                        document.getElementById('nombreCumple').textContent = persona.nombre;
+                        banner.style.display = 'block';
+                        if (!window.confettiLanzado) {
+                            confetti({ particleCount: 300, spread: 120, origin: { y: 0.3 } });
+                            window.confettiLanzado = true;
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     window.renderDirectorio = function() {
         if(!gridDirectorio) return;
@@ -402,6 +452,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const inicial = persona.nombre.charAt(0).toUpperCase();
             const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarMiembro('${persona.id}')" style="position: absolute; top: 15px; right: 15px;"><i class="fa-solid fa-trash"></i></button>` : '';
             let avatarHTML = persona.foto ? `<img src="${persona.foto}" class="miembro-avatar-img">` : `<div class="miembro-avatar">${inicial}</div>`;
+            const puntos = persona.puntos || 0;
+
             let medallasHTML = '';
             if (persona.logros && persona.logros.length > 0) {
                 medallasHTML = `<div class="logros-container">`;
@@ -417,6 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${botonEliminar}${avatarHTML}
                     <h3 class="miembro-nombre">${persona.nombre}</h3>
                     <span class="miembro-rol">${persona.rol}</span>
+                    <div class="xp-badge"><i class="fa-solid fa-bolt"></i> ${puntos} XP</div>
                     ${medallasHTML}
                     <div class="miembro-contacto">
                         <span><i class="fa-solid fa-envelope"></i> ${persona.correo}</span>
@@ -433,6 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rol = document.getElementById('dirRol').value;
             const correo = document.getElementById('dirCorreo').value;
             const telefono = document.getElementById('dirTelefono').value;
+            const cumpleanos = document.getElementById('dirCumpleanos').value;
             const fileInput = document.getElementById('dirFoto');
             const boton = document.getElementById('btnGuardarDirectorio');
 
@@ -449,19 +503,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     } catch (error) { console.log(error); }
                     boton.innerHTML = "Guardar Integrante"; boton.disabled = false;
                 }
-                db.collection("directorio").add({ nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", foto: fotoUrl, logros: [] }).then(() => {
+                db.collection("directorio").add({ nombre, rol, correo: correo || "Sin correo", telefono: telefono || "Sin teléfono", cumpleanos, foto: fotoUrl, logros: [], puntos: 0 }).then(() => {
                     document.getElementById('formNuevoDirectorio').style.display = 'none';
-                    document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; fileInput.value = '';
+                    document.getElementById('dirNombre').value = ''; document.getElementById('dirRol').value = ''; document.getElementById('dirCorreo').value = ''; document.getElementById('dirTelefono').value = ''; document.getElementById('dirCumpleanos').value = ''; fileInput.value = '';
                 });
             } else { alert("El nombre y el puesto son obligatorios."); }
         });
     }
-
     window.eliminarMiembro = function(id) { if (confirm("¿Eliminar a este integrante?")) { db.collection("directorio").doc(id).delete(); } };
 
     // ================= ANUNCIOS =================
     const listaAnuncios = document.getElementById('listaAnuncios');
-
     db.collection("anuncios").onSnapshot((snapshot) => {
         anunciosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderAnuncios();
@@ -507,11 +559,9 @@ document.addEventListener('DOMContentLoaded', function() {
             } else { alert("Escribe el título y el mensaje."); }
         });
     }
-
     window.eliminarAnuncio = function(id) { if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); } };
 
     // ================= EXÁMENES =================
-    let examenActivoId = null;
     const listaExamenes = document.getElementById('listaExamenes');
     const tablaResultados = document.getElementById('tablaResultados');
     const contenedorPreguntas = document.getElementById('contenedorPreguntas');
@@ -523,9 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     db.collection("resultados").onSnapshot((snapshot) => {
         resultadosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderExamenes(); 
-        evaluarLogros();
-        renderRRHH(); 
+        renderExamenes(); evaluarLogros(); renderRRHH(); 
     });
 
     function crearBloquePregunta() {
@@ -631,19 +679,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 examenId: examen.id, tituloExamen: examen.titulo, alumno: nombreStaff, porcentaje: porcentaje, aciertos: aciertos, total: total, timestamp: Date.now()
             }).then(() => {
                 cerrarModalExamen();
-                if (porcentaje >= 70) { confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`); } 
+                if (porcentaje >= 70) { 
+                    confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } }); 
+                    alert(`¡Felicidades ${nombreStaff}! Has aprobado con un ${porcentaje}%. 🎉`);
+                    darPuntos(nombreStaff, 20);
+                } 
                 else { alert(`Obtuviste un ${porcentaje}%. Necesitas al menos 70% para aprobar. 😢`); }
             });
         });
     }
 
-    // ================= PROYECTOS Y GASTOS =================
+    // ================= PROYECTOS =================
     const listaProyectos = document.getElementById('listaProyectos'); 
-
     db.collection("proyectos").onSnapshot((snapshot) => {
         proyectosDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderProyectosLista();
-        renderGerencia(); // Actualizar KPIs
+        renderProyectosLista(); renderGerencia();
     });
 
     window.renderProyectosLista = function() {
@@ -660,27 +710,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const nombre = document.getElementById('inputProyectoNom').value;
             const cliente = document.getElementById('inputClienteProyecto').value || "Sin cliente";
             const presupuesto = parseFloat(document.getElementById('inputPresupuestoProyecto').value) || 0;
-            
             if (nombre && !proyectosDB.find(p => p.nombre.toLowerCase() === nombre.toLowerCase())) {
                 db.collection("proyectos").add({ nombre, cliente, presupuesto, gastos: [] }).then(() => {
                     document.getElementById('formNuevoProyecto').style.display = 'none';
-                    document.getElementById('inputProyectoNom').value = '';
-                    document.getElementById('inputPresupuestoProyecto').value = '';
+                    document.getElementById('inputProyectoNom').value = ''; document.getElementById('inputPresupuestoProyecto').value = '';
                 });
             } else { alert("El proyecto ya existe o el nombre está vacío."); }
         });
     }
-
     window.eliminarProyecto = function(id) { if (confirm("¿Eliminar este proyecto?")) { db.collection("proyectos").doc(id).delete(); } };
-
-    let proyectoActivoId = null;
 
     window.abrirModalProyecto = function(nombreProyecto) {
         const p = proyectosDB.find(proy => proy.nombre === nombreProyecto);
         if (!p) return;
-        
         proyectoActivoId = p.id;
-        
         document.getElementById('mProyectoTitulo').textContent = nombreProyecto;
         
         const lista = document.getElementById('mProyectoTareas'); lista.innerHTML = '';
@@ -693,12 +736,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const seccionGastos = document.getElementById('seccionGastos');
-        if (puedeVerGastos) {
-            seccionGastos.style.display = 'block';
-            renderGastosProyecto(p);
-        } else {
-            seccionGastos.style.display = 'none';
-        }
+        if (puedeVerGastos) { seccionGastos.style.display = 'block'; renderGastosProyecto(p); } 
+        else { seccionGastos.style.display = 'none'; }
         
         document.getElementById('modalProyecto').style.display = 'flex';
     }
@@ -723,13 +762,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const lista = document.getElementById('listaGastos');
         lista.innerHTML = '';
-        if (gastos.length === 0) {
-            lista.innerHTML = '<p style="color:#666; font-size: 0.9rem;">No hay gastos registrados.</p>';
-        } else {
+        if (gastos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size: 0.9rem;">No hay gastos registrados.</p>'; } 
+        else {
             gastos.forEach((g, index) => {
                 lista.innerHTML += `
-                    <li class="gasto-item">
-                        <span>${g.concepto}</span>
+                    <li class="gasto-item"><span>${g.concepto}</span>
                         <div style="display:flex; align-items:center; gap:10px;">
                             <span class="gasto-monto">-$${g.monto.toFixed(2)}</span>
                             <button class="gasto-eliminar" onclick="eliminarGasto(${index})"><i class="fa-solid fa-trash"></i></button>
@@ -743,17 +780,13 @@ document.addEventListener('DOMContentLoaded', function() {
     window.agregarGasto = function() {
         const concepto = document.getElementById('gastoConcepto').value;
         const monto = parseFloat(document.getElementById('gastoMonto').value);
-
         if (concepto && monto > 0) {
             const proyecto = proyectosDB.find(p => p.id === proyectoActivoId);
             let gastosActuales = proyecto.gastos || [];
             gastosActuales.push({ concepto, monto });
-
             db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => {
-                document.getElementById('gastoConcepto').value = '';
-                document.getElementById('gastoMonto').value = '';
-                proyecto.gastos = gastosActuales;
-                renderGastosProyecto(proyecto);
+                document.getElementById('gastoConcepto').value = ''; document.getElementById('gastoMonto').value = '';
+                proyecto.gastos = gastosActuales; renderGastosProyecto(proyecto);
             });
         } else { alert("Escribe un concepto y un monto válido."); }
     }
@@ -763,30 +796,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const proyecto = proyectosDB.find(p => p.id === proyectoActivoId);
             let gastosActuales = proyecto.gastos || [];
             gastosActuales.splice(index, 1);
-
             db.collection("proyectos").doc(proyectoActivoId).update({ gastos: gastosActuales }).then(() => {
-                proyecto.gastos = gastosActuales;
-                renderGastosProyecto(proyecto);
+                proyecto.gastos = gastosActuales; renderGastosProyecto(proyecto);
             });
         }
     }
 
-    // ================= TAREAS (TABLERO KANBAN CON FILTRO) =================
-    let tareaActivaId = null;
-
+    // ================= TAREAS (KANBAN Y APROBACIÓN) =================
     db.collection("tareas").onSnapshot((snapshot) => {
         tareas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTareas(); 
-        evaluarLogros();
-        renderEntregas();
-        renderGerencia(); // Actualizar KPIs
+        renderTareas(); evaluarLogros(); renderEntregas(); renderGerencia();
     });
 
     window.renderTareas = function() {
         const colPending = document.getElementById('kanban-pending');
         const colProgress = document.getElementById('kanban-progress');
         const colCompleted = document.getElementById('kanban-completed');
-        
         if(!colPending) return;
 
         colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
@@ -797,9 +822,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tareas.forEach((t) => {
             if (verSoloMisTareas && t.asignado !== nombreStaff) return;
-
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
+            const etiquetaXP = t.xp ? `<span class="xp-badge" style="padding: 2px 6px; font-size: 0.7rem;"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
             let botonesAccion = '';
 
             if (t.estado === 'pending') {
@@ -810,16 +835,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 botonesAccion = btnReabrir + btnTerminar;
             } else if (t.estado === 'completed') {
                 botonesAccion = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-rotate-left"></i> Reabrir</button>`;
-                if (esGerente) {
-                    botonesAccion += `<button class="btn-back" onclick="event.stopPropagation(); eliminarTarea('${t.id}')" style="flex: 0.5;"><i class="fa-solid fa-trash"></i></button>`;
-                }
+                if (esGerente) { botonesAccion += `<button class="btn-back" onclick="event.stopPropagation(); eliminarTarea('${t.id}')" style="flex: 0.5;"><i class="fa-solid fa-trash"></i></button>`; }
             }
 
             const cardHTML = `
                 <div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')">
                     <h4>${t.titulo}</h4>
                     <p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p>
-                    ${etiquetaNota}
+                    <div style="display:flex; gap: 10px;">${etiquetaNota}${etiquetaXP}</div>
                     <div class="kanban-actions">${botonesAccion}</div>
                 </div>
             `;
@@ -835,8 +858,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.cambiarEstadoTarea = function(id, nuevoEstado) {
+        const t = tareas.find(tarea => tarea.id === id);
         db.collection("tareas").doc(id).update({ estado: nuevoEstado }).then(() => {
-            if (nuevoEstado === 'completed') { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+            if (nuevoEstado === 'completed') { 
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); 
+                if (t && t.xp) darPuntos(t.asignado, parseInt(t.xp)); 
+            }
         });
     };
 
@@ -847,12 +874,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const fecha = document.getElementById('inputFecha').value;
             const proyecto = document.getElementById('inputProyecto').value.trim() || "General";
             const desc = document.getElementById('inputDescripcionTarea').value || "Sin instrucciones.";
+            const xp = document.getElementById('inputXP').value || 10; 
             
             if (titulo) {
                 if (proyecto !== "General" && !proyectosDB.find(p => p.nombre.toLowerCase() === proyecto.toLowerCase())) {
                     await db.collection("proyectos").add({ nombre: proyecto, cliente: "Sin cliente", presupuesto: 0, gastos: [] });
                 }
-                db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, archivos: [], calificacion: null }).then(() => {
+                db.collection("tareas").add({ titulo, asignado, fecha, estado: 'pending', desc, proyecto, xp, archivos: [], calificacion: null }).then(() => {
                     crearNotificacion(asignado, `Nueva tarea asignada: ${titulo}`);
                     document.getElementById('formNuevaTarea').style.display = 'none';
                     document.getElementById('inputTarea').value = ''; document.getElementById('inputProyecto').value = '';
@@ -866,7 +894,6 @@ document.addEventListener('DOMContentLoaded', function() {
     window.abrirModalTarea = function(id) {
         const t = tareas.find(tarea => tarea.id === id);
         if(!t) return;
-
         tareaActivaId = id;
         document.getElementById('mTareaTitulo').textContent = t.titulo;
         document.getElementById('mTareaAsignado').textContent = `Asignado a: ${t.asignado} | Fecha: ${t.fecha}`;
@@ -893,7 +920,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const nota = document.getElementById('inputCalificacion').value;
         const t = tareas.find(tarea => tarea.id === tareaActivaId);
         if (nota < 1 || nota > 10 || nota === '') { alert("Ingresa una nota del 1 al 10."); return; }
-        
         db.collection("tareas").doc(tareaActivaId).update({ calificacion: nota }).then(() => {
             crearNotificacion(t.asignado, `Has recibido una calificación de ${nota}/10 en: ${t.titulo}`);
             alert("Calificación guardada."); cerrarModal();
@@ -906,12 +932,59 @@ document.addEventListener('DOMContentLoaded', function() {
         const archivos = tarea.archivos || [];
         if(archivos.length === 0) { lista.innerHTML = '<p style="color:#666; font-size:0.85rem;">No hay archivos aún.</p>'; } 
         else {
-            archivos.forEach(a => {
+            archivos.forEach((a, index) => {
                 const urlDescarga = a.url.replace('/upload/', '/upload/fl_attachment/');
-                lista.innerHTML += `<li class="archivo-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;"><a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a><a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a></li>`;
+                let badgeEstado = '';
+                let botonesAprobacion = '';
+
+                if (a.estado === 'aprobado') badgeEstado = '<span class="badge-estado badge-aprobado">Aprobado ✅</span>';
+                else if (a.estado === 'rechazado') badgeEstado = '<span class="badge-estado badge-rechazado">Cambios ❌</span>';
+                else badgeEstado = '<span class="badge-estado badge-pendiente">Pendiente ⏳</span>';
+
+                if (esGerente && a.estado !== 'aprobado') {
+                    botonesAprobacion = `
+                        <div style="display: flex; gap: 5px; margin-top: 5px;">
+                            <button class="btn-aprobar" onclick="aprobarArchivo('${tarea.id}', ${index}, 'aprobado')"><i class="fa-solid fa-check"></i> Aprobar</button>
+                            <button class="btn-rechazar" onclick="aprobarArchivo('${tarea.id}', ${index}, 'rechazado')"><i class="fa-solid fa-xmark"></i> Cambios</button>
+                        </div>
+                    `;
+                }
+
+                lista.innerHTML += `
+                    <li class="archivo-item" style="display: flex; flex-direction: column; align-items: flex-start; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <a href="${a.url}" target="_blank" style="color: #fff; text-decoration: none;"><i class="fa-solid fa-file" style="color: #f7c948;"></i> ${a.nombre}</a>
+                            <a href="${urlDescarga}" class="btn-descargar" target="_blank"><i class="fa-solid fa-download"></i></a>
+                        </div>
+                        <div style="display:flex; justify-content: space-between; width: 100%; align-items: center; margin-top: 5px;">
+                            ${badgeEstado}
+                            ${botonesAprobacion}
+                        </div>
+                    </li>
+                `;
             });
         }
     }
+
+    window.aprobarArchivo = function(tareaId, indexArchivo, nuevoEstado) {
+        const t = tareas.find(tarea => tarea.id === tareaId);
+        if (!t) return;
+        let archivosActuales = t.archivos || [];
+        
+        if (nuevoEstado === 'rechazado') {
+            const motivo = prompt("¿Qué cambios debe hacer el diseñador?");
+            if (motivo === null) return; // Canceló
+            archivosActuales[indexArchivo].motivoRechazo = motivo;
+        }
+
+        archivosActuales[indexArchivo].estado = nuevoEstado;
+        
+        db.collection("tareas").doc(tareaId).update({ archivos: archivosActuales }).then(() => {
+            crearNotificacion(t.asignado, `Tu archivo en "${t.titulo}" ha sido marcado como: ${nuevoEstado.toUpperCase()}`);
+            alert(`Archivo marcado como ${nuevoEstado}.`);
+            renderArchivosModal(t); // Recargar modal
+        });
+    };
 
     window.subirArchivosTarea = async function(event) {
         if (event) event.preventDefault();
@@ -928,22 +1001,20 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: formData });
                 const data = await response.json();
-                if (data.secure_url) { nuevosArchivos.push({ nombre: file.name, url: data.secure_url }); } 
+                if (data.secure_url) { nuevosArchivos.push({ nombre: file.name, url: data.secure_url, estado: 'pendiente' }); } 
             } catch (error) { console.log(error); }
         }
         
         db.collection("tareas").doc(tareaActivaId).update({ archivos: nuevosArchivos }).then(() => {
             boton.innerHTML = textOrig; boton.disabled = false; input.value = '';
             t.archivos = nuevosArchivos; 
-            renderArchivosModal(t);
-            renderEntregas(); 
+            renderArchivosModal(t); renderEntregas(); 
         });
     }
     window.cerrarModal = function() { document.getElementById('modalTarea').style.display = 'none'; document.getElementById('modalProyecto').style.display = 'none'; }
 
     // ================= CALENDARIO =================
     let fechaCalendario = new Date();
-
     db.collection("eventos").onSnapshot((snapshot) => {
         eventos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderCalendario(); renderListaEventos();
@@ -1010,25 +1081,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ================= LÓGICA DEL MENÚ MÓVIL =================
+    // ================= MENÚ MÓVIL =================
     const btnMobileMenu = document.getElementById('btnMobileMenu');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
 
     if (btnMobileMenu && sidebar && sidebarOverlay) {
-        // Abrir/Cerrar al tocar el botón de las 3 rayitas
         btnMobileMenu.addEventListener('click', () => {
             sidebar.classList.toggle('open');
             sidebarOverlay.classList.toggle('active');
         });
 
-        // Cerrar al tocar el fondo oscuro
         sidebarOverlay.addEventListener('click', () => {
             sidebar.classList.remove('open');
             sidebarOverlay.classList.remove('active');
         });
 
-        // Cerrar automáticamente al tocar cualquier sección
         document.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth <= 900) {
