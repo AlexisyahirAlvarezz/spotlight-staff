@@ -9,14 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('rolStaff').textContent = rolStaff;
 
     const esGerente = (rolStaff === "Gerente General" || rolStaff === "Gerente de Marketing");
-    const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair");
+    const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair Lopez" || nombreStaff === "Jair");
     const puedeVerGastos = esGerente || esFinanzas;
     const esMarketing = (rolStaff === "Gerente de Marketing");
-    const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
+    const esRRHH = (nombreStaff === "Ximena Reyes" || nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     
-    // VISIBILIDAD DE MENÚS
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
-    document.getElementById('link-entregas').style.display = 'flex'; // AHORA TODOS VEN "MIS ENTREGAS"
+    document.getElementById('link-entregas').style.display = 'flex';
     if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
     
     if (esGerente) {
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (esGerente || esFinanzas) document.getElementById('link-boveda').style.display = 'flex';
 
-    if (nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
+    if (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
 
     window.toggleForm = function(idFormulario) {
         const form = document.getElementById(idFormulario);
@@ -119,22 +118,32 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     function darPuntos(usuario, cantidad) {
-        db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const docId = querySnapshot.docs[0].id; const data = querySnapshot.docs[0].data(); let puntosActuales = data.puntos || 0;
-                db.collection("directorio").doc(docId).update({ puntos: puntosActuales + cantidad }).then(() => { 
-                    crearNotificacion(usuario, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
-                    
-                    // CORRECCIÓN: Actualizar la UI en memoria (el snapshot de Firestore lo hará de nuevo, pero esto asegura fluidez)
-                    const index = directorioDB.findIndex(p => p.nombre === usuario);
+        // ESTA ES LA CORRECCIÓN CLAVE. SI EL NOMBRE NO COINCIDE EXACTO CON LA BD, BUSCA POR NOMBRE PARCIAL.
+        db.collection("directorio").get().then((querySnapshot) => {
+            let usuarioEncontrado = null;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // Comprueba si el nombre de la BD incluye el nombre que le pasamos
+                if (data.nombre === usuario || data.nombre.includes(usuario) || usuario.includes(data.nombre)) {
+                    usuarioEncontrado = { id: doc.id, ...data };
+                }
+            });
+
+            if (usuarioEncontrado) {
+                let puntosActuales = usuarioEncontrado.puntos || 0;
+                db.collection("directorio").doc(usuarioEncontrado.id).update({ puntos: puntosActuales + cantidad }).then(() => { 
+                    crearNotificacion(usuarioEncontrado.nombre, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
+                    const index = directorioDB.findIndex(p => p.id === usuarioEncontrado.id);
                     if (index !== -1) directorioDB[index].puntos = puntosActuales + cantidad;
                     
-                    renderDashboard(usuario);
+                    renderDashboard(nombreStaff);
                     renderRRHH();
                     renderHallDeLaFama();
                     renderDirectorio();
                     renderTienda();
                 });
+            } else {
+                console.log("No se encontró el usuario para dar puntos:", usuario);
             }
         });
     }
@@ -401,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
             db.collection("directorio").doc(miPerfil.id).update({ puntos: (miPerfil.puntos || 0) - costo }).then(() => {
                 db.collection("canjes").add({ empleado: nombreStaff, recompensa: titulo, costo: costo, estado: 'pendiente', timestamp: Date.now() }).then(() => {
                     crearNotificacion(nombreStaff, `Has canjeado: ${titulo}. Gerencia ha sido notificada. ✅`);
-                    ["Johan Sebastián", "Brayan Alexander", "Ximena"].forEach(g => { crearNotificacion(g, `🚨 ${nombreStaff} ha canjeado: ${titulo} (-${costo} XP).`); });
+                    ["Johan Sebastian", "Brayan Alexander", "Ximena Reyes"].forEach(g => { crearNotificacion(g, `🚨 ${nombreStaff} ha canjeado: ${titulo} (-${costo} XP).`); });
                     confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); alert("¡Canje exitoso! Gerencia ha sido notificada.");
                 });
             });
@@ -460,11 +469,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= MIS ENTREGAS (AHORA PARA TODOS) =================
+    // ================= MIS ENTREGAS =================
     window.renderEntregas = function() {
         const grid = document.getElementById('gridEntregas'); if (!grid) return; grid.innerHTML = '';
         let archivosSubidos = [];
-        // Busca los archivos del usuario ACTUAL, no de Maria Fernanda
         tareas.forEach(t => { 
             if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) { 
                 t.archivos.forEach(a => { archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo, estado: a.estado || 'pendiente' }); }); 
@@ -556,10 +564,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const podiumDiv = document.getElementById('hallDeLaFamaContent'); if (!podiumDiv) return; podiumDiv.innerHTML = '';
         const top3 = [...directorioDB].sort((a, b) => (b.puntos || 0) - (a.puntos || 0)).slice(0, 3);
         if (top3.length === 0) { podiumDiv.innerHTML = '<p style="color:#666;">Aún no hay datos para mostrar el podio.</p>'; return; }
+        
+        // CORRECCIÓN: Añadido el <div class="podium-info"> para que el CSS móvil lo ponga en columna
         const crearTarjeta = (persona, posicion) => {
             if (!persona) return `<div class="podium-card podium-${posicion}" style="opacity: 0.3; justify-content: center;"><p style="color:#666;">Sin datos</p></div>`;
             const clases = ['podium-1', 'podium-2', 'podium-3']; const corona = posicion === 1 ? '<div class="podium-crown">👑</div>' : ''; const inicial = persona.nombre.charAt(0).toUpperCase();
-            return `<div class="podium-card ${clases[posicion-1]}">${corona}<div class="podium-avatar">${inicial}</div><div class="podium-name">${persona.nombre.split(' ')[0]}</div><div class="podium-rol">${persona.rol}</div><div class="podium-xp">${persona.puntos || 0} XP</div></div>`;
+            return `
+                <div class="podium-card ${clases[posicion-1]}">
+                    ${corona}
+                    <div class="podium-avatar">${inicial}</div>
+                    <div class="podium-info">
+                        <div class="podium-name">${persona.nombre.split(' ')[0]}</div>
+                        <div class="podium-rol">${persona.rol}</div>
+                    </div>
+                    <div class="podium-xp">${persona.puntos || 0} XP</div>
+                </div>
+            `;
         };
         podiumDiv.innerHTML = crearTarjeta(top3[1], 2) + crearTarjeta(top3[0], 1) + crearTarjeta(top3[2], 3);
     }
@@ -706,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderTareas = function() {
         const colPending = document.getElementById('kanban-pending'); const colProgress = document.getElementById('kanban-progress'); const colCompleted = document.getElementById('kanban-completed');
         if(!colPending) return; colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
-        const filtroActivo = document.getElementById('checkFiltroMisTareas') && document.getElementById('checkFiltroMisTareas').checked; const esBeatriz = (nombreStaff === "Beatriz"); const verSoloMisTareas = esBeatriz || filtroActivo;
+        const filtroActivo = document.getElementById('checkFiltroMisTareas') && document.getElementById('checkFiltroMisTareas').checked; const esBeatriz = (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz"); const verSoloMisTareas = esBeatriz || filtroActivo;
         tareas.forEach((t) => {
             if (verSoloMisTareas && t.asignado !== nombreStaff) return;
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());

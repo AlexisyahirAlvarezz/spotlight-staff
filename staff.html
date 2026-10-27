@@ -55,7 +55,7 @@
             <a href="#" class="nav-link" id="link-radar" data-target="radar" style="display: none;"><i class="fa-solid fa-satellite-dish"></i> Radar de Tendencias</a>
             
             <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
-            <a href="#" class="nav-link" id="link-entregas" data-target="entregas" style="display: none;"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
+            <a href="#" class="nav-link" id="link-entregas" data-target="entregas"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
             <a href="#" class="nav-link" id="link-gerencia" data-target="gerencia" style="display: none;"><i class="fa-solid fa-chart-pie"></i> Panel de Gerencia</a>
             <a href="#" class="nav-link" id="link-boveda" data-target="boveda" style="display: none;"><i class="fa-solid fa-lock"></i> Bóveda de Accesos</a>
         </nav>
@@ -87,52 +87,31 @@
 
         <!-- ===== VISTA: INICIO (DASHBOARD + KANBAN) ===== -->
         <section id="view-inicio" class="view-section active">
-            
-            <!-- FRASE DEL DÍA -->
             <div id="dailyQuote" class="daily-quote">
                 <i class="fa-solid fa-quote-left"></i>
                 <span id="quoteText">La creatividad es la inteligencia divirtiéndose.</span>
                 <i class="fa-solid fa-quote-right"></i>
             </div>
 
-            <!-- DASHBOARD -->
             <div class="dashboard-grid">
                 <div class="dash-card">
-                    <div class="dash-card-header">
-                        <i class="fa-solid fa-bolt" style="color: #3b82f6;"></i>
-                        <h3>Mi Nivel</h3>
-                    </div>
+                    <div class="dash-card-header"><i class="fa-solid fa-bolt" style="color: #3b82f6;"></i><h3>Mi Nivel</h3></div>
                     <div class="dash-card-body" style="text-align: center;">
                         <h2 id="dashNivel" style="color: #3b82f6; font-size: 2.5rem; margin-bottom: 5px;">SP POBRE</h2>
                         <p id="dashXPText" style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 15px;">0 / 100 XP</p>
-                        <div class="barra-progreso-bg" style="height: 10px;">
-                            <div id="dashXPBar" class="barra-progreso-fill" style="width: 0%; background: #3b82f6;"></div>
-                        </div>
+                        <div class="barra-progreso-bg" style="height: 10px;"><div id="dashXPBar" class="barra-progreso-fill" style="width: 0%; background: #3b82f6;"></div></div>
                     </div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-card-header">
-                        <i class="fa-solid fa-list-check" style="color: #f7c948;"></i>
-                        <h3>Mis Próximas Tareas</h3>
-                    </div>
-                    <div class="dash-card-body">
-                        <ul id="dashTareasList" style="list-style: none; padding: 0; margin: 0;">
-                            <li style="color: #666; font-size: 0.9rem;">No tienes tareas pendientes.</li>
-                        </ul>
-                    </div>
+                    <div class="dash-card-header"><i class="fa-solid fa-list-check" style="color: #f7c948;"></i><h3>Mis Próximas Tareas</h3></div>
+                    <div class="dash-card-body"><ul id="dashTareasList" style="list-style: none; padding: 0; margin: 0;"><li style="color: #666; font-size: 0.9rem;">No tienes tareas pendientes.</li></ul></div>
                 </div>
                 <div class="dash-card">
-                    <div class="dash-card-header">
-                        <i class="fa-solid fa-bullhorn" style="color: #ef4444;"></i>
-                        <h3>Último Anuncio</h3>
-                    </div>
-                    <div class="dash-card-body" id="dashAnuncio">
-                        <p style="color: #666; font-size: 0.9rem;">No hay anuncios recientes.</p>
-                    </div>
+                    <div class="dash-card-header"><i class="fa-solid fa-bullhorn" style="color: #ef4444;"></i><h3>Último Anuncio</h3></div>
+                    <div class="dash-card-body" id="dashAnuncio"><p style="color: #666; font-size: 0.9rem;">No hay anuncios recientes.</p></div>
                 </div>
             </div>
 
-            <!-- KANBAN -->
             <div class="recent-tasks-header" style="margin-top: 40px;">
                 <h2>Tareas del Equipo</h2>
                 <div style="display: flex; align-items: center; gap: 15px;">
@@ -141,13 +120,21 @@
                 </div>
             </div>
             
-            <div class="info-banner">
-                <i class="fa-solid fa-circle-info"></i>
-                <div>Aquí puedes ver el estado de tus tareas. Usa los botones <strong>"Empezar"</strong> y <strong>"Terminar"</strong> para moverlas y ganar Puntos XP.</div>
-            </div>
+            <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Aquí puedes ver el estado de tus tareas. Usa los botones <strong>"Empezar"</strong> y <strong>"Terminar"</strong> para moverlas y ganar Puntos XP.</div></div>
 
             <div id="formNuevaTarea" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="inputTarea" placeholder="Tarea..." style="flex: 2;"><select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><option value="Johan Sebastián">Johan Sebastián</option><option value="Brayan Alexander">Brayan Alexander</option><option value="Beatriz">Beatriz</option><option value="Jair">Jair</option><option value="Ximena">Ximena</option><option value="Maria Fernanda">Maria Fernanda</option></select></div>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <input type="text" id="inputTarea" placeholder="Tarea..." style="flex: 2;">
+                    <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
+                        <!-- AQUÍ ESTABAN LOS NOMBRES MAL, AHORA ESTÁN COMPLETOS PARA QUE COINCIDAN CON LA BD -->
+                        <option value="Johan Sebastian">Johan Sebastian</option>
+                        <option value="Brayan Alexander">Brayan Alexander</option>
+                        <option value="Beatriz Ortiz">Beatriz Ortiz</option>
+                        <option value="Jair Lopez">Jair Lopez</option>
+                        <option value="Ximena Reyes">Ximena Reyes</option>
+                        <option value="Maria Fernanda">Maria Fernanda</option>
+                    </select>
+                </div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="date" id="inputFecha" style="flex: 1;"><input type="text" id="inputProyecto" placeholder="Proyecto" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"><input type="number" id="inputXP" placeholder="XP" value="10" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></div>
                 <textarea id="inputDescripcionTarea" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
                 <button id="btnGuardarTarea" class="btn-primary" style="align-self: flex-end;">Guardar</button>
@@ -173,9 +160,7 @@
         <section id="view-ruleta" class="view-section" style="display: none;">
             <h2>Ruleta de la Suerte</h2>
             <div class="info-banner"><i class="fa-solid fa-dharmachakra" style="color: #3b82f6;"></i><div>¡Prueba tu suerte! Tienes 1 giro diario.</div></div>
-            <div class="wheel-container">
-                <div class="wheel" id="wheel"><div class="wheel-center" onclick="girarRuleta()"><i class="fa-solid fa-play"></i> GIRAR</div></div>
-            </div>
+            <div class="wheel-container"><div class="wheel" id="wheel"><div class="wheel-center" onclick="girarRuleta()"><i class="fa-solid fa-play"></i> GIRAR</div></div></div>
             <div id="ruletaResultado" style="text-align: center; margin-top: 30px; font-size: 1.5rem; color: #f7c948; font-weight: bold;"></div>
         </section>
 
@@ -201,10 +186,7 @@
         <section id="view-wiki" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Wiki de SPOTLIGHT</h2><button id="btnMostrarFormWiki" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaWiki')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
             <div class="info-banner"><i class="fa-solid fa-book-open"></i><div>El cerebro de la productora. Aquí encontrarás tutoriales, manuales y procesos internos.</div></div>
-            <div id="formNuevaWiki" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="wikiTitulo" placeholder="Título" style="font-weight: bold;"><textarea id="wikiContenido" placeholder="Contenido..." rows="6" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <button id="btnGuardarWiki" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
+            <div id="formNuevaWiki" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="wikiTitulo" placeholder="Título" style="font-weight: bold;"><textarea id="wikiContenido" placeholder="Contenido..." rows="6" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea><button id="btnGuardarWiki" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <div id="gridWiki" class="wiki-grid"></div>
         </section>
 
@@ -212,10 +194,7 @@
         <section id="view-bts" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Detrás de Cámaras</h2><button id="btnMostrarFormBTS" class="btn-nueva-tarea" onclick="toggleForm('formNuevoBTS')"><i class="fa-solid fa-plus"></i> Subir</button></div>
             <div class="info-banner"><i class="fa-solid fa-camera-retro"></i><div>¡Los momentos épicos de SPOTLIGHT! Sube fotos de los rodajes o momentos divertidos.</div></div>
-            <div id="formNuevoBTS" class="form-tarea" style="display: none; flex-direction: column;">
-                <input type="text" id="btsTitulo" placeholder="Descripción"><input type="file" id="btsFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
-                <button id="btnGuardarBTS" class="btn-primary" style="align-self: flex-end;">Subir</button>
-            </div>
+            <div id="formNuevoBTS" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="btsTitulo" placeholder="Descripción"><input type="file" id="btsFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"><button id="btnGuardarBTS" class="btn-primary" style="align-self: flex-end;">Subir</button></div>
             <div id="gridBTS" class="moodboard-grid"></div>
         </section>
 
@@ -223,11 +202,7 @@
         <section id="view-radar" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Radar de Tendencias</h2><button id="btnMostrarFormRadar" class="btn-nueva-tarea" onclick="toggleForm('formNuevoRadar')"><i class="fa-solid fa-plus"></i> Añadir</button></div>
             <div class="info-banner"><i class="fa-solid fa-satellite-dish" style="color: #3b82f6;"></i><div>Tu arsenal creativo. Guarda enlaces de TikTok, Reels, música o artículos que te inspiren.</div></div>
-            <div id="formNuevoRadar" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="radarTitulo" placeholder="Título" style="flex: 2;"><input type="text" id="radarCategoria" placeholder="Categoría" style="flex: 1;"></div>
-                <input type="url" id="radarLink" placeholder="Enlace (https://...)"><textarea id="radarDesc" placeholder="Descripción..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <button id="btnGuardarRadar" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
+            <div id="formNuevoRadar" class="form-tarea" style="display: none; flex-direction: column;"><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="radarTitulo" placeholder="Título" style="flex: 2;"><input type="text" id="radarCategoria" placeholder="Categoría" style="flex: 1;"></div><input type="url" id="radarLink" placeholder="Enlace (https://...)"><textarea id="radarDesc" placeholder="Descripción..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea><button id="btnGuardarRadar" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <div id="gridRadar" class="radar-grid"></div>
         </section>
 
@@ -235,12 +210,7 @@
         <section id="view-plantillas" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Plantillas</h2><button id="btnMostrarFormPlantilla" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaPlantilla')"><i class="fa-solid fa-plus"></i> Crear</button></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Agiliza el trabajo. Usa estas plantillas predefinidas con instrucciones.</div></div>
-            <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;">
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="plantillaTitulo" placeholder="Título" style="flex: 2;"><input type="number" id="plantillaXP" placeholder="XP" value="15" style="flex: 1;"></div>
-                <textarea id="plantillaDesc" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea>
-                <div style="display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Foto (Opcional):</label><input type="file" id="plantillaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div>
-                <button id="btnGuardarPlantilla" class="btn-primary" style="align-self: flex-end;">Guardar</button>
-            </div>
+            <div id="formNuevaPlantilla" class="form-tarea" style="display: none; flex-direction: column;"><div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="plantillaTitulo" placeholder="Título" style="flex: 2;"><input type="number" id="plantillaXP" placeholder="XP" value="15" style="flex: 1;"></div><textarea id="plantillaDesc" placeholder="Instrucciones..." rows="2" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);"></textarea><div style="display: flex; flex-direction: column; gap: 5px;"><label style="color: #a0a0b8; font-size: 0.85rem;">Foto (Opcional):</label><input type="file" id="plantillaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;"></div><button id="btnGuardarPlantilla" class="btn-primary" style="align-self: flex-end;">Guardar</button></div>
             <div id="gridPlantillas" class="moodboard-grid"></div>
         </section>
 
@@ -252,8 +222,11 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaServicio" placeholder="Servicio" style="flex: 1;"><input type="text" id="bovedaUsuario" placeholder="Usuario" style="flex: 1;"><input type="text" id="bovedaPassword" placeholder="Contraseña" style="flex: 1;"></div>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;"><input type="text" id="bovedaNota" placeholder="Nota" style="flex: 2;"><button id="btnGuardarBoveda" class="btn-primary" style="flex: 1;">Guardar</button></div>
             </div>
-            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Servicio</th><th style="padding: 15px;">Usuario</th><th style="padding: 15px;">Contraseña</th><th style="padding: 15px;">Notas</th><th style="padding: 15px;">Acción</th></tr></thead><tbody id="tablaBoveda"></tbody></table>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Servicio</th><th>Usuario</th><th>Contraseña</th><th>Notas</th><th>Acción</th></tr></thead>
+                    <tbody id="tablaBoveda"></tbody>
+                </table>
             </div>
         </section>
 
@@ -271,7 +244,12 @@
             <div id="gridTienda" class="tienda-grid"></div>
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
                 <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Historial de Canjes (Admin)</h3>
-                <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Recompensa</th><th style="padding: 15px;">Costo</th><th style="padding: 15px;">Estado</th><th style="padding: 15px;">Acción</th></tr></thead><tbody id="tablaCanjes"></tbody></table></div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Empleado</th><th>Recompensa</th><th>Costo</th><th>Estado</th><th>Acción</th></tr></thead>
+                        <tbody id="tablaCanjes"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -290,14 +268,24 @@
                 <div class="chart-box"><h3>Finanzas</h3><canvas id="graficoPresupuesto"></canvas></div>
             </div>
             <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Tareas Pendientes</h3>
-            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Tarea</th><th style="padding: 15px;">Asignado</th><th style="padding: 15px;">Proyecto</th><th style="padding: 15px;">Estado</th></tr></thead><tbody id="tablaAlertasGerencia"></tbody></table></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Tarea</th><th>Asignado</th><th>Proyecto</th><th>Estado</th></tr></thead>
+                    <tbody id="tablaAlertasGerencia"></tbody>
+                </table>
+            </div>
         </section>
 
         <!-- ===== VISTA: PANEL RRHH ===== -->
         <section id="view-rrhh" class="view-section" style="display: none;">
             <h2>Panel de RRHH</h2>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>Vista exclusiva de RRHH. Monitorea el desempeño del equipo basado en medallas, XP y exámenes.</div></div>
-            <div style="background: #13131a; border: 1px solid #2a2a3a; border-radius: 16px; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Empleado</th><th style="padding: 15px;">Puesto</th><th style="padding: 15px;">XP</th><th style="padding: 15px;">Medallas</th><th style="padding: 15px;">Promedio</th></tr></thead><tbody id="tablaRRHH"></tbody></table></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Empleado</th><th>Puesto</th><th>XP</th><th>Medallas</th><th>Promedio</th></tr></thead>
+                    <tbody id="tablaRRHH"></tbody>
+                </table>
+            </div>
         </section>
 
         <!-- ===== VISTA: MIS ENTREGAS ===== -->
@@ -368,7 +356,12 @@
             <div id="formNuevoExamen" class="form-tarea" style="display: none; flex-direction: column;"><input type="text" id="examenTitulo" placeholder="Título" style="font-weight: bold;"><div id="contenedorPreguntas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;"></div><div style="display: flex; gap: 15px; margin-top: 15px;"><button id="btnAgregarPregunta" class="btn-nueva-tarea" style="background: rgba(255,255,255,0.1); color: white; flex: 1;">+ Pregunta</button><button id="btnGuardarExamen" class="btn-primary" style="flex: 1;">Publicar</button></div></div>
             <ul id="listaExamenes" class="archivos-lista"></ul>
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;">Resultados</h3>
-            <div style="background: #13131a; border-radius: 16px; border: 1px solid #2a2a3a; overflow: hidden;"><table style="width: 100%; border-collapse: collapse; text-align: left;"><thead style="background: rgba(247, 201, 72, 0.1); color: #f7c948;"><tr><th style="padding: 15px;">Nombre</th><th style="padding: 15px;">Examen</th><th style="padding: 15px;">Nota</th></tr></thead><tbody id="tablaResultados"></tbody></table></div>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Nombre</th><th>Examen</th><th>Nota</th></tr></thead>
+                    <tbody id="tablaResultados"></tbody>
+                </table>
+            </div>
         </section>
     </main>
 
