@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const esRRHH = (nombreStaff === "Ximena Reyes" || nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
-    document.getElementById('link-entregas').style.display = 'flex';
+    document.getElementById('link-entregas').style.display = 'flex'; // Todos ven Mis Entregas
     if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
     
     if (esGerente) {
@@ -34,6 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (esGerente || esFinanzas) document.getElementById('link-boveda').style.display = 'flex';
 
     if (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
+
+    // PEDIR PERMISO PARA NOTIFICACIONES NATIVAS DEL CELULAR
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
 
     window.toggleForm = function(idFormulario) {
         const form = document.getElementById(idFormulario);
@@ -76,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(toast); setTimeout(() => { toast.remove(); }, 5000);
     }
 
-    // ================= NOTIFICACIONES =================
+    // ================= NOTIFICACIONES EN TIEMPO REAL Y PUSH =================
     let notificaciones = [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -87,10 +92,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const cambios = snapshot.docChanges();
         notificaciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp);
         renderNotificaciones();
+        
         cambios.forEach((cambio) => {
             if (cambio.type === "added") {
                 const nuevaNoti = cambio.doc.data();
-                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { mostrarToast(nuevaNoti.mensaje); playNotificationSound(); }
+                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { 
+                    mostrarToast(nuevaNoti.mensaje); 
+                    playNotificationSound(); 
+                    
+                    // NOTIFICACIÓN NATIVA EN EL CELULAR
+                    if (Notification.permission === "granted") {
+                        new Notification("SPOTLIGHT", { 
+                            body: nuevaNoti.mensaje, 
+                            icon: "logo-blanco.jpg" 
+                        });
+                    }
+                }
             }
         });
     });
@@ -118,12 +135,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     function darPuntos(usuario, cantidad) {
-        // ESTA ES LA CORRECCIÓN CLAVE. SI EL NOMBRE NO COINCIDE EXACTO CON LA BD, BUSCA POR NOMBRE PARCIAL.
         db.collection("directorio").get().then((querySnapshot) => {
             let usuarioEncontrado = null;
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                // Comprueba si el nombre de la BD incluye el nombre que le pasamos
                 if (data.nombre === usuario || data.nombre.includes(usuario) || usuario.includes(data.nombre)) {
                     usuarioEncontrado = { id: doc.id, ...data };
                 }
@@ -142,8 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     renderDirectorio();
                     renderTienda();
                 });
-            } else {
-                console.log("No se encontró el usuario para dar puntos:", usuario);
             }
         });
     }
@@ -427,7 +440,16 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     window.marcarCanjeEntregado = function(id) { if (confirm("¿Marcar este premio como entregado?")) { db.collection("canjes").doc(id).update({ estado: 'entregado' }).then(() => { const canje = canjesDB.find(c => c.id === id); if(canje) crearNotificacion(canje.empleado, `¡Tu premio "${canje.recompensa}" ha sido entregado! 🎉`); }); } };
 
-    // ================= PANEL DE GERENCIA =================
+    // ================= PANEL DE GERENCIA Y ADMIN XP =================
+    window.cargarEmpleadosAdminXP = function() {
+        const select = document.getElementById('adminXPEmpleado');
+        if (!select) return;
+        select.innerHTML = '<option value="">Selecciona un empleado...</option>';
+        directorioDB.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.nombre} (${p.puntos || 0} XP)</option>`;
+        });
+    }
+
     window.renderGerencia = function() {
         if (!document.getElementById('kpiTareasTotal')) return;
         const totalTareas = tareas.length; const completadas = tareas.filter(t => t.estado === 'completed').length; const pendientes = tareas.filter(t => t.estado !== 'completed');
@@ -455,7 +477,32 @@ document.addEventListener('DOMContentLoaded', function() {
             if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
             graficoPresupuestoInstance = new Chart(canvasPresupuesto, { type: 'doughnut', data: { labels: ['Gastado', 'Disponible'], datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
         }
+        
+        // Cargar dropdown de administrador de XP
+        cargarEmpleadosAdminXP();
     };
+
+    if(document.getElementById('btnAdminXP')) {
+        document.getElementById('btnAdminXP').addEventListener('click', () => {
+            const docId = document.getElementById('adminXPEmpleado').value;
+            const cantidad = parseInt(document.getElementById('adminXPCantidad').value);
+
+            if (docId && !isNaN(cantidad)) {
+                const persona = directorioDB.find(p => p.id === docId);
+                if (persona) {
+                    const nuevosPuntos = (persona.puntos || 0) + cantidad;
+                    db.collection("directorio").doc(docId).update({ puntos: nuevosPuntos }).then(() => {
+                        alert(`Se han aplicado ${cantidad} XP a ${persona.nombre}. Total: ${nuevosPuntos} XP.`);
+                        crearNotificacion(persona.nombre, `¡Has recibido ${cantidad} XP de parte de Gerencia! ⚡`);
+                        document.getElementById('adminXPCantidad').value = '';
+                        cargarEmpleadosAdminXP(); // Recargar el dropdown con los nuevos puntos
+                    });
+                }
+            } else {
+                alert("Selecciona un empleado y escribe una cantidad válida.");
+            }
+        });
+    }
 
     // ================= PANEL RRHH =================
     window.renderRRHH = function() {
@@ -469,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= MIS ENTREGAS =================
+    // ================= MIS ENTREGAS (PARA TODOS) =================
     window.renderEntregas = function() {
         const grid = document.getElementById('gridEntregas'); if (!grid) return; grid.innerHTML = '';
         let archivosSubidos = [];
@@ -859,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') renderGerencia(); if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') { renderGerencia(); cargarEmpleadosAdminXP(); } if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); }
         });
     });
 

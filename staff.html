@@ -273,6 +273,18 @@
                     <thead><tr><th>Tarea</th><th>Asignado</th><th>Proyecto</th><th>Estado</th></tr></thead>
                     <tbody id="tablaAlertasGerencia"></tbody>
                 </table>
+                            <!-- NUEVO: ADMINISTRADOR DE PUNTOS XP -->
+            <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-bolt"></i> Administrador de Puntos</h3>
+            <div class="form-tarea" style="flex-direction: column; max-width: 600px;">
+                <p style="color: #a0a0b8; font-size: 0.9rem;">Usa esto para dar o quitar XP manualmente por algún bono, ayuda extra o corrección.</p>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <select id="adminXPEmpleado" style="flex: 2; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                        <!-- Aquí se cargarán los nombres con JS -->
+                    </select>
+                    <input type="number" id="adminXPCantidad" placeholder="XP (Ej: 50)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
+                </div>
+                <button id="btnAdminXP" class="btn-primary" style="align-self: flex-end;">Aplicar Puntos</button>
+        
             </div>
         </section>
 
