@@ -14,8 +14,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const esMarketing = (rolStaff === "Gerente de Marketing");
     const esRRHH = (nombreStaff === "Ximena Reyes" || nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     
-    if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
-    document.getElementById('link-entregas').style.display = 'flex'; // Todos ven Mis Entregas
+    // Permisos generales
+    if (esGerente || esRRHH) {
+        document.getElementById('link-rrhh').style.display = 'flex';
+        if(document.getElementById('link-admin-noti')) document.getElementById('link-admin-noti').style.display = 'flex'; // NUEVO: Notificaciones para admins
+    }
+    document.getElementById('link-entregas').style.display = 'flex'; 
     if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
     
     if (esGerente) {
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
 
-    // PEDIR PERMISO PARA NOTIFICACIONES NATIVAS DEL CELULAR
+    // PEDIR PERMISO PARA NOTIFICACIONES NATIVAS
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
     }
@@ -81,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         container.appendChild(toast); setTimeout(() => { toast.remove(); }, 5000);
     }
 
-    // ================= NOTIFICACIONES EN TIEMPO REAL Y PUSH =================
+    // ================= NOTIFICACIONES =================
     let notificaciones = [];
     const btnNotificaciones = document.getElementById('btnNotificaciones');
     const panelNotificaciones = document.getElementById('panelNotificaciones');
@@ -100,7 +104,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     mostrarToast(nuevaNoti.mensaje); 
                     playNotificationSound(); 
                     
-                    // NOTIFICACIÓN NATIVA EN EL CELULAR
+                    // Notificación Nativa en el Celular
                     if (Notification.permission === "granted") {
                         new Notification("SPOTLIGHT", { 
                             body: nuevaNoti.mensaje, 
@@ -139,7 +143,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let usuarioEncontrado = null;
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.nombre === usuario || data.nombre.includes(usuario) || usuario.includes(data.nombre)) {
+                // Comparación flexible: ignora mayúsculas y espacios extra
+                if (data.nombre.trim().toLowerCase() === usuario.trim().toLowerCase()) {
                     usuarioEncontrado = { id: doc.id, ...data };
                 }
             });
@@ -148,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let puntosActuales = usuarioEncontrado.puntos || 0;
                 db.collection("directorio").doc(usuarioEncontrado.id).update({ puntos: puntosActuales + cantidad }).then(() => { 
                     crearNotificacion(usuarioEncontrado.nombre, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
+                    
                     const index = directorioDB.findIndex(p => p.id === usuarioEncontrado.id);
                     if (index !== -1) directorioDB[index].puntos = puntosActuales + cantidad;
                     
@@ -191,11 +197,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= DASHBOARD Y NIVELES =================
     const NIVELES_SP = [
-        { nivel: 1, nombre: "SP POBRE", xpMin: 0 },
-        { nivel: 2, nombre: "SP MEDIO", xpMin: 100 },
-        { nivel: 3, nombre: "SEMI SP", xpMin: 300 },
-        { nivel: 4, nombre: "PRO SP", xpMin: 600 },
-        { nivel: 5, nombre: "SUPER SUPREMO", xpMin: 1000 }
+        { nivel: 1, nombre: "SP POBRE", xpMin: 0 }, { nivel: 2, nombre: "SP MEDIO", xpMin: 100 },
+        { nivel: 3, nombre: "SEMI SP", xpMin: 300 }, { nivel: 4, nombre: "PRO SP", xpMin: 600 }, { nivel: 5, nombre: "SUPER SUPREMO", xpMin: 1000 }
     ];
 
     const frasesDelDia = [
@@ -212,19 +215,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const quoteEl = document.getElementById('quoteText');
         if (quoteEl) quoteEl.textContent = fraseHoy;
 
-        const perfil = directorioDB.find(p => p.nombre === usuarioActivo);
+        // CORRECCIÓN CLAVE DE XP: Búsqueda flexible
+        const perfil = directorioDB.find(p => p.nombre.trim().toLowerCase() === usuarioActivo.trim().toLowerCase());
+        
         if (perfil) {
             const puntos = perfil.puntos || 0;
             let nivelActual = NIVELES_SP[0]; let nivelSiguiente = NIVELES_SP[1];
             for (let i = 0; i < NIVELES_SP.length; i++) { if (puntos >= NIVELES_SP[i].xpMin) { nivelActual = NIVELES_SP[i]; nivelSiguiente = NIVELES_SP[i + 1] || null; } }
-            const dashNivel = document.getElementById('dashNivel'); const dashXPText = document.getElementById('dashXPText'); const dashXPBar = document.getElementById('dashXPBar');
+            
+            const dashNivel = document.getElementById('dashNivel'); 
+            const dashXPText = document.getElementById('dashXPText'); 
+            const dashXPBar = document.getElementById('dashXPBar');
+            
             if (dashNivel) dashNivel.textContent = nivelActual.nombre;
             if (dashXPText) {
                 if (nivelSiguiente) {
                     dashXPText.textContent = `${puntos} / ${nivelSiguiente.xpMin} XP`;
                     const progreso = ((puntos - nivelActual.xpMin) / (nivelSiguiente.xpMin - nivelActual.xpMin)) * 100;
                     if (dashXPBar) dashXPBar.style.width = `${progreso}%`;
-                } else { dashXPText.textContent = `${puntos} XP (Nivel Máximo)`; if (dashXPBar) dashXPBar.style.width = `100%`; }
+                } else { 
+                    dashXPText.textContent = `${puntos} XP (Nivel Máximo)`; 
+                    if (dashXPBar) dashXPBar.style.width = `100%`; 
+                }
             }
         }
 
@@ -250,7 +262,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ================= SIMULADOR DE POST (MOCKUP) =================
+    // ================= ADMINISTRADOR DE NOTIFICACIONES =================
+    window.cargarUsuariosNoti = function() {
+        const select = document.getElementById('notiPara');
+        if (!select) return;
+        select.innerHTML = '<option value="Todos">Todos los usuarios (Broadcast)</option>';
+        directorioDB.forEach(p => {
+            select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
+        });
+    }
+
+    if(document.getElementById('btnEnviarNoti')) {
+        document.getElementById('btnEnviarNoti').addEventListener('click', () => {
+            const para = document.getElementById('notiPara').value;
+            const mensaje = document.getElementById('notiMensaje').value;
+
+            if (mensaje) {
+                if (para === "Todos") {
+                    directorioDB.forEach(p => {
+                        crearNotificacion(p.nombre, `📢 ANUNCIO: ${mensaje}`);
+                    });
+                    alert("Notificación enviada a todos.");
+                } else {
+                    crearNotificacion(para, `📢 Mensaje: ${mensaje}`);
+                    alert(`Notificación enviada a ${para}.`);
+                }
+                document.getElementById('notiMensaje').value = '';
+            } else {
+                alert("Escribe un mensaje.");
+            }
+        });
+    }
+
+    // ================= SIMULADOR DE POST =================
     window.previewMockup = function(event) {
         const input = event.target;
         if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('mockupImg').src = e.target.result; }; reader.readAsDataURL(input.files[0]); }
@@ -286,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3500);
     };
 
-    // ================= RADAR =================
+    // ================= RADAR, WIKI, BTS, PLANTILLAS, BÓVEDA =================
     db.collection("radar").onSnapshot((snapshot) => { radarDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderRadar(); });
     window.renderRadar = function() {
         const grid = document.getElementById('gridRadar'); if (!grid) return; grid.innerHTML = '';
@@ -305,7 +349,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarRadar = function(id) { if (confirm("¿Eliminar esta tendencia?")) { db.collection("radar").doc(id).delete(); } };
 
-    // ================= WIKI =================
     db.collection("wiki").onSnapshot((snapshot) => { wikiDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderWiki(); });
     window.renderWiki = function() {
         const grid = document.getElementById('gridWiki'); if (!grid) return; grid.innerHTML = '';
@@ -324,7 +367,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarWiki = function(id) { if (confirm("¿Eliminar este artículo?")) { db.collection("wiki").doc(id).delete(); } };
 
-    // ================= BTS =================
     const gridBTS = document.getElementById('gridBTS');
     db.collection("bts").orderBy("timestamp", "desc").onSnapshot((snapshot) => { btsDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderBTS(); });
     window.renderBTS = function() {
@@ -348,7 +390,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarBTS = function(id) { if (confirm("¿Eliminar esta foto?")) { db.collection("bts").doc(id).delete(); } };
 
-    // ================= PLANTILLAS =================
     db.collection("plantillas").onSnapshot((snapshot) => { plantillasDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderPlantillas(); });
     window.renderPlantillas = function() {
         const grid = document.getElementById('gridPlantillas'); if (!grid) return; grid.innerHTML = '';
@@ -379,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     window.eliminarPlantilla = function(id) { if (confirm("¿Eliminar esta plantilla?")) { db.collection("plantillas").doc(id).delete(); } };
 
-    // ================= BÓVEDA =================
     db.collection("boveda").onSnapshot((snapshot) => { bovedaDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderBoveda(); });
     window.renderBoveda = function() {
         const tbody = document.getElementById('tablaBoveda'); if (!tbody) return; tbody.innerHTML = '';
@@ -477,8 +517,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
             graficoPresupuestoInstance = new Chart(canvasPresupuesto, { type: 'doughnut', data: { labels: ['Gastado', 'Disponible'], datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
         }
-        
-        // Cargar dropdown de administrador de XP
         cargarEmpleadosAdminXP();
     };
 
@@ -495,12 +533,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         alert(`Se han aplicado ${cantidad} XP a ${persona.nombre}. Total: ${nuevosPuntos} XP.`);
                         crearNotificacion(persona.nombre, `¡Has recibido ${cantidad} XP de parte de Gerencia! ⚡`);
                         document.getElementById('adminXPCantidad').value = '';
-                        cargarEmpleadosAdminXP(); // Recargar el dropdown con los nuevos puntos
+                        cargarEmpleadosAdminXP();
                     });
                 }
-            } else {
-                alert("Selecciona un empleado y escribe una cantidad válida.");
-            }
+            } else { alert("Selecciona un empleado y escribe una cantidad válida."); }
         });
     }
 
@@ -516,7 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= MIS ENTREGAS (PARA TODOS) =================
+    // ================= MIS ENTREGAS =================
     window.renderEntregas = function() {
         const grid = document.getElementById('gridEntregas'); if (!grid) return; grid.innerHTML = '';
         let archivosSubidos = [];
@@ -582,6 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); renderDashboard(nombreStaff); verificarCumpleanos();
+        cargarUsuariosNoti(); // Recarga la lista de usuarios en el panel de notificaciones
     });
     function verificarCumpleanos() {
         const hoy = new Date(); const mesHoy = hoy.getMonth() + 1; const diaHoy = hoy.getDate();
@@ -611,22 +648,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const podiumDiv = document.getElementById('hallDeLaFamaContent'); if (!podiumDiv) return; podiumDiv.innerHTML = '';
         const top3 = [...directorioDB].sort((a, b) => (b.puntos || 0) - (a.puntos || 0)).slice(0, 3);
         if (top3.length === 0) { podiumDiv.innerHTML = '<p style="color:#666;">Aún no hay datos para mostrar el podio.</p>'; return; }
-        
-        // CORRECCIÓN: Añadido el <div class="podium-info"> para que el CSS móvil lo ponga en columna
         const crearTarjeta = (persona, posicion) => {
             if (!persona) return `<div class="podium-card podium-${posicion}" style="opacity: 0.3; justify-content: center;"><p style="color:#666;">Sin datos</p></div>`;
             const clases = ['podium-1', 'podium-2', 'podium-3']; const corona = posicion === 1 ? '<div class="podium-crown">👑</div>' : ''; const inicial = persona.nombre.charAt(0).toUpperCase();
-            return `
-                <div class="podium-card ${clases[posicion-1]}">
-                    ${corona}
-                    <div class="podium-avatar">${inicial}</div>
-                    <div class="podium-info">
-                        <div class="podium-name">${persona.nombre.split(' ')[0]}</div>
-                        <div class="podium-rol">${persona.rol}</div>
-                    </div>
-                    <div class="podium-xp">${persona.puntos || 0} XP</div>
-                </div>
-            `;
+            return `<div class="podium-card ${clases[posicion-1]}">${corona}<div class="podium-avatar">${inicial}</div><div class="podium-info"><div class="podium-name">${persona.nombre.split(' ')[0]}</div><div class="podium-rol">${persona.rol}</div></div><div class="podium-xp">${persona.puntos || 0} XP</div></div>`;
         };
         podiumDiv.innerHTML = crearTarjeta(top3[1], 2) + crearTarjeta(top3[0], 1) + crearTarjeta(top3[2], 3);
     }
@@ -906,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') { renderGerencia(); cargarEmpleadosAdminXP(); } if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') { renderGerencia(); cargarEmpleadosAdminXP(); } if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); } if (target === 'admin-noti') { cargarUsuariosNoti(); }
         });
     });
 

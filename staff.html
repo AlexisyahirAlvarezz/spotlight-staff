@@ -48,16 +48,19 @@
             <a href="#" class="nav-link" data-target="tienda"><i class="fa-solid fa-store"></i> Tienda de Recompensas</a>
             <a href="#" class="nav-link" data-target="plantillas"><i class="fa-solid fa-layer-group"></i> Plantillas de Tareas</a>
             <a href="#" class="nav-link" data-target="wiki"><i class="fa-solid fa-book"></i> Wiki / Procesos</a>
-            
             <a href="#" class="nav-link" data-target="caja"><i class="fa-solid fa-gift"></i> Caja Misteriosa</a>
             <a href="#" class="nav-link" data-target="ruleta"><i class="fa-solid fa-dharmachakra"></i> Ruleta Diaria</a>
             <a href="#" class="nav-link" data-target="mockup"><i class="fa-solid fa-mobile-screen"></i> Simulador de Post</a>
-            <a href="#" class="nav-link" id="link-radar" data-target="radar" style="display: none;"><i class="fa-solid fa-satellite-dish"></i> Radar de Tendencias</a>
             
+            <!-- SECCIONES ADMINISTRATIVAS -->
+            <a href="#" class="nav-link" id="link-radar" data-target="radar" style="display: none;"><i class="fa-solid fa-satellite-dish"></i> Radar de Tendencias</a>
             <a href="#" class="nav-link" id="link-rrhh" data-target="rrhh" style="display: none;"><i class="fa-solid fa-chart-line"></i> Panel RRHH</a>
-            <a href="#" class="nav-link" id="link-entregas" data-target="entregas"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
             <a href="#" class="nav-link" id="link-gerencia" data-target="gerencia" style="display: none;"><i class="fa-solid fa-chart-pie"></i> Panel de Gerencia</a>
+            <a href="#" class="nav-link" id="link-admin-noti" data-target="admin-noti" style="display: none;"><i class="fa-solid fa-paper-plane"></i> Enviar Notificaciones</a>
             <a href="#" class="nav-link" id="link-boveda" data-target="boveda" style="display: none;"><i class="fa-solid fa-lock"></i> Bóveda de Accesos</a>
+            
+            <!-- MIS ENTREGAS (Visible para todos) -->
+            <a href="#" class="nav-link" id="link-entregas" data-target="entregas"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
         </nav>
         <div class="sidebar-footer">
             <a href="#" id="btnLogout" class="logout-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión</a>
@@ -85,7 +88,7 @@
             </div>
         </header>
 
-        <!-- ===== VISTA: INICIO (DASHBOARD + KANBAN) ===== -->
+        <!-- ===== VISTA: INICIO ===== -->
         <section id="view-inicio" class="view-section active">
             <div id="dailyQuote" class="daily-quote">
                 <i class="fa-solid fa-quote-left"></i>
@@ -126,7 +129,6 @@
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <input type="text" id="inputTarea" placeholder="Tarea..." style="flex: 2;">
                     <select id="inputAsignado" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid rgba(255,255,255,0.1);">
-                        <!-- AQUÍ ESTABAN LOS NOMBRES MAL, AHORA ESTÁN COMPLETOS PARA QUE COINCIDAN CON LA BD -->
                         <option value="Johan Sebastian">Johan Sebastian</option>
                         <option value="Brayan Alexander">Brayan Alexander</option>
                         <option value="Beatriz Ortiz">Beatriz Ortiz</option>
@@ -267,13 +269,8 @@
                 <div class="chart-box"><h3>Rendimiento</h3><canvas id="graficoTareas"></canvas></div>
                 <div class="chart-box"><h3>Finanzas</h3><canvas id="graficoPresupuesto"></canvas></div>
             </div>
-            <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Tareas Pendientes</h3>
-            <div class="table-responsive">
-                <table>
-                    <thead><tr><th>Tarea</th><th>Asignado</th><th>Proyecto</th><th>Estado</th></tr></thead>
-                    <tbody id="tablaAlertasGerencia"></tbody>
-                </table>
-                            <!-- NUEVO: ADMINISTRADOR DE PUNTOS XP -->
+
+            <!-- NUEVO: ADMINISTRADOR DE PUNTOS XP -->
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-bolt"></i> Administrador de Puntos</h3>
             <div class="form-tarea" style="flex-direction: column; max-width: 600px;">
                 <p style="color: #a0a0b8; font-size: 0.9rem;">Usa esto para dar o quitar XP manualmente por algún bono, ayuda extra o corrección.</p>
@@ -284,7 +281,33 @@
                     <input type="number" id="adminXPCantidad" placeholder="XP (Ej: 50)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
                 </div>
                 <button id="btnAdminXP" class="btn-primary" style="align-self: flex-end;">Aplicar Puntos</button>
-        
+            </div>
+
+            <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Tareas Pendientes</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead><tr><th>Tarea</th><th>Asignado</th><th>Proyecto</th><th>Estado</th></tr></thead>
+                    <tbody id="tablaAlertasGerencia"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ===== VISTA: ADMIN NOTIFICACIONES ===== -->
+        <section id="view-admin-noti" class="view-section" style="display: none;">
+            <h2>Centro de Notificaciones</h2>
+            <div class="info-banner"><i class="fa-solid fa-paper-plane" style="color: #3b82f6;"></i><div>Envía mensajes directos al celular de tus empleados. Les llegará una notificación push nativa y un aviso en la campanita.</div></div>
+            
+            <div class="form-tarea" style="flex-direction: column; max-width: 600px;">
+                <label style="color: #a0a0b8; font-size: 0.9rem;">¿Para quién es el mensaje?</label>
+                <select id="notiPara" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333; margin-bottom: 15px;">
+                    <option value="Todos">Todos los usuarios (Broadcast)</option>
+                    <!-- Los usuarios se cargarán aquí con JS -->
+                </select>
+                
+                <label style="color: #a0a0b8; font-size: 0.9rem;">Mensaje:</label>
+                <textarea id="notiMensaje" placeholder="Escribe el mensaje que quieres enviar..." rows="3" style="margin-bottom: 15px;"></textarea>
+                
+                <button id="btnEnviarNoti" class="btn-primary" style="align-self: flex-end;">Enviar Notificación</button>
             </div>
         </section>
 
