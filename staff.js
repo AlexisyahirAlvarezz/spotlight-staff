@@ -13,10 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const puedeVerGastos = esGerente || esFinanzas;
     const esMarketing = (rolStaff === "Gerente de Marketing");
     const esRRHH = (nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
-    const esDisenadora = (nombreStaff === "Maria Fernanda" || rolStaff.includes("Diseñadora"));
-
+    
+    // VISIBILIDAD DE MENÚS
     if (esGerente || esRRHH) document.getElementById('link-rrhh').style.display = 'flex';
-    if (esGerente || esDisenadora) document.getElementById('link-entregas').style.display = 'flex';
+    document.getElementById('link-entregas').style.display = 'flex'; // AHORA TODOS VEN "MIS ENTREGAS"
     if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
     
     if (esGerente) {
@@ -117,17 +117,28 @@ document.addEventListener('DOMContentLoaded', function() {
         'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' }, 'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
         'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' }, 'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
     };
+    
     function darPuntos(usuario, cantidad) {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
             if (!querySnapshot.empty) {
                 const docId = querySnapshot.docs[0].id; const data = querySnapshot.docs[0].data(); let puntosActuales = data.puntos || 0;
                 db.collection("directorio").doc(docId).update({ puntos: puntosActuales + cantidad }).then(() => { 
                     crearNotificacion(usuario, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
-                    if (usuario === nombreStaff) { renderDashboard(nombreStaff); } // Solo actualiza el dashboard si es el usuario activo
+                    
+                    // CORRECCIÓN: Actualizar la UI en memoria (el snapshot de Firestore lo hará de nuevo, pero esto asegura fluidez)
+                    const index = directorioDB.findIndex(p => p.nombre === usuario);
+                    if (index !== -1) directorioDB[index].puntos = puntosActuales + cantidad;
+                    
+                    renderDashboard(usuario);
+                    renderRRHH();
+                    renderHallDeLaFama();
+                    renderDirectorio();
+                    renderTienda();
                 });
             }
         });
     }
+
     function otorgarLogro(logro, usuario) {
         db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
             if (!querySnapshot.empty) {
@@ -174,106 +185,62 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
 
     function renderDashboard(usuarioActivo) {
-        // 1. Frase del día
         const diaDelAno = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
         const fraseHoy = frasesDelDia[diaDelAno % frasesDelDia.length];
         const quoteEl = document.getElementById('quoteText');
         if (quoteEl) quoteEl.textContent = fraseHoy;
 
-        // 2. Mi Nivel (Nuevos Rangos SP)
         const perfil = directorioDB.find(p => p.nombre === usuarioActivo);
         if (perfil) {
             const puntos = perfil.puntos || 0;
-            
-            let nivelActual = NIVELES_SP[0];
-            let nivelSiguiente = NIVELES_SP[1];
-            
-            for (let i = 0; i < NIVELES_SP.length; i++) {
-                if (puntos >= NIVELES_SP[i].xpMin) {
-                    nivelActual = NIVELES_SP[i];
-                    nivelSiguiente = NIVELES_SP[i + 1] || null;
-                }
-            }
-
-            const dashNivel = document.getElementById('dashNivel');
-            const dashXPText = document.getElementById('dashXPText');
-            const dashXPBar = document.getElementById('dashXPBar');
-
+            let nivelActual = NIVELES_SP[0]; let nivelSiguiente = NIVELES_SP[1];
+            for (let i = 0; i < NIVELES_SP.length; i++) { if (puntos >= NIVELES_SP[i].xpMin) { nivelActual = NIVELES_SP[i]; nivelSiguiente = NIVELES_SP[i + 1] || null; } }
+            const dashNivel = document.getElementById('dashNivel'); const dashXPText = document.getElementById('dashXPText'); const dashXPBar = document.getElementById('dashXPBar');
             if (dashNivel) dashNivel.textContent = nivelActual.nombre;
-            
             if (dashXPText) {
                 if (nivelSiguiente) {
                     dashXPText.textContent = `${puntos} / ${nivelSiguiente.xpMin} XP`;
                     const progreso = ((puntos - nivelActual.xpMin) / (nivelSiguiente.xpMin - nivelActual.xpMin)) * 100;
                     if (dashXPBar) dashXPBar.style.width = `${progreso}%`;
-                } else {
-                    dashXPText.textContent = `${puntos} XP (Nivel Máximo)`;
-                    if (dashXPBar) dashXPBar.style.width = `100%`;
-                }
+                } else { dashXPText.textContent = `${puntos} XP (Nivel Máximo)`; if (dashXPBar) dashXPBar.style.width = `100%`; }
             }
         }
 
-        // 3. Mis Próximas Tareas
         const misTareas = tareas.filter(t => t.asignado === usuarioActivo && t.estado !== 'completed').slice(0, 3);
         const listaTareas = document.getElementById('dashTareasList');
         if (listaTareas) {
             listaTareas.innerHTML = '';
-            if (misTareas.length === 0) {
-                listaTareas.innerHTML = '<li style="color: #666; font-size: 0.9rem;">¡Todo al día! No tienes tareas pendientes.</li>';
-            } else {
+            if (misTareas.length === 0) { listaTareas.innerHTML = '<li style="color: #666; font-size: 0.9rem;">¡Todo al día! No tienes tareas pendientes.</li>'; } 
+            else {
                 misTareas.forEach(t => {
-                    const colorTag = t.estado === 'pending' ? '#ef4444' : '#f7c948';
-                    const textoTag = t.estado === 'pending' ? 'Por Hacer' : 'En Proceso';
-                    listaTareas.innerHTML += `
-                        <li class="dash-task-item" onclick="abrirModalTarea('${t.id}')" style="cursor: pointer;">
-                            <span>${t.titulo}</span>
-                            <span class="tag" style="background: rgba(247, 201, 72, 0.1); color: ${colorTag}; border: 1px solid ${colorTag};">${textoTag}</span>
-                        </li>
-                    `;
+                    const colorTag = t.estado === 'pending' ? '#ef4444' : '#f7c948'; const textoTag = t.estado === 'pending' ? 'Por Hacer' : 'En Proceso';
+                    listaTareas.innerHTML += `<li class="dash-task-item" onclick="abrirModalTarea('${t.id}')" style="cursor: pointer;"><span>${t.titulo}</span><span class="tag" style="background: rgba(247, 201, 72, 0.1); color: ${colorTag}; border: 1px solid ${colorTag};">${textoTag}</span></li>`;
                 });
             }
         }
 
-        // 4. Último Anuncio
         const dashAnuncio = document.getElementById('dashAnuncio');
         if (dashAnuncio) {
             if (anunciosDB.length > 0) {
                 const ultimo = anunciosDB[0];
-                dashAnuncio.innerHTML = `
-                    <h4 style="color: #f3f4f6; font-size: 1rem; margin-bottom: 5px;">${ultimo.titulo}</h4>
-                    <p style="color: #9ca3af; font-size: 0.85rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${ultimo.mensaje}</p>
-                `;
-            } else {
-                dashAnuncio.innerHTML = '<p style="color: #666; font-size: 0.9rem;">No hay anuncios recientes.</p>';
-            }
+                dashAnuncio.innerHTML = `<h4 style="color: #f3f4f6; font-size: 0.95rem; margin-bottom: 5px;">${ultimo.titulo}</h4><p style="color: #9ca3af; font-size: 0.8rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${ultimo.mensaje}</p>`;
+            } else { dashAnuncio.innerHTML = '<p style="color: #666; font-size: 0.85rem;">No hay anuncios recientes.</p>'; }
         }
     }
 
     // ================= SIMULADOR DE POST (MOCKUP) =================
     window.previewMockup = function(event) {
         const input = event.target;
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('mockupImg').src = e.target.result; }
-            reader.readAsDataURL(input.files[0]);
-        }
+        if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById('mockupImg').src = e.target.result; }; reader.readAsDataURL(input.files[0]); }
     }
-    window.actualizarCaption = function() {
-        const text = document.getElementById('mockupCaption').value;
-        document.getElementById('mockupCaptionText').textContent = text || "Escribe algo aquí...";
-    }
+    window.actualizarCaption = function() { const text = document.getElementById('mockupCaption').value; document.getElementById('mockupCaptionText').textContent = text || "Escribe algo aquí..."; }
 
     // ================= CAJA MISTERIOSA =================
     window.verificarCaja = function() {
         const hoy = new Date().toDateString(); const ultimaApertura = localStorage.getItem('lootBox_' + nombreStaff);
         const status = document.getElementById('lootBoxStatus'); const icon = document.getElementById('lootBoxIcon');
-        if (hoy === ultimaApertura) {
-            if(status) status.textContent = "Vuelve mañana por otra recompensa.";
-            if(icon) { icon.style.opacity = '0.5'; icon.style.cursor = 'not-allowed'; icon.onclick = null; }
-        } else {
-            if(status) status.textContent = "¡Haz clic para abrir!";
-            if(icon) { icon.style.opacity = '1'; icon.style.cursor = 'pointer'; icon.onclick = window.abrirLootBox; }
-        }
+        if (hoy === ultimaApertura) { if(status) status.textContent = "Vuelve mañana por otra recompensa."; if(icon) { icon.style.opacity = '0.5'; icon.style.cursor = 'not-allowed'; icon.onclick = null; } } 
+        else { if(status) status.textContent = "¡Haz clic para abrir!"; if(icon) { icon.style.opacity = '1'; icon.style.cursor = 'pointer'; icon.onclick = window.abrirLootBox; } }
     }
     window.abrirLootBox = function() {
         const hoy = new Date().toDateString(); const recompensasPosibles = [10, 20, 30, 50, 100]; const puntosGanados = recompensasPosibles[Math.floor(Math.random() * recompensasPosibles.length)];
@@ -493,11 +460,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ================= MIS ENTREGAS =================
+    // ================= MIS ENTREGAS (AHORA PARA TODOS) =================
     window.renderEntregas = function() {
         const grid = document.getElementById('gridEntregas'); if (!grid) return; grid.innerHTML = '';
         let archivosSubidos = [];
-        tareas.forEach(t => { if (t.asignado === "Maria Fernanda" && t.archivos && t.archivos.length > 0) { t.archivos.forEach(a => { archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo, estado: a.estado || 'pendiente' }); }); } });
+        // Busca los archivos del usuario ACTUAL, no de Maria Fernanda
+        tareas.forEach(t => { 
+            if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) { 
+                t.archivos.forEach(a => { archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo, estado: a.estado || 'pendiente' }); }); 
+            } 
+        });
         if (archivosSubidos.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no has subido archivos a tus tareas.</p>'; return; }
         archivosSubidos.forEach(a => {
             const isImage = a.url.match(/\.(jpeg|jpg|gif|png)$/) != null; const preview = isImage ? `<img src="${a.url}" class="moodboard-img" style="height: 150px;">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;background:#1a1a24;font-size:3rem;height:150px;">📄</div>`;
@@ -739,11 +711,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (verSoloMisTareas && t.asignado !== nombreStaff) return;
             const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
-            const etiquetaXP = t.xp ? `<span class="xp-badge" style="padding: 2px 6px; font-size: 0.7rem;"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
+            const etiquetaXP = t.xp ? `<span class="xp-badge"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
             let etiquetaTiempo = '';
             if (t.estado === 'completed' && t.fechaCreacion && t.fechaFin) {
                 const diff = t.fechaFin - t.fechaCreacion; const dias = Math.floor(diff / (1000 * 60 * 60 * 24)); const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
-                etiquetaTiempo = `<span class="badge-estado badge-aprobado" style="margin-left:0; margin-top:5px; display:inline-block;"><i class="fa-solid fa-clock"></i> ${dias}d ${horas}h</span>`;
+                etiquetaTiempo = `<span class="badge-estado badge-aprobado" style="margin-left:0; display:inline-block; font-size:0.65rem;"><i class="fa-solid fa-clock"></i> ${dias}d ${horas}h</span>`;
             }
 
             let botonesAccion = '';
@@ -751,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (t.estado === 'progress') { const btnReabrir = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> Pausar</button>`; const btnTerminar = (esAsignado || esGerente) ? `<button class="btn-finish" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'completed')"><i class="fa-solid fa-check"></i> Terminar</button>` : ''; botonesAccion = btnReabrir + btnTerminar; } 
             else if (t.estado === 'completed') { botonesAccion = `<button class="btn-back" onclick="event.stopPropagation(); cambiarEstadoTarea('${t.id}', 'progress')"><i class="fa-solid fa-rotate-left"></i> Reabrir</button>`; if (esGerente) { botonesAccion += `<button class="btn-back" onclick="event.stopPropagation(); eliminarTarea('${t.id}')" style="flex: 0.5;"><i class="fa-solid fa-trash"></i></button>`; } }
             
-            const cardHTML = `<div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')"><h4>${t.titulo}</h4><p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p><div style="display:flex; gap: 10px; flex-wrap:wrap;">${etiquetaNota}${etiquetaXP}${etiquetaTiempo}</div><div class="kanban-actions">${botonesAccion}</div></div>`;
+            const cardHTML = `<div class="kanban-card ${t.estado}" onclick="abrirModalTarea('${t.id}')"><h4>${t.titulo}</h4><p>Asignado a: <strong>${t.asignado}</strong> <br> Proyecto: ${t.proyecto}</p><div style="display:flex; gap: 8px; flex-wrap:wrap; margin-bottom: 10px;">${etiquetaNota}${etiquetaXP}${etiquetaTiempo}</div><div class="kanban-actions">${botonesAccion}</div></div>`;
             if (t.estado === 'pending') colPending.innerHTML += cardHTML; else if (t.estado === 'progress') colProgress.innerHTML += cardHTML; else if (t.estado === 'completed') colCompleted.innerHTML += cardHTML;
         });
     }
