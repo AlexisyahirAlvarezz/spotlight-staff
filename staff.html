@@ -40,6 +40,7 @@
             <a href="#" class="nav-link" data-target="calendario"><i class="fa-solid fa-calendar"></i> Calendario</a>
             <a href="#" class="nav-link" data-target="examenes"><i class="fa-solid fa-file-signature"></i> Exámenes</a>
             <a href="#" class="nav-link" data-target="objetivos"><i class="fa-solid fa-bullseye"></i> Objetivos</a>
+            <a href="#" class="nav-link" data-target="ideas"><i class="fa-solid fa-lightbulb"></i> Bóveda de Ideas</a>
             <a href="#" class="nav-link" data-target="moodboard"><i class="fa-solid fa-images"></i> Muro de Inspiración</a>
             <a href="#" class="nav-link" data-target="bts"><i class="fa-solid fa-camera-retro"></i> Detrás de Cámaras</a>
             <a href="#" class="nav-link" data-target="anuncios"><i class="fa-solid fa-bullhorn"></i> Tablón de Anuncios</a>
@@ -146,6 +147,26 @@
                 <div class="kanban-column"><h3><i class="fa-solid fa-spinner"></i> En Proceso</h3><div class="kanban-items" id="kanban-progress"></div></div>
                 <div class="kanban-column"><h3><i class="fa-solid fa-check-circle"></i> Completadas</h3><div class="kanban-items" id="kanban-completed"></div></div>
             </div>
+        </section>
+
+        <!-- ===== VISTA: BÓVEDA DE IDEAS ===== -->
+        <section id="view-ideas" class="view-section" style="display: none;">
+            <div class="recent-tasks-header">
+                <h2>Bóveda de Ideas</h2>
+                <button id="btnMostrarFormIdea" class="btn-nueva-tarea" onclick="toggleForm('formNuevaIdea')"><i class="fa-solid fa-plus"></i> Proponer Idea</button>
+            </div>
+            <div class="info-banner"><i class="fa-solid fa-lightbulb" style="color: #f7c948;"></i><div>Comparte ideas para nuevos proyectos o videos. ¡Las más votadas podrán convertirse en tareas reales!</div></div>
+            
+            <div id="formNuevaIdea" class="form-tarea" style="display: none; flex-direction: column;">
+                <input type="text" id="ideaTitulo" placeholder="Título de la idea (Ej: Video de terror en POV)" style="font-weight: bold;">
+                <textarea id="ideaDesc" placeholder="Describe tu idea..." rows="3"></textarea>
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="color: #a0a0b8; font-size: 0.85rem;">Imagen de referencia (Opcional):</label>
+                    <input type="file" id="ideaFoto" accept="image/*" style="padding: 10px; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                </div>
+                <button id="btnGuardarIdea" class="btn-primary" style="align-self: flex-end;">Publicar Idea</button>
+            </div>
+            <div id="gridIdeas" class="moodboard-grid"></div>
         </section>
 
         <!-- ===== VISTA: CAJA MISTERIOSA ===== -->
@@ -301,7 +322,6 @@
                 <label style="color: #a0a0b8; font-size: 0.9rem;">¿Para quién es el mensaje?</label>
                 <select id="notiPara" style="padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333; margin-bottom: 15px;">
                     <option value="Todos">Todos los usuarios (Broadcast)</option>
-                    <!-- Los usuarios se cargarán aquí con JS -->
                 </select>
                 
                 <label style="color: #a0a0b8; font-size: 0.9rem;">Mensaje:</label>

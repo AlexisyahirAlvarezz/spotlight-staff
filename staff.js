@@ -14,10 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const esMarketing = (rolStaff === "Gerente de Marketing");
     const esRRHH = (nombreStaff === "Ximena Reyes" || nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
     
-    // Permisos generales
     if (esGerente || esRRHH) {
         document.getElementById('link-rrhh').style.display = 'flex';
-        if(document.getElementById('link-admin-noti')) document.getElementById('link-admin-noti').style.display = 'flex'; // NUEVO: Notificaciones para admins
+        if(document.getElementById('link-admin-noti')) document.getElementById('link-admin-noti').style.display = 'flex';
     }
     document.getElementById('link-entregas').style.display = 'flex'; 
     if (esGerente || esMarketing) document.getElementById('link-radar').style.display = 'flex';
@@ -39,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
 
-    // PEDIR PERMISO PARA NOTIFICACIONES NATIVAS
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
     }
@@ -92,24 +90,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const listaNotificaciones = document.getElementById('listaNotificaciones');
     const badge = document.getElementById('badgeNotificaciones');
 
-    db.collection("notificaciones").where("para", "==", nombreStaff).onSnapshot((snapshot) => {
+    db.collection("notificaciones").onSnapshot((snapshot) => {
         const cambios = snapshot.docChanges();
-        notificaciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp);
+        const todasNotis = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Filtro a prueba de mayúsculas/minúsculas
+        notificaciones = todasNotis.filter(n => n.para.trim().toLowerCase() === nombreStaff.trim().toLowerCase())
+                                    .sort((a,b) => b.timestamp - a.timestamp);
+        
         renderNotificaciones();
         
         cambios.forEach((cambio) => {
             if (cambio.type === "added") {
                 const nuevaNoti = cambio.doc.data();
-                if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { 
-                    mostrarToast(nuevaNoti.mensaje); 
-                    playNotificationSound(); 
-                    
-                    // Notificación Nativa en el Celular
-                    if (Notification.permission === "granted") {
-                        new Notification("SPOTLIGHT", { 
-                            body: nuevaNoti.mensaje, 
-                            icon: "logo-blanco.jpg" 
-                        });
+                if (nuevaNoti.para.trim().toLowerCase() === nombreStaff.trim().toLowerCase()) {
+                    if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { 
+                        mostrarToast(nuevaNoti.mensaje); 
+                        playNotificationSound(); 
+                        if (Notification.permission === "granted") {
+                            new Notification("SPOTLIGHT", { body: nuevaNoti.mensaje, icon: "logo-blanco.jpg" });
+                        }
                     }
                 }
             }
@@ -134,8 +134,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= SISTEMA DE LOGROS Y XP =================
     const DICCIONARIO_LOGROS = {
-        'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' }, 'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
-        'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' }, 'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
+        'El Incansable': { icono: '🥇', desc: 'Completar 10 tareas' }, 
+        'El Creativo': { icono: '🎬', desc: 'Subir archivos a 5 tareas' },
+        'El Cerebrito': { icono: '🧠', desc: 'Sacar 100% en un examen' }, 
+        'El Inspirador': { icono: '🖼️', desc: 'Subir 5 imágenes al Moodboard' }
     };
     
     function darPuntos(usuario, cantidad) {
@@ -143,25 +145,16 @@ document.addEventListener('DOMContentLoaded', function() {
             let usuarioEncontrado = null;
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                // Comparación flexible: ignora mayúsculas y espacios extra
-                if (data.nombre.trim().toLowerCase() === usuario.trim().toLowerCase()) {
-                    usuarioEncontrado = { id: doc.id, ...data };
-                }
+                if (data.nombre.trim().toLowerCase() === usuario.trim().toLowerCase()) { usuarioEncontrado = { id: doc.id, ...data }; }
             });
 
             if (usuarioEncontrado) {
                 let puntosActuales = usuarioEncontrado.puntos || 0;
                 db.collection("directorio").doc(usuarioEncontrado.id).update({ puntos: puntosActuales + cantidad }).then(() => { 
                     crearNotificacion(usuarioEncontrado.nombre, `¡Has ganado +${cantidad} XP! Sigue así. ⚡`); 
-                    
                     const index = directorioDB.findIndex(p => p.id === usuarioEncontrado.id);
                     if (index !== -1) directorioDB[index].puntos = puntosActuales + cantidad;
-                    
-                    renderDashboard(nombreStaff);
-                    renderRRHH();
-                    renderHallDeLaFama();
-                    renderDirectorio();
-                    renderTienda();
+                    renderDashboard(nombreStaff); renderRRHH(); renderHallDeLaFama(); renderDirectorio(); renderTienda();
                 });
             }
         });
@@ -191,7 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= VARIABLES GLOBALES =================
     let directorioDB = [], resultadosDB = [], tareas = [], proyectosDB = [], examenesDB = [], moodboardDB = [], anunciosDB = [], eventos = [];
-    let tiendaDB = [], canjesDB = [], plantillasDB = [], bovedaDB = [], btsDB = [], wikiDB = [], radarDB = [];
+    let tiendaDB = [], canjesDB = [], plantillasDB = [], bovedaDB = [], btsDB = [], wikiDB = [], radarDB = [], ideasDB = [];
     let graficoTareasInstance = null, graficoPresupuestoInstance = null;
     let tareaActivaId = null, proyectoActivoId = null, examenActivoId = null, imgPlantillaActiva = "";
 
@@ -215,7 +208,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const quoteEl = document.getElementById('quoteText');
         if (quoteEl) quoteEl.textContent = fraseHoy;
 
-        // CORRECCIÓN CLAVE DE XP: Búsqueda flexible
         const perfil = directorioDB.find(p => p.nombre.trim().toLowerCase() === usuarioActivo.trim().toLowerCase());
         
         if (perfil) {
@@ -262,35 +254,96 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ================= BÓVEDA DE IDEAS =================
+    db.collection("ideas").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+        ideasDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => (b.votos || 0) - (a.votos || 0));
+        renderIdeas();
+    });
+
+    window.renderIdeas = function() {
+        const grid = document.getElementById('gridIdeas'); if (!grid) return; grid.innerHTML = '';
+        if (ideasDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay ideas. ¡Sé el primero en proponer una!</p>'; return; }
+        
+        ideasDB.forEach(idea => {
+            const isImage = idea.imagen && idea.imagen.length > 0;
+            const imgHTML = isImage ? `<img src="${idea.imagen}" class="moodboard-img">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;background:#1a1a24;font-size:3rem;">💡</div>`;
+            const btnConvertir = esGerente ? `<button class="btn-usar-plantilla" style="margin-top:5px; background:#22c55e;" onclick="convertirIdeaATarea('${idea.id}')"><i class="fa-solid fa-check"></i> Convertir a Tarea</button>` : '';
+            const btnEliminar = esGerente || idea.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarIdea('${idea.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+
+            grid.innerHTML += `
+                <div class="moodboard-card">
+                    ${btnEliminar}
+                    ${imgHTML}
+                    <div class="moodboard-info">
+                        <div class="moodboard-titulo">${idea.titulo}</div>
+                        <div class="moodboard-autor" style="margin-bottom: 10px;">Por: ${idea.autor}</div>
+                        <p style="color:#9ca3af; font-size:0.85rem; margin-bottom:15px;">${idea.descripcion}</p>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <button class="btn-primary" style="flex:1; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444;" onclick="votarIdea('${idea.id}', ${idea.votos || 0})">
+                                <i class="fa-solid fa-heart"></i> ${idea.votos || 0} Votos
+                            </button>
+                        </div>
+                        ${btnConvertir}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    window.votarIdea = function(id, votosActuales) { db.collection("ideas").doc(id).update({ votos: votosActuales + 1 }); }
+    window.eliminarIdea = function(id) { if (confirm("¿Eliminar esta idea?")) { db.collection("ideas").doc(id).delete(); } }
+
+    window.convertirIdeaATarea = function(id) {
+        const idea = ideasDB.find(i => i.id === id); if (!idea) return;
+        document.getElementById('inputTarea').value = idea.titulo;
+        document.getElementById('inputDescripcionTarea').value = idea.descripcion + " (Idea propuesta por: " + idea.autor + ")";
+        document.getElementById('inputProyecto').value = "Idea";
+        if (idea.imagen) { imgPlantillaActiva = idea.imagen; }
+        document.getElementById('formNuevaTarea').style.display = 'flex';
+        document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none'); document.getElementById('view-inicio').style.display = 'block';
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelector('.nav-link[data-target="inicio"]').classList.add('active');
+        alert("Idea cargada en el formulario. Asigna un responsable y una fecha para crearla.");
+    }
+
+    if(document.getElementById('btnGuardarIdea')) {
+        document.getElementById('btnGuardarIdea').addEventListener('click', async () => {
+            const titulo = document.getElementById('ideaTitulo').value; const descripcion = document.getElementById('ideaDesc').value; const fileInput = document.getElementById('ideaFoto'); const boton = document.getElementById('btnGuardarIdea');
+            if (titulo && descripcion) {
+                let imagenUrl = "";
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0]; const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                    boton.innerHTML = "Subiendo..."; boton.disabled = true;
+                    try { const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData }); const data = await response.json(); if (data.secure_url) { imagenUrl = data.secure_url; } } catch (error) { console.log(error); }
+                    boton.innerHTML = "Publicar Idea"; boton.disabled = false;
+                }
+                db.collection("ideas").add({ titulo, descripcion, imagen: imagenUrl, autor: nombreStaff, votos: 0, timestamp: Date.now() }).then(() => {
+                    document.getElementById('formNuevaIdea').style.display = 'none';
+                    document.getElementById('ideaTitulo').value = ''; document.getElementById('ideaDesc').value = ''; fileInput.value = '';
+                });
+            } else { alert("El título y la descripción son obligatorios."); }
+        });
+    }
+
     // ================= ADMINISTRADOR DE NOTIFICACIONES =================
     window.cargarUsuariosNoti = function() {
-        const select = document.getElementById('notiPara');
-        if (!select) return;
+        const select = document.getElementById('notiPara'); if (!select) return;
         select.innerHTML = '<option value="Todos">Todos los usuarios (Broadcast)</option>';
-        directorioDB.forEach(p => {
-            select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`;
-        });
+        directorioDB.forEach(p => { select.innerHTML += `<option value="${p.nombre}">${p.nombre}</option>`; });
     }
 
     if(document.getElementById('btnEnviarNoti')) {
         document.getElementById('btnEnviarNoti').addEventListener('click', () => {
-            const para = document.getElementById('notiPara').value;
-            const mensaje = document.getElementById('notiMensaje').value;
-
+            const para = document.getElementById('notiPara').value; const mensaje = document.getElementById('notiMensaje').value;
             if (mensaje) {
                 if (para === "Todos") {
-                    directorioDB.forEach(p => {
-                        crearNotificacion(p.nombre, `📢 ANUNCIO: ${mensaje}`);
-                    });
+                    directorioDB.forEach(p => { crearNotificacion(p.nombre, `📢 ANUNCIO: ${mensaje}`); });
                     alert("Notificación enviada a todos.");
                 } else {
                     crearNotificacion(para, `📢 Mensaje: ${mensaje}`);
                     alert(`Notificación enviada a ${para}.`);
                 }
                 document.getElementById('notiMensaje').value = '';
-            } else {
-                alert("Escribe un mensaje.");
-            }
+            } else { alert("Escribe un mensaje."); }
         });
     }
 
@@ -482,12 +535,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ================= PANEL DE GERENCIA Y ADMIN XP =================
     window.cargarEmpleadosAdminXP = function() {
-        const select = document.getElementById('adminXPEmpleado');
-        if (!select) return;
+        const select = document.getElementById('adminXPEmpleado'); if (!select) return;
         select.innerHTML = '<option value="">Selecciona un empleado...</option>';
-        directorioDB.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.nombre} (${p.puntos || 0} XP)</option>`;
-        });
+        directorioDB.forEach(p => { select.innerHTML += `<option value="${p.id}">${p.nombre} (${p.puntos || 0} XP)</option>`; });
     }
 
     window.renderGerencia = function() {
@@ -618,7 +668,7 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("directorio").onSnapshot((snapshot) => {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); renderDashboard(nombreStaff); verificarCumpleanos();
-        cargarUsuariosNoti(); // Recarga la lista de usuarios en el panel de notificaciones
+        cargarUsuariosNoti();
     });
     function verificarCumpleanos() {
         const hoy = new Date(); const mesHoy = hoy.getMonth() + 1; const diaHoy = hoy.getDate();
@@ -931,7 +981,7 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault(); document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none');
             this.classList.add('active'); const target = this.getAttribute('data-target'); document.getElementById('view-' + target).style.display = 'block';
-            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') { renderGerencia(); cargarEmpleadosAdminXP(); } if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); } if (target === 'admin-noti') { cargarUsuariosNoti(); }
+            if (target === 'calendario') renderCalendario(); if (target === 'examenes') renderExamenes(); if (target === 'anuncios') renderAnuncios(); if (target === 'directorio') renderDirectorio(); if (target === 'hall') renderHallDeLaFama(); if (target === 'objetivos') renderObjetivos(); if (target === 'moodboard') renderMoodboard(); if (target === 'rrhh') renderRRHH(); if (target === 'entregas') renderEntregas(); if (target === 'gerencia') { renderGerencia(); cargarEmpleadosAdminXP(); } if (target === 'tienda') { renderTienda(); renderAdminCanjes(); } if (target === 'plantillas') { renderPlantillas(); } if (target === 'boveda') { renderBoveda(); } if (target === 'wiki') { renderWiki(); } if (target === 'bts') { renderBTS(); } if (target === 'radar') { renderRadar(); } if (target === 'caja') { verificarCaja(); } if (target === 'ruleta') { document.getElementById('ruletaResultado').textContent = ''; } if (target === 'inicio') { renderDashboard(nombreStaff); } if (target === 'admin-noti') { cargarUsuariosNoti(); } if (target === 'ideas') { renderIdeas(); }
         });
     });
 
