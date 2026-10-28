@@ -8,11 +8,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('avatarLetra').textContent = nombreStaff.charAt(0).toUpperCase();
     document.getElementById('rolStaff').textContent = rolStaff;
 
+    // FUNCIÓN MÁGICA PARA IGNORAR TILDES, MAYÚSCULAS Y ESPACIOS
+    function normalizarTexto(texto) {
+        if (!texto) return "";
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    }
+
     const esGerente = (rolStaff === "Gerente General" || rolStaff === "Gerente de Marketing");
-    const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || nombreStaff === "Jair Lopez" || nombreStaff === "Jair");
+    const esFinanzas = (rolStaff === "Jefe de Finanzas" || rolStaff === "Jefa de Finanzas" || normalizarTexto(nombreStaff) === normalizarTexto("Jair Lopez") || normalizarTexto(nombreStaff) === normalizarTexto("Jair"));
     const puedeVerGastos = esGerente || esFinanzas;
     const esMarketing = (rolStaff === "Gerente de Marketing");
-    const esRRHH = (nombreStaff === "Ximena Reyes" || nombreStaff === "Ximena" || rolStaff.includes("Recursos Humanos"));
+    const esRRHH = (normalizarTexto(nombreStaff) === normalizarTexto("Ximena Reyes") || normalizarTexto(nombreStaff) === normalizarTexto("Ximena") || rolStaff.includes("Recursos Humanos"));
     
     if (esGerente || esRRHH) {
         document.getElementById('link-rrhh').style.display = 'flex';
@@ -36,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (esGerente || esFinanzas) document.getElementById('link-boveda').style.display = 'flex';
 
-    if (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz" || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
+    if (normalizarTexto(nombreStaff) === normalizarTexto("Beatriz Ortiz") || normalizarTexto(nombreStaff) === normalizarTexto("Beatriz") || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
 
     if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
         Notification.requestPermission();
@@ -94,8 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const cambios = snapshot.docChanges();
         const todasNotis = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Filtro a prueba de mayúsculas/minúsculas
-        notificaciones = todasNotis.filter(n => n.para.trim().toLowerCase() === nombreStaff.trim().toLowerCase())
+        // Filtro a prueba de tildes y mayúsculas
+        notificaciones = todasNotis.filter(n => normalizarTexto(n.para) === normalizarTexto(nombreStaff))
                                     .sort((a,b) => b.timestamp - a.timestamp);
         
         renderNotificaciones();
@@ -103,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cambios.forEach((cambio) => {
             if (cambio.type === "added") {
                 const nuevaNoti = cambio.doc.data();
-                if (nuevaNoti.para.trim().toLowerCase() === nombreStaff.trim().toLowerCase()) {
+                if (normalizarTexto(nuevaNoti.para) === normalizarTexto(nombreStaff)) {
                     if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { 
                         mostrarToast(nuevaNoti.mensaje); 
                         playNotificationSound(); 
@@ -145,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             let usuarioEncontrado = null;
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.nombre.trim().toLowerCase() === usuario.trim().toLowerCase()) { usuarioEncontrado = { id: doc.id, ...data }; }
+                if (normalizarTexto(data.nombre) === normalizarTexto(usuario)) { usuarioEncontrado = { id: doc.id, ...data }; }
             });
 
             if (usuarioEncontrado) {
@@ -161,25 +167,36 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function otorgarLogro(logro, usuario) {
-        db.collection("directorio").where("nombre", "==", usuario).get().then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const docId = querySnapshot.docs[0].id; const data = querySnapshot.docs[0].data(); let logrosActuales = data.logros || [];
+        db.collection("directorio").get().then((querySnapshot) => {
+            let usuarioEncontrado = null;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (normalizarTexto(data.nombre) === normalizarTexto(usuario)) { usuarioEncontrado = { id: doc.id, ...data }; }
+            });
+
+            if (usuarioEncontrado) {
+                let logrosActuales = usuarioEncontrado.logros || [];
                 if (!logrosActuales.includes(logro)) {
-                    logrosActuales.push(logro); db.collection("directorio").doc(docId).update({ logros: logrosActuales }).then(() => {
-                        crearNotificacion(usuario, `¡Has desbloqueado la medalla: ${logro}! ${DICCIONARIO_LOGROS[logro].icono}`);
-                        if (usuario === nombreStaff) { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
+                    logrosActuales.push(logro); 
+                    db.collection("directorio").doc(usuarioEncontrado.id).update({ logros: logrosActuales }).then(() => {
+                        crearNotificacion(usuarioEncontrado.nombre, `¡Has desbloqueado la medalla: ${logro}! ${DICCIONARIO_LOGROS[logro].icono}`);
+                        if (normalizarTexto(usuarioEncontrado.nombre) === normalizarTexto(nombreStaff)) { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
                     });
                 }
             }
         });
     }
+
     function evaluarLogros() {
         let tareasCompletadas = 0; let tareasConArchivos = 0;
-        tareas.forEach(t => { if (t.asignado === nombreStaff && t.estado === 'completed') tareasCompletadas++; if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) tareasConArchivos++; });
+        tareas.forEach(t => { 
+            if (normalizarTexto(t.asignado) === normalizarTexto(nombreStaff) && t.estado === 'completed') tareasCompletadas++; 
+            if (normalizarTexto(t.asignado) === normalizarTexto(nombreStaff) && t.archivos && t.archivos.length > 0) tareasConArchivos++; 
+        });
         if (tareasCompletadas >= 10) otorgarLogro('El Incansable', nombreStaff);
         if (tareasConArchivos >= 5) otorgarLogro('El Creativo', nombreStaff);
-        if (resultadosDB.some(r => r.alumno === nombreStaff && r.porcentaje === 100)) otorgarLogro('El Cerebrito', nombreStaff);
-        if (moodboardDB.filter(m => m.autor === nombreStaff).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
+        if (resultadosDB.some(r => normalizarTexto(r.alumno) === normalizarTexto(nombreStaff) && r.porcentaje === 100)) otorgarLogro('El Cerebrito', nombreStaff);
+        if (moodboardDB.filter(m => normalizarTexto(m.autor) === normalizarTexto(nombreStaff)).length >= 5) otorgarLogro('El Inspirador', nombreStaff);
     }
 
     // ================= VARIABLES GLOBALES =================
@@ -208,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const quoteEl = document.getElementById('quoteText');
         if (quoteEl) quoteEl.textContent = fraseHoy;
 
-        const perfil = directorioDB.find(p => p.nombre.trim().toLowerCase() === usuarioActivo.trim().toLowerCase());
+        const perfil = directorioDB.find(p => normalizarTexto(p.nombre) === normalizarTexto(usuarioActivo));
         
         if (perfil) {
             const puntos = perfil.puntos || 0;
@@ -232,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const misTareas = tareas.filter(t => t.asignado === usuarioActivo && t.estado !== 'completed').slice(0, 3);
+        const misTareas = tareas.filter(t => normalizarTexto(t.asignado) === normalizarTexto(usuarioActivo) && t.estado !== 'completed').slice(0, 3);
         const listaTareas = document.getElementById('dashTareasList');
         if (listaTareas) {
             listaTareas.innerHTML = '';
@@ -252,76 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 dashAnuncio.innerHTML = `<h4 style="color: #f3f4f6; font-size: 0.95rem; margin-bottom: 5px;">${ultimo.titulo}</h4><p style="color: #9ca3af; font-size: 0.8rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${ultimo.mensaje}</p>`;
             } else { dashAnuncio.innerHTML = '<p style="color: #666; font-size: 0.85rem;">No hay anuncios recientes.</p>'; }
         }
-    }
-
-    // ================= BÓVEDA DE IDEAS =================
-    db.collection("ideas").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-        ideasDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => (b.votos || 0) - (a.votos || 0));
-        renderIdeas();
-    });
-
-    window.renderIdeas = function() {
-        const grid = document.getElementById('gridIdeas'); if (!grid) return; grid.innerHTML = '';
-        if (ideasDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay ideas. ¡Sé el primero en proponer una!</p>'; return; }
-        
-        ideasDB.forEach(idea => {
-            const isImage = idea.imagen && idea.imagen.length > 0;
-            const imgHTML = isImage ? `<img src="${idea.imagen}" class="moodboard-img">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;background:#1a1a24;font-size:3rem;">💡</div>`;
-            const btnConvertir = esGerente ? `<button class="btn-usar-plantilla" style="margin-top:5px; background:#22c55e;" onclick="convertirIdeaATarea('${idea.id}')"><i class="fa-solid fa-check"></i> Convertir a Tarea</button>` : '';
-            const btnEliminar = esGerente || idea.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarIdea('${idea.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
-
-            grid.innerHTML += `
-                <div class="moodboard-card">
-                    ${btnEliminar}
-                    ${imgHTML}
-                    <div class="moodboard-info">
-                        <div class="moodboard-titulo">${idea.titulo}</div>
-                        <div class="moodboard-autor" style="margin-bottom: 10px;">Por: ${idea.autor}</div>
-                        <p style="color:#9ca3af; font-size:0.85rem; margin-bottom:15px;">${idea.descripcion}</p>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <button class="btn-primary" style="flex:1; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444;" onclick="votarIdea('${idea.id}', ${idea.votos || 0})">
-                                <i class="fa-solid fa-heart"></i> ${idea.votos || 0} Votos
-                            </button>
-                        </div>
-                        ${btnConvertir}
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    window.votarIdea = function(id, votosActuales) { db.collection("ideas").doc(id).update({ votos: votosActuales + 1 }); }
-    window.eliminarIdea = function(id) { if (confirm("¿Eliminar esta idea?")) { db.collection("ideas").doc(id).delete(); } }
-
-    window.convertirIdeaATarea = function(id) {
-        const idea = ideasDB.find(i => i.id === id); if (!idea) return;
-        document.getElementById('inputTarea').value = idea.titulo;
-        document.getElementById('inputDescripcionTarea').value = idea.descripcion + " (Idea propuesta por: " + idea.autor + ")";
-        document.getElementById('inputProyecto').value = "Idea";
-        if (idea.imagen) { imgPlantillaActiva = idea.imagen; }
-        document.getElementById('formNuevaTarea').style.display = 'flex';
-        document.querySelectorAll('.view-section').forEach(s => s.style.display = 'none'); document.getElementById('view-inicio').style.display = 'block';
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelector('.nav-link[data-target="inicio"]').classList.add('active');
-        alert("Idea cargada en el formulario. Asigna un responsable y una fecha para crearla.");
-    }
-
-    if(document.getElementById('btnGuardarIdea')) {
-        document.getElementById('btnGuardarIdea').addEventListener('click', async () => {
-            const titulo = document.getElementById('ideaTitulo').value; const descripcion = document.getElementById('ideaDesc').value; const fileInput = document.getElementById('ideaFoto'); const boton = document.getElementById('btnGuardarIdea');
-            if (titulo && descripcion) {
-                let imagenUrl = "";
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0]; const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-                    boton.innerHTML = "Subiendo..."; boton.disabled = true;
-                    try { const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData }); const data = await response.json(); if (data.secure_url) { imagenUrl = data.secure_url; } } catch (error) { console.log(error); }
-                    boton.innerHTML = "Publicar Idea"; boton.disabled = false;
-                }
-                db.collection("ideas").add({ titulo, descripcion, imagen: imagenUrl, autor: nombreStaff, votos: 0, timestamp: Date.now() }).then(() => {
-                    document.getElementById('formNuevaIdea').style.display = 'none';
-                    document.getElementById('ideaTitulo').value = ''; document.getElementById('ideaDesc').value = ''; fileInput.value = '';
-                });
-            } else { alert("El título y la descripción son obligatorios."); }
-        });
     }
 
     // ================= ADMINISTRADOR DE NOTIFICACIONES =================
@@ -426,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!gridBTS) return; gridBTS.innerHTML = '';
         if (btsDB.length === 0) { gridBTS.innerHTML = '<p style="color:#666;">Aún no hay fotos. ¡Sube la primera!</p>'; return; }
         btsDB.forEach(img => {
-            const botonEliminar = esGerente || img.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarBTS('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+            const botonEliminar = esGerente || normalizarTexto(img.autor) === normalizarTexto(nombreStaff) ? `<button class="moodboard-delete" onclick="eliminarBTS('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             gridBTS.innerHTML += `<div class="moodboard-card">${botonEliminar}<img src="${img.url}" class="moodboard-img" alt="BTS"><div class="moodboard-info"><div class="moodboard-titulo">${img.titulo}</div><div class="moodboard-autor">Subido por: ${img.autor}</div></div></div>`;
         });
     }
@@ -501,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
     db.collection("canjes").onSnapshot((snapshot) => { canjesDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); renderAdminCanjes(); });
     window.renderTienda = function() {
         const grid = document.getElementById('gridTienda'); if (!grid) return; grid.innerHTML = '';
-        const miPerfil = directorioDB.find(p => p.nombre === nombreStaff); const misPuntos = miPerfil ? (miPerfil.puntos || 0) : 0;
+        const miPerfil = directorioDB.find(p => normalizarTexto(p.nombre) === normalizarTexto(nombreStaff)); const misPuntos = miPerfil ? (miPerfil.puntos || 0) : 0;
         const saldoEl = document.getElementById('saldoXP'); if (saldoEl) saldoEl.textContent = `${misPuntos} XP`;
         tiendaDB.forEach(r => {
             const puedePagar = misPuntos >= r.costo; const botonEliminar = esGerente ? `<button class="btn-eliminar" onclick="eliminarRecompensa('${r.id}')" style="position: absolute; top: 10px; right: 10px; padding: 5px 10px;"><i class="fa-solid fa-trash"></i></button>` : '';
@@ -511,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('btnGuardarRecompensa')) { document.getElementById('btnGuardarRecompensa').addEventListener('click', () => { const titulo = document.getElementById('tiendaTitulo').value; const costo = parseInt(document.getElementById('tiendaCosto').value); const icono = document.getElementById('tiendaIcono').value || '🎁'; if (titulo && costo > 0) { db.collection("tienda").add({ titulo, costo, icono }).then(() => { document.getElementById('formNuevaRecompensa').style.display = 'none'; document.getElementById('tiendaTitulo').value = ''; document.getElementById('tiendaCosto').value = ''; document.getElementById('tiendaIcono').value = ''; alert("¡Recompensa añadida!"); }); } else { alert("Escribe un título y un costo mayor a 0."); } }); }
     window.eliminarRecompensa = function(id) { if (confirm("¿Eliminar esta recompensa de la tienda?")) { db.collection("tienda").doc(id).delete(); } };
     window.canjearRecompensa = function(id, titulo, costo) {
-        const miPerfil = directorioDB.find(p => p.nombre === nombreStaff); if (!miPerfil || (miPerfil.puntos || 0) < costo) { alert("No tienes suficientes XP."); return; }
+        const miPerfil = directorioDB.find(p => normalizarTexto(p.nombre) === normalizarTexto(nombreStaff)); if (!miPerfil || (miPerfil.puntos || 0) < costo) { alert("No tienes suficientes XP."); return; }
         if(confirm(`¿Canjear "${titulo}" por ${costo} XP?`)) {
             db.collection("directorio").doc(miPerfil.id).update({ puntos: (miPerfil.puntos || 0) - costo }).then(() => {
                 db.collection("canjes").add({ empleado: nombreStaff, recompensa: titulo, costo: costo, estado: 'pendiente', timestamp: Date.now() }).then(() => {
@@ -562,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const canvasTareas = document.getElementById('graficoTareas'); const canvasPresupuesto = document.getElementById('graficoPresupuesto');
         if (canvasTareas && canvasPresupuesto) {
             if (graficoTareasInstance) graficoTareasInstance.destroy();
-            const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); const tareasCompletadasPorPersona = directorioDB.map(p => tareas.filter(t => t.asignado === p.nombre && t.estado === 'completed').length);
+            const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); const tareasCompletadasPorPersona = directorioDB.map(p => tareas.filter(t => normalizarTexto(t.asignado) === normalizarTexto(p.nombre) && t.estado === 'completed').length);
             graficoTareasInstance = new Chart(canvasTareas, { type: 'bar', data: { labels: nombres, datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } } });
             if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
             graficoPresupuestoInstance = new Chart(canvasPresupuesto, { type: 'doughnut', data: { labels: ['Gastado', 'Disponible'], datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
@@ -595,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const tbody = document.getElementById('tablaRRHH'); if (!tbody) return; tbody.innerHTML = '';
         directorioDB.forEach(persona => {
             const medallas = persona.logros ? persona.logros.length : 0; const puntos = persona.puntos || 0;
-            const examenesPersona = resultadosDB.filter(r => r.alumno === persona.nombre); let promedio = 0;
+            const examenesPersona = resultadosDB.filter(r => normalizarTexto(r.alumno) === normalizarTexto(persona.nombre)); let promedio = 0;
             if (examenesPersona.length > 0) { const suma = examenesPersona.reduce((acc, curr) => acc + curr.porcentaje, 0); promedio = Math.round(suma / examenesPersona.length); }
             const colorPromedio = promedio >= 70 ? '#22c55e' : (promedio > 0 ? '#ef4444' : '#9ca3af');
             tbody.innerHTML += `<tr style="border-bottom: 1px solid #2a2a3a;"><td style="padding: 15px; color: white; font-weight: bold;">${persona.nombre}</td><td style="padding: 15px; color: #9ca3af;">${persona.rol}</td><td style="padding: 15px; font-weight: bold; color: #3b82f6;">${puntos} XP</td><td style="padding: 15px; font-size: 1.2rem;">${medallas} 🏅</td><td style="padding: 15px; font-weight: bold; color: ${colorPromedio};">${promedio}%</td></tr>`;
@@ -607,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const grid = document.getElementById('gridEntregas'); if (!grid) return; grid.innerHTML = '';
         let archivosSubidos = [];
         tareas.forEach(t => { 
-            if (t.asignado === nombreStaff && t.archivos && t.archivos.length > 0) { 
+            if (normalizarTexto(t.asignado) === normalizarTexto(nombreStaff) && t.archivos && t.archivos.length > 0) { 
                 t.archivos.forEach(a => { archivosSubidos.push({ nombre: a.nombre, url: a.url, tarea: t.titulo, estado: a.estado || 'pendiente' }); }); 
             } 
         });
@@ -626,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!gridMoodboard) return; gridMoodboard.innerHTML = '';
         if (moodboardDB.length === 0) { gridMoodboard.innerHTML = '<p style="color:#666;">El muro está vacío.</p>'; return; }
         moodboardDB.forEach(img => {
-            const botonEliminar = esGerente || img.autor === nombreStaff ? `<button class="moodboard-delete" onclick="eliminarMoodboard('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+            const botonEliminar = esGerente || normalizarTexto(img.autor) === normalizarTexto(nombreStaff) ? `<button class="moodboard-delete" onclick="eliminarMoodboard('${img.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
             gridMoodboard.innerHTML += `<div class="moodboard-card">${botonEliminar}<img src="${img.url}" class="moodboard-img" alt="Referencia"><div class="moodboard-info"><div class="moodboard-titulo">${img.titulo}</div><div class="moodboard-autor">Subido por: ${img.autor}</div></div></div>`;
         });
     }
@@ -848,10 +795,10 @@ document.addEventListener('DOMContentLoaded', function() {
     window.renderTareas = function() {
         const colPending = document.getElementById('kanban-pending'); const colProgress = document.getElementById('kanban-progress'); const colCompleted = document.getElementById('kanban-completed');
         if(!colPending) return; colPending.innerHTML = ''; colProgress.innerHTML = ''; colCompleted.innerHTML = '';
-        const filtroActivo = document.getElementById('checkFiltroMisTareas') && document.getElementById('checkFiltroMisTareas').checked; const esBeatriz = (nombreStaff === "Beatriz Ortiz" || nombreStaff === "Beatriz"); const verSoloMisTareas = esBeatriz || filtroActivo;
+        const filtroActivo = document.getElementById('checkFiltroMisTareas') && document.getElementById('checkFiltroMisTareas').checked; const esBeatriz = (normalizarTexto(nombreStaff) === normalizarTexto("Beatriz Ortiz") || normalizarTexto(nombreStaff) === normalizarTexto("Beatriz")); const verSoloMisTareas = esBeatriz || filtroActivo;
         tareas.forEach((t) => {
-            if (verSoloMisTareas && t.asignado !== nombreStaff) return;
-            const esAsignado = (nombreStaff.trim().toLowerCase() === t.asignado.trim().toLowerCase());
+            if (verSoloMisTareas && normalizarTexto(t.asignado) !== normalizarTexto(nombreStaff)) return;
+            const esAsignado = (normalizarTexto(nombreStaff) === normalizarTexto(t.asignado));
             const etiquetaNota = t.calificacion ? `<span class="nota-tag"><i class="fa-solid fa-star"></i> ${t.calificacion}/10</span>` : '';
             const etiquetaXP = t.xp ? `<span class="xp-badge"><i class="fa-solid fa-bolt"></i> ${t.xp} XP</span>` : '';
             let etiquetaTiempo = '';
