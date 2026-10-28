@@ -509,8 +509,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const canvasTareas = document.getElementById('graficoTareas'); const canvasPresupuesto = document.getElementById('graficoPresupuesto');
         if (canvasTareas && canvasPresupuesto) {
             if (graficoTareasInstance) graficoTareasInstance.destroy();
-            const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); const tareasCompletadasPorPersona = directorioDB.map(p => tareas.filter(t => normalizarTexto(t.asignado) === normalizarTexto(p.nombre) && t.estado === 'completed').length);
-            graficoTareasInstance = new Chart(canvasTareas, { type: 'bar', data: { labels: nombres, datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#2a2a3a' }, ticks: { color: '#9ca3af' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } } });
+            const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); 
+            const tareasCompletadasPorPersona = directorioDB.map(p => {
+                const nombreDir = normalizarTexto(p.nombre);
+                const primerNombreDir = nombreDir.split(' ')[0]; // Ej: "jair"
+                
+                return tareas.filter(t => {
+                    if (t.estado !== 'completed') return false;
+                    const nombreAsignado = normalizarTexto(t.asignado);
+                    
+                    // Hacemos que cuente si el nombre completo coincide, o si solo coincide el primer nombre
+                    return nombreAsignado === nombreDir || nombreAsignado === primerNombreDir || nombreDir === nombreAsignado.split(' ')[0];
+                }).length;
+            });
+            graficoTareasInstance = new Chart(canvasTareas, { type: 'bar', data: { labels: nombres, datasets: [{ label: 'Tareas Completadas', data: tareasCompletadasPorPersona, backgroundColor: '#f7c948', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#9ca3af' }, grid: { color: '#2a2a3a' } }, x: { grid: { display: false }, ticks: { color: '#9ca3af' } } } } });
             if (graficoPresupuestoInstance) graficoPresupuestoInstance.destroy();
             graficoPresupuestoInstance = new Chart(canvasPresupuesto, { type: 'doughnut', data: { labels: ['Gastado', 'Disponible'], datasets: [{ data: [gastadoTotal, (presupuestoTotal - gastadoTotal > 0 ? presupuestoTotal - gastadoTotal : 0)], backgroundColor: ['#ef4444', '#22c55e'], borderWidth: 0 }] }, options: { responsive: true, cutout: '70%', plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af' } } } } });
         }
