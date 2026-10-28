@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control | SPOTLIGHT</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
     <link rel="stylesheet" href="staff.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- LIBRERÍAS DE FIREBASE (AQUÍ ESTÁ LA QUE FALTABA) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script> <!-- LA LÍNEA MÁGICA -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
 </head>
 <body>
 
@@ -86,7 +94,7 @@
                     <div id="panelNotificaciones" class="notification-dropdown"><h4>Notificaciones</h4><ul id="listaNotificaciones"></ul></div>
                 </div>
                 
-                <!-- MENÚ DE PERFIL NUEVO -->
+                <!-- MENÚ DE PERFIL -->
                 <div class="user-profile" style="position: relative;">
                     <div class="avatar" id="avatarLetra" style="cursor: pointer;" onclick="toggleProfileMenu()">S</div>
                     <div id="profileMenu" class="notification-dropdown" style="display: none; width: 260px; right: 0; top: 55px;">
@@ -102,8 +110,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- FIN MENÚ DE PERFIL -->
-
             </div>
         </header>
 
@@ -283,7 +289,7 @@
             <div class="recent-tasks-header"><h2>Tienda de Recompensas</h2><div class="saldo-xp-container"><span>Saldo:</span><strong id="saldoXP">0 XP</strong></div></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>¡Canjea los Puntos XP que has ganado completando tareas y exámenes! Al canjear, Gerencia recibirá una notificación.</div></div>
             
-            <!-- NUEVO: FORMULARIO PARA CREAR RECOMPENSAS -->
+            <!-- FORMULARIO PARA CREAR RECOMPENSAS -->
             <div style="margin-bottom: 20px;">
                 <button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button>
             </div>
@@ -293,7 +299,6 @@
                 <input type="text" id="tiendaIcono" placeholder="Emoji (Ej: 🏖️)">
                 <button id="btnGuardarRecompensa" class="btn-primary" style="align-self: flex-end;">Guardar Recompensa</button>
             </div>
-            <!-- FIN FORMULARIO -->
 
             <div id="gridTienda" class="tienda-grid"></div>
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
