@@ -1,0 +1,20 @@
+{
+  "name": "SPOTLIGHT - Panel de Staff",
+  "short_name": "SPOTLIGHT",
+  "start_url": "./staff.html",
+  "display": "standalone",
+  "background_color": "#0d0d12",
+  "theme_color": "#f7c948",
+  "icons": [
+    {
+      "src": "logo-blanco.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "logo-blanco.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

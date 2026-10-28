@@ -45,17 +45,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (normalizarTexto(nombreStaff) === normalizarTexto("Beatriz Ortiz") || normalizarTexto(nombreStaff) === normalizarTexto("Beatriz") || esGerente) { document.getElementById('filtroContainer').style.display = 'block'; }
 
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-        Notification.requestPermission();
-    }
-
-    window.toggleForm = function(idFormulario) {
-        const form = document.getElementById(idFormulario);
-        if (form) { if (form.style.display === 'none' || form.style.display === '') { form.style.display = 'flex'; } else { form.style.display = 'none'; } }
-    };
-
     // ==========================================
-    // CONFIGURACIÓN DE FIREBASE
+    // CONFIGURACIÓN DE FIREBASE Y FCM
     // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyD0b-S3Qo28sJzuJr-Sb-90_OqDzeJ0o1Q",
@@ -68,6 +59,10 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.firestore();
+
+    // Inicializar Messaging (FCM)
+    let messaging;
+    try { messaging = firebase.messaging(); } catch(e) { console.log("FCM no soportado en este navegador."); }
 
     const CLOUDINARY_CLOUD_NAME = "jc1rzsyt"; 
     const CLOUDINARY_UPLOAD_PRESET = "spotlight_uploads"; 
@@ -88,6 +83,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const toast = document.createElement('div'); toast.className = 'toast';
         toast.innerHTML = `<i class="fa-solid fa-bell"></i> <div>${mensaje}</div>`;
         container.appendChild(toast); setTimeout(() => { toast.remove(); }, 5000);
+    }
+
+    // ================= LÓGICA FCM (TOKEN) =================
+    async function guardarTokenFCM() {
+        if (!messaging) return;
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                // CLAVE VAPID INTEGRADA
+                const currentToken = await messaging.getToken({ vapidKey: 'BEScPUW_lkedPZaQoXsuupbf1-W94ZVj5fjWqvE44BXTNmh-_kofrIf81QITc9u-OZaujHl9FWdctdPo3vu-UrI' });
+                if (currentToken) {
+                    console.log('Token FCM obtenido con éxito.');
+                    const perfil = directorioDB.find(p => normalizarTexto(p.nombre) === normalizarTexto(nombreStaff));
+                    if (perfil && perfil.fcmToken !== currentToken) {
+                        await db.collection("directorio").doc(perfil.id).update({ fcmToken: currentToken });
+                    }
+                }
+            }
+        } catch (error) {
+            console.log('Error obteniendo token FCM:', error);
+        }
     }
 
     // ================= NOTIFICACIONES =================
@@ -112,9 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (!nuevaNoti.leida && (Date.now() - nuevaNoti.timestamp < 10000)) { 
                         mostrarToast(nuevaNoti.mensaje); 
                         playNotificationSound(); 
-                        if (Notification.permission === "granted") {
-                            new Notification("SPOTLIGHT", { body: nuevaNoti.mensaje, icon: "logo-blanco.jpg" });
-                        }
                     }
                 }
             }
@@ -247,7 +260,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Actualizar datos del menú de perfil
             const profileMenu = document.getElementById('profileMenu');
             if (profileMenu) {
                 document.getElementById('profileAvatar').textContent = perfil.nombre.charAt(0).toUpperCase();
@@ -689,6 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
         directorioDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderDirectorio(); renderHallDeLaFama(); renderRRHH(); renderGerencia(); renderTienda(); renderDashboard(nombreStaff); verificarCumpleanos();
         cargarUsuariosNoti();
+        guardarTokenFCM();
     });
     function verificarCumpleanos() {
         const hoy = new Date(); const mesHoy = hoy.getMonth() + 1; const diaHoy = hoy.getDate();
@@ -753,7 +766,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if(document.getElementById('btnGuardarAnuncio')) {
         document.getElementById('btnGuardarAnuncio').addEventListener('click', () => {
             const titulo = document.getElementById('anuncioTitulo').value; const mensaje = document.getElementById('anuncioMensaje').value; const prioridad = document.getElementById('anuncioPrioridad').value;
-            if (titulo && mensaje) { const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }); db.collection("anuncios").add({ titulo, mensaje, prioridad, autor: nombreStaff, fecha: fechaActual, timestamp: Date.now() }).then(() => { document.getElementById('formNuevoAnuncio').style.display = 'none'; document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = ''; }); } else { alert("Escribe el título y el mensaje."); }
+            if (titulo && mensaje) { const fechaActual = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }); db.collection("anuncios").add({ titulo, mensaje, prioridad, autor: nombreStaff, fecha: fechaActual, timestamp: Date.now() }).then(() => { document.getElementById('formNuevoAnuncio').style.display = 'none'; document.getElementById('anuncioTitulo').value = ''; document.getElementById('anuncioMensaje').value = ''; }); } 
+            else { alert("Escribe el título y el mensaje."); }
         });
     }
     window.eliminarAnuncio = function(id) { if (confirm("¿Eliminar este comunicado?")) { db.collection("anuncios").doc(id).delete(); } };
@@ -1013,5 +1027,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.nav-link').forEach(link => { link.addEventListener('click', () => { if (window.innerWidth <= 900) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); } }); });
     }
 
+    // Cerrar Sesión manual
     document.getElementById('btnLogout').addEventListener('click', function(e) { e.preventDefault(); localStorage.removeItem('staffLogueado'); window.location.href = "login.html"; });
-});
+
+    // ================= REGISTRO DE SERVICE WORKER (PWA) =================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => { console.log('Service Worker registrado con éxito:', registration.scope); })
+                .catch(error => { console.log('Fallo al registrar el Service Worker:', error); });
+        });
+    }
+
+}); // <--- ESTA ES LA LLAVE QUE CIERRA TODO EL DOMContentLoaded
