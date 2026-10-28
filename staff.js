@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login"; return; }
+    // Redirige a tu login.html si no hay sesión
+    if (localStorage.getItem('staffLogueado') !== 'true') { window.location.href = "login.html"; return; }
     
     const nombreStaff = localStorage.getItem('nombreStaff');
     const rolStaff = localStorage.getItem('rolStaff');
@@ -100,9 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const cambios = snapshot.docChanges();
         const todasNotis = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Filtro a prueba de tildes y mayúsculas
-        notificaciones = todasNotis.filter(n => normalizarTexto(n.para) === normalizarTexto(nombreStaff))
-                                    .sort((a,b) => b.timestamp - a.timestamp);
+        notificaciones = todasNotis.filter(n => normalizarTexto(n.para) === normalizarTexto(nombreStaff)).sort((a,b) => b.timestamp - a.timestamp);
         
         renderNotificaciones();
         
@@ -247,6 +246,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (dashXPBar) dashXPBar.style.width = `100%`; 
                 }
             }
+            
+            // Actualizar datos del menú de perfil
+            const profileMenu = document.getElementById('profileMenu');
+            if (profileMenu) {
+                document.getElementById('profileAvatar').textContent = perfil.nombre.charAt(0).toUpperCase();
+                document.getElementById('profileName').textContent = perfil.nombre;
+                document.getElementById('profileRole').textContent = perfil.rol;
+                document.getElementById('profileXP').textContent = perfil.puntos || 0;
+            }
         }
 
         const misTareas = tareas.filter(t => normalizarTexto(t.asignado) === normalizarTexto(usuarioActivo) && t.estado !== 'completed').slice(0, 3);
@@ -270,6 +278,24 @@ document.addEventListener('DOMContentLoaded', function() {
             } else { dashAnuncio.innerHTML = '<p style="color: #666; font-size: 0.85rem;">No hay anuncios recientes.</p>'; }
         }
     }
+
+    // ================= MENÚ DE PERFIL =================
+    window.toggleProfileMenu = function() {
+        const menu = document.getElementById('profileMenu');
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+    };
+    window.cerrarSesion = function() { 
+        localStorage.removeItem('staffLogueado'); 
+        window.location.href = "login.html"; 
+    };
+    
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('profileMenu');
+        const avatar = document.getElementById('avatarLetra');
+        if (menu && menu.style.display === 'block' && !menu.contains(e.target) && e.target !== avatar) {
+            menu.style.display = 'none';
+        }
+    });
 
     // ================= ADMINISTRADOR DE NOTIFICACIONES =================
     window.cargarUsuariosNoti = function() {
@@ -512,13 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const nombres = directorioDB.map(p => p.nombre.split(' ')[0]); 
             const tareasCompletadasPorPersona = directorioDB.map(p => {
                 const nombreDir = normalizarTexto(p.nombre);
-                const primerNombreDir = nombreDir.split(' ')[0]; // Ej: "jair"
+                const primerNombreDir = nombreDir.split(' ')[0]; 
                 
                 return tareas.filter(t => {
                     if (t.estado !== 'completed') return false;
                     const nombreAsignado = normalizarTexto(t.asignado);
-                    
-                    // Hacemos que cuente si el nombre completo coincide, o si solo coincide el primer nombre
                     return nombreAsignado === nombreDir || nombreAsignado === primerNombreDir || nombreDir === nombreAsignado.split(' ')[0];
                 }).length;
             });
@@ -601,6 +625,43 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     window.eliminarMoodboard = function(id) { if (confirm("¿Eliminar esta referencia?")) { db.collection("moodboard").doc(id).delete(); } };
+
+    // ================= BÓVEDA DE IDEAS =================
+    db.collection("ideas").onSnapshot((snapshot) => { 
+        ideasDB = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a,b) => b.timestamp - a.timestamp); 
+        renderIdeas(); 
+    });
+    
+    window.renderIdeas = function() {
+        const grid = document.getElementById('gridIdeas'); if (!grid) return; grid.innerHTML = '';
+        if (ideasDB.length === 0) { grid.innerHTML = '<p style="color:#666;">Aún no hay ideas propuestas.</p>'; return; }
+        ideasDB.forEach(i => {
+            const botonEliminar = esGerente || normalizarTexto(i.autor) === normalizarTexto(nombreStaff) ? `<button class="moodboard-delete" onclick="eliminarIdea('${i.id}')"><i class="fa-solid fa-trash"></i></button>` : '';
+            const imgHTML = i.foto ? `<img src="${i.foto}" class="moodboard-img" style="height: 150px;">` : `<div class="moodboard-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;height:150px;background:#1a1a24;">💡</div>`;
+            grid.innerHTML += `<div class="moodboard-card">${botonEliminar}${imgHTML}<div class="moodboard-info"><div class="moodboard-titulo">${i.titulo}</div><div class="moodboard-autor">Por: ${i.autor}</div><p style="font-size: 0.8rem; color: #d1d5db; margin-top: 5px;">${i.descripcion}</p></div></div>`;
+        });
+    }
+    
+    if(document.getElementById('btnGuardarIdea')) {
+        document.getElementById('btnGuardarIdea').addEventListener('click', async () => {
+            const titulo = document.getElementById('ideaTitulo').value; const descripcion = document.getElementById('ideaDesc').value; const fileInput = document.getElementById('ideaFoto'); const boton = document.getElementById('btnGuardarIdea');
+            if (titulo && descripcion) {
+                let fotoUrl = "";
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0]; const formData = new FormData(); formData.append('file', file); formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                    boton.innerHTML = "Subiendo..."; boton.disabled = true;
+                    try { const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData }); const data = await res.json(); if (data.secure_url) fotoUrl = data.secure_url; } catch (e) { console.log(e); }
+                    boton.innerHTML = "Publicar Idea"; boton.disabled = false;
+                }
+                db.collection("ideas").add({ titulo, descripcion, foto: fotoUrl, autor: nombreStaff, timestamp: Date.now() }).then(() => {
+                    document.getElementById('formNuevaIdea').style.display = 'none';
+                    document.getElementById('ideaTitulo').value = ''; document.getElementById('ideaDesc').value = ''; fileInput.value = '';
+                    mostrarToast("¡Idea publicada en la bóveda!");
+                });
+            } else { alert("El título y la descripción son obligatorios."); }
+        });
+    }
+    window.eliminarIdea = function(id) { if (confirm("¿Eliminar esta idea?")) { db.collection("ideas").doc(id).delete(); } };
 
     // ================= OBJETIVOS =================
     const listaObjetivos = document.getElementById('listaObjetivos'); let objetivosDB = [];
@@ -952,5 +1013,5 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.nav-link').forEach(link => { link.addEventListener('click', () => { if (window.innerWidth <= 900) { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('active'); } }); });
     }
 
-    document.getElementById('btnLogout').addEventListener('click', function(e) { e.preventDefault(); localStorage.removeItem('staffLogueado'); window.location.href = "login"; });
+    document.getElementById('btnLogout').addEventListener('click', function(e) { e.preventDefault(); localStorage.removeItem('staffLogueado'); window.location.href = "login.html"; });
 });

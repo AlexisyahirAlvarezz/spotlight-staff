@@ -60,7 +60,7 @@
             <a href="#" class="nav-link" id="link-admin-noti" data-target="admin-noti" style="display: none;"><i class="fa-solid fa-paper-plane"></i> Enviar Notificaciones</a>
             <a href="#" class="nav-link" id="link-boveda" data-target="boveda" style="display: none;"><i class="fa-solid fa-lock"></i> Bóveda de Accesos</a>
             
-            <!-- MIS ENTREGAS (Visible para todos) -->
+            <!-- MIS ENTREGAS -->
             <a href="#" class="nav-link" id="link-entregas" data-target="entregas"><i class="fa-solid fa-briefcase"></i> Mis Entregas</a>
         </nav>
         <div class="sidebar-footer">
@@ -85,7 +85,25 @@
                     <button id="btnNotificaciones" class="btn-icon"><i class="fa-solid fa-bell"></i><span id="badgeNotificaciones" class="badge" style="display: none;">0</span></button>
                     <div id="panelNotificaciones" class="notification-dropdown"><h4>Notificaciones</h4><ul id="listaNotificaciones"></ul></div>
                 </div>
-                <div class="user-profile"><div class="avatar" id="avatarLetra">S</div></div>
+                
+                <!-- MENÚ DE PERFIL NUEVO -->
+                <div class="user-profile" style="position: relative;">
+                    <div class="avatar" id="avatarLetra" style="cursor: pointer;" onclick="toggleProfileMenu()">S</div>
+                    <div id="profileMenu" class="notification-dropdown" style="display: none; width: 260px; right: 0; top: 55px;">
+                        <h4 style="text-align: center; margin-bottom: 10px;">Mi Perfil</h4>
+                        <div style="padding: 10px; text-align: center;">
+                            <div class="avatar" style="margin: 0 auto 10px; width: 60px; height: 60px; font-size: 2rem;" id="profileAvatar">S</div>
+                            <strong id="profileName" style="color: white; display: block; margin-bottom: 5px;">Nombre</strong>
+                            <span id="profileRole" style="color: #f7c948; font-size: 0.85rem; display: block; margin-bottom: 15px;">Rol</span>
+                            <div class="saldo-xp-container" style="justify-content: center; margin-bottom: 15px;">
+                                <span>XP:</span><strong id="profileXP">0</strong>
+                            </div>
+                            <a href="#" onclick="cerrarSesion()" class="logout-btn" style="justify-content: center;">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- FIN MENÚ DE PERFIL -->
+
             </div>
         </header>
 
@@ -264,6 +282,19 @@
         <section id="view-tienda" class="view-section" style="display: none;">
             <div class="recent-tasks-header"><h2>Tienda de Recompensas</h2><div class="saldo-xp-container"><span>Saldo:</span><strong id="saldoXP">0 XP</strong></div></div>
             <div class="info-banner"><i class="fa-solid fa-circle-info"></i><div>¡Canjea los Puntos XP que has ganado completando tareas y exámenes! Al canjear, Gerencia recibirá una notificación.</div></div>
+            
+            <!-- NUEVO: FORMULARIO PARA CREAR RECOMPENSAS -->
+            <div style="margin-bottom: 20px;">
+                <button id="btnMostrarFormRecompensa" class="btn-nueva-tarea" style="display: none;" onclick="toggleForm('formNuevaRecompensa')"><i class="fa-solid fa-plus"></i> Nueva Recompensa</button>
+            </div>
+            <div id="formNuevaRecompensa" class="form-tarea" style="display: none; flex-direction: column; margin-bottom: 20px;">
+                <input type="text" id="tiendaTitulo" placeholder="Título de la recompensa (Ej: Tarde Libre)">
+                <input type="number" id="tiendaCosto" placeholder="Costo en XP (Ej: 150)">
+                <input type="text" id="tiendaIcono" placeholder="Emoji (Ej: 🏖️)">
+                <button id="btnGuardarRecompensa" class="btn-primary" style="align-self: flex-end;">Guardar Recompensa</button>
+            </div>
+            <!-- FIN FORMULARIO -->
+
             <div id="gridTienda" class="tienda-grid"></div>
             <div id="seccionAdminCanjes" style="display: none; margin-top: 40px;">
                 <h3 style="margin-top: 30px; color: #f7c948; margin-bottom: 15px;">Historial de Canjes (Admin)</h3>
@@ -291,14 +322,11 @@
                 <div class="chart-box"><h3>Finanzas</h3><canvas id="graficoPresupuesto"></canvas></div>
             </div>
 
-            <!-- NUEVO: ADMINISTRADOR DE PUNTOS XP -->
             <h3 style="margin-top: 40px; color: #f7c948; margin-bottom: 15px;"><i class="fa-solid fa-bolt"></i> Administrador de Puntos</h3>
             <div class="form-tarea" style="flex-direction: column; max-width: 600px;">
                 <p style="color: #a0a0b8; font-size: 0.9rem;">Usa esto para dar o quitar XP manualmente por algún bono, ayuda extra o corrección.</p>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <select id="adminXPEmpleado" style="flex: 2; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
-                        <!-- Aquí se cargarán los nombres con JS -->
-                    </select>
+                    <select id="adminXPEmpleado" style="flex: 2; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;"></select>
                     <input type="number" id="adminXPCantidad" placeholder="XP (Ej: 50)" style="flex: 1; padding: 12px; border-radius: 8px; background: #05050f; color: white; border: 1px solid #333;">
                 </div>
                 <button id="btnAdminXP" class="btn-primary" style="align-self: flex-end;">Aplicar Puntos</button>
