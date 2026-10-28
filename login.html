@@ -3,61 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Login | SPOTLIGHT</title>
-    <link rel="stylesheet" href="login.css">
+    <title>Iniciar Sesión | SPOTLIGHT</title>
+    
+    <!-- Cargamos tus estilos globales -->
+    <link rel="stylesheet" href="staff.css">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- LIBRERÍAS DE FIREBASE OBLIGATORIAS PARA EL LOGIN -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+        /* Estilos específicos para centrar el login */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0d0d12;
+            margin: 0;
+        }
+        .login-card {
+            background: #13131a;
+            border: 1px solid #2a2a3a;
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        .login-logo {
+            width: 70px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 5px;
+        }
+        .login-card h2 {
+            color: #f7c948;
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+        }
+        .login-card p {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 12px 12px 45px;
+            border-radius: 10px;
+            background: #05050f;
+            color: white;
+            border: 1px solid #2a2a3a;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        .input-group input:focus {
+            border-color: #f7c948;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #f7c948;
+            color: #0d0d12;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            background: #ffe08a;
+            transform: translateY(-2px);
+        }
+        .btn-login:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Botón para regresar al inicio -->
-    <a href="index.html" class="volver-inicio">← Volver a la página principal</a>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <img src="logo-blanco.jpg" alt="SPOTLIGHT" class="login-logo">
-                <h2>Portal del Staff</h2>
-                <p>Ingresa tus credenciales para acceder</p>
+    <div class="login-card">
+        <!-- Asegúrate de tener tu logo en la misma carpeta, si no, cambia el src -->
+        <img src="logo-blanco.jpg" alt="SPOTLIGHT" class="login-logo" onerror="this.style.display='none'">
+        
+        <h2>SPOTLIGHT</h2>
+        <p>Casa Productora | Acceso Staff</p>
+
+        <!-- EL FORMULARIO TIENE EL ID 'loginForm' -->
+        <form id="loginForm">
+            <div class="input-group">
+                <i class="fa-solid fa-user"></i>
+                <!-- EL INPUT TIENE EL ID 'usuario' -->
+                <input type="text" id="usuario" placeholder="ID Empleado (Ej: SP-001)" required autocomplete="off">
             </div>
-
-            <!-- FORMULARIO DE LOGIN -->
-            <form id="loginForm">
-                <div class="input-group">
-                    <label for="usuario">Usuario o Correo</label>
-                    <input type="text" id="usuario" placeholder="Ej. staff@spotlight.com" required>
-                </div>
-
-                <div class="input-group">
-                    <label for="password">Contraseña</label>
-                    <input type="password" id="password" placeholder="••••••••" required>
-                </div>
-
-                <button type="submit" class="btn-login">
-                    Iniciar Sesión
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <p>¿Olvidaste tu contraseña? <br> Contacta al administrador.</p>
+            
+            <div class="input-group">
+                <i class="fa-solid fa-lock"></i>
+                <!-- EL INPUT TIENE EL ID 'password' -->
+                <input type="password" id="password" placeholder="Contraseña" required>
             </div>
-        </div>
+            
+            <button type="submit" id="btnLogin" class="btn-login">Entrar al Panel</button>
+        </form>
     </div>
 
-    <!-- Tu script normal -->
+    <!-- Llamamos al script de login al final del body -->
     <script src="login.js"></script>
-
-    <!-- ============================================================ -->
-    <!-- ONESIGNAL SDK (AQUÍ ESTÁ BIEN UBICADO) -->
-    <!-- ============================================================ -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: "6d8c12f8-ae11-467a-9af2-e2b5138f1650",
-          notifyButton: {
-            enable: true, // Esto hace que aparezca la campanita
-          },
-        });
-      });
-    </script>
 </body>
 </html>
